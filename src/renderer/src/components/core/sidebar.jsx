@@ -32,7 +32,8 @@ import {
   PointOfSaleRounded,
   ChevronRightRounded,
   ChevronLeftRounded,
-  ExpandMoreRounded
+  ExpandMoreRounded,
+  FiberManualRecord
 } from '@mui/icons-material'
 import { useAuth } from '../../context/authContext'
 import { useNotifier } from './notificationProvider'
@@ -194,6 +195,28 @@ export const Sidebar = ({ routes = [] }) => {
   const isGroupActive = (item) => item.children?.some((c) => location.pathname.startsWith(c.path))
   const isSettingsRoute = location.pathname.startsWith('/settings')
   const isCashierOpen = Boolean(activeSession?.is_active)
+  const settingsMenu = {
+    label: 'Settings',
+    labelKey: 'sidebar.settings',
+    icon: SettingsRounded,
+    children: [
+      {
+        path: '/settings',
+        label: 'General Settings',
+        labelKey: 'sidebar.settings_general',
+        icon: FiberManualRecord,
+        active: true
+      },
+      {
+        path: '/settings/receipt',
+        label: 'Receipt Settings',
+        labelKey: 'sidebar.settings_receipt',
+        icon: FiberManualRecord,
+        active: true
+      }
+    ]
+  }
+  const settingsGroupOpen = openGroups.settings ?? isSettingsRoute
 
   useEffect(() => {
     if (!user?.username) return
@@ -440,26 +463,92 @@ export const Sidebar = ({ routes = [] }) => {
 
       <List sx={{ width: '100%', px: 0 }}>
         <Tooltip
-          title={collapsed ? t('sidebar.settings') : ''}
+          title={collapsed ? t(settingsMenu.labelKey) : ''}
           placement="right"
           disableHoverListener={!collapsed}
         >
           <ListItemButton
             selected={isSettingsRoute}
-            onClick={() => navigate('/settings')}
-            sx={{ ...navItemSx, mb: 0 }}
+            onClick={() => {
+              if (collapsed) return
+              toggleGroup('settings')
+            }}
+            onMouseEnter={(e) => collapsed && openGroup('settings', e.currentTarget)}
+            onMouseLeave={() => collapsed && closeGroup()}
+            sx={{ ...navItemSx, justifyContent: collapsed ? 'center' : 'space-between', mb: 0 }}
           >
-            <ListItemIcon sx={{ color: 'inherit' }}>
-              <SettingsRounded fontSize="medium" />
-            </ListItemIcon>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                gap: collapsed ? 0 : 1.5,
+                flex: 1,
+                minWidth: 0
+              }}
+            >
+              <ListItemIcon sx={{ color: 'inherit', minWidth: 0 }}>
+                <SettingsRounded fontSize="medium" />
+              </ListItemIcon>
+              {!collapsed && (
+                <ListItemText
+                  primary={t(settingsMenu.labelKey)}
+                  primaryTypographyProps={{ fontSize: 14, fontWeight: isSettingsRoute ? 700 : 500 }}
+                />
+              )}
+            </Box>
             {!collapsed && (
-              <ListItemText
-                primary={t('sidebar.settings')}
-                primaryTypographyProps={{ fontSize: 14, fontWeight: isSettingsRoute ? 700 : 500 }}
+              <ExpandMoreRounded
+                sx={{
+                  fontSize: 18,
+                  color: 'text.disabled',
+                  flexShrink: 0,
+                  transform: settingsGroupOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                  transition: 'transform 200ms ease'
+                }}
               />
             )}
           </ListItemButton>
         </Tooltip>
+
+        {collapsed && (
+          <CollapsedSubMenu
+            anchorEl={hoveredGroupEl}
+            open={hoveredGroup === 'settings'}
+            item={settingsMenu}
+            onClose={closeGroup}
+            onOpen={() => clearTimeout(closeTimer.current)}
+            navItemSx={navItemSx}
+            theme={theme}
+          />
+        )}
+
+        {!collapsed && (
+          <Collapse in={settingsGroupOpen} timeout={160}>
+            <List disablePadding sx={{ pl: 1, mb: 0.5 }}>
+              {settingsMenu.children.map((child) => {
+                const selected = location.pathname === child.path
+                const ChildIcon = child.icon ?? HomeRounded
+                return (
+                  <ListItemButton
+                    key={child.path}
+                    selected={selected}
+                    onClick={() => navigate(child.path)}
+                    sx={childItemSx}
+                  >
+                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                      <ChildIcon sx={{ fontSize: 11 }} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={t(child.labelKey || child.label)}
+                      primaryTypographyProps={{ fontSize: 13, fontWeight: selected ? 700 : 500 }}
+                    />
+                  </ListItemButton>
+                )
+              })}
+            </List>
+          </Collapse>
+        )}
 
         <Tooltip
           title={collapsed ? t('sidebar.cashier_session') : ''}

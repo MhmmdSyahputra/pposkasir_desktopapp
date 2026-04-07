@@ -14,7 +14,8 @@ import {
   EditModifierPage,
   ListTransactionPage,
   ListReportPage,
-  SettingsPage
+  SettingsPage,
+  ReceiptSettingsPage
 } from '../pages'
 
 export const appRoutes = [
@@ -41,6 +42,12 @@ export const appRoutes = [
   // laporan
   { path: '/laporan/list', element: <ListReportPage />, active: true, protected: false },
   // settings
-  { path: '/settings', element: <SettingsPage />, active: true, protected: false }
+  { path: '/settings', element: <SettingsPage />, active: true, protected: false },
+  {
+    path: '/settings/receipt',
+    element: <ReceiptSettingsPage />,
+    active: true,
+    protected: false
+  }
   // { path: '*', element: <NotFoundPage />, active: true, protected: false }
 ]

@@ -14,6 +14,7 @@ import { EditModifierPage } from './modifierPage/edit'
 import { ListTransactionPage } from './transactionPage/list'
 import { ListReportPage } from './reportPage/list'
 import { SettingsPage } from './settingsPage'
+import { ReceiptSettingsPage } from './receiptSettingsPage'
 
 export {
   HomePage,
@@ -31,5 +32,6 @@ export {
   EditModifierPage,
   ListTransactionPage,
   ListReportPage,
-  SettingsPage
+  SettingsPage,
+  ReceiptSettingsPage
 }

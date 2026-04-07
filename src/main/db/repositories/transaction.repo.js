@@ -68,7 +68,18 @@ export function transactionCreate({
        VALUES
          (@no_transaksi, @subtotal, @diskon, @pajak, @total, @bayar, @kembalian, @metode_bayar, @catatan, @kasir, 'selesai')`
     )
-    .run({ no_transaksi, subtotal, diskon, pajak, total, bayar, kembalian, metode_bayar, catatan, kasir })
+    .run({
+      no_transaksi,
+      subtotal,
+      diskon,
+      pajak,
+      total,
+      bayar,
+      kembalian,
+      metode_bayar,
+      catatan,
+      kasir
+    })
 
   const txId = result.lastInsertRowid
 
@@ -81,16 +92,24 @@ export function transactionCreate({
 
   const insertAll = db.transaction((cartItems) => {
     for (const item of cartItems) {
+      const productId = item.product_id ?? item.id ?? null
+      const productName = item.nama_produk ?? item.name ?? ''
+      const unitPrice = Number(item.harga_satuan ?? item.price ?? 0) || 0
+      const basePrice =
+        Number(item.harga_dasar ?? item.basePrice ?? item.harga_satuan ?? item.price ?? 0) || 0
+      const quantity = Number(item.qty ?? 1) || 1
+      const lineSubtotal = Number(item.subtotal ?? unitPrice * quantity) || 0
+
       itemStmt.run({
         transaction_id: txId,
-        product_id: item.id ?? null,
-        nama_produk: item.name || item.nama_produk || '',
-        harga_satuan: item.price ?? 0,
-        harga_dasar: item.basePrice ?? item.price ?? 0,
-        qty: item.qty ?? 1,
-        subtotal: (item.price ?? 0) * (item.qty ?? 1),
-        catatan: item.note ?? '',
-        modifier_summary: item.summaryLabel ?? ''
+        product_id: productId,
+        nama_produk: productName,
+        harga_satuan: unitPrice,
+        harga_dasar: basePrice,
+        qty: quantity,
+        subtotal: lineSubtotal,
+        catatan: item.catatan ?? item.note ?? '',
+        modifier_summary: item.modifier_summary ?? item.summaryLabel ?? ''
       })
     }
   })
@@ -153,16 +172,16 @@ export function transactionGetAll({
     )
     .all(params)
 
-  const total = db
-    .prepare(`SELECT COUNT(*) as cnt FROM transactions t ${where}`)
-    .get(params).cnt
+  const total = db.prepare(`SELECT COUNT(*) as cnt FROM transactions t ${where}`).get(params).cnt
 
   return { rows, total }
 }
 
 export function transactionGetStats({ tanggal = '' } = {}) {
   const db = getDb()
-  const where = tanggal ? `WHERE date(created_at) = @tanggal AND status = 'selesai'` : `WHERE status = 'selesai'`
+  const where = tanggal
+    ? `WHERE date(created_at) = @tanggal AND status = 'selesai'`
+    : `WHERE status = 'selesai'`
   const params = tanggal ? { tanggal } : {}
 
   const stats = db
@@ -290,7 +309,9 @@ export function transactionGetReport({
     )
     .all(params)
 
-  const totalRows = db.prepare(`SELECT COUNT(*) AS cnt FROM transactions t ${where}`).get(params).cnt
+  const totalRows = db
+    .prepare(`SELECT COUNT(*) AS cnt FROM transactions t ${where}`)
+    .get(params).cnt
 
   return {
     summary,

@@ -5,6 +5,7 @@ import {
   Box,
   alpha,
   AppBar,
+  Button,
   Toolbar,
   Typography,
   IconButton,
@@ -32,11 +33,14 @@ import RemoveIcon from '@mui/icons-material/Remove'
 import CloseIcon from '@mui/icons-material/Close'
 import CheckIcon from '@mui/icons-material/Check'
 import NotesIcon from '@mui/icons-material/Notes'
+import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
 import { useTranslation } from 'react-i18next'
 import { productService } from '../../services/productService'
 import { modifierService } from '../../services/modifierService'
 import { transactionService } from '../../services/transactionService'
 import { useAuth } from '../../context/authContext'
+import { receiptSettingsService } from '../../services/receiptSettingsService'
+import { ReceiptPreview } from '../../components/core/receiptPreview'
 
 // ─── FORMAT RUPIAH ─────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -45,6 +49,22 @@ const fmt = (n) =>
     currency: 'IDR',
     maximumFractionDigits: 0
   }).format(n)
+
+const fmtDateTime = (value) => {
+  const date = value ? new Date(value) : new Date()
+  if (Number.isNaN(date.getTime())) return String(value || '-')
+  return new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date)
+}
+
+const fmtNumberId = (n) => Number(n || 0).toLocaleString('id-ID')
+
+const ceilToStep = (value, step) => Math.ceil(value / step) * step
 
 // ─── OPTION CHIP ──────────────────────────────────────────────────────────────
 const OptionChip = ({ option, selected, onClick }) => {
@@ -597,6 +617,20 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
   const bayar = parseInt(bayarInput.replace(/\D/g, '') || '0', 10)
   const kembalian = metode === 'tunai' ? Math.max(0, bayar - total) : 0
   const canConfirm = !saving && (metode !== 'tunai' || bayar >= total)
+  const paymentSuggestions = useMemo(() => {
+    if (total <= 0) return []
+
+    const suggestions = [
+      total,
+      ceilToStep(total, 5000),
+      ceilToStep(total, 10000),
+      ceilToStep(total, 20000),
+      ceilToStep(total, 50000),
+      ceilToStep(total, 100000)
+    ]
+
+    return [...new Set(suggestions)].filter((amount) => amount >= total).slice(0, 5)
+  }, [total])
   const METODE_OPTS = [
     { value: 'tunai', label: t('pos.method_cash') },
     { value: 'qris', label: t('pos.method_qris') },
@@ -658,6 +692,134 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
     onSuccess()
   }
 
+  const handlePrintPreview = () => {
+    if (!done) return
+
+    const receiptSettings = receiptSettingsService.get()
+    const receiptOrder = {
+      orderNumber: done.no_transaksi || '-',
+      date: fmtDateTime(done.created_at),
+      cashier: done.kasir || user?.username || '-',
+      subtotal: fmt(done.subtotal || 0),
+      discount: done.diskon ? fmt(done.diskon) : 'Rp0',
+      total: fmt(done.total || 0),
+      cash: fmt(done.bayar || 0),
+      change: done.kembalian ? fmt(done.kembalian) : 'Rp0',
+      items: cart.map((item) => ({
+        key: item.cartId,
+        name: item.name,
+        qtyText: `${item.qty} x ${fmt(item.price)}`,
+        note: item.summaryLabel || item.note || '',
+        subtotal: fmt(item.price * item.qty)
+      })),
+      labels: {
+        orderNumber: t('receipt_settings.field_order_number'),
+        date: t('receipt_settings.field_date'),
+        cashier: t('receipt_settings.field_cashier'),
+        subtotal: t('receipt_settings.field_subtotal'),
+        discount: t('receipt_settings.field_discount'),
+        total: t('receipt_settings.field_total'),
+        cash: t('receipt_settings.field_cash'),
+        change: t('receipt_settings.field_change')
+      }
+    }
+
+    const printWindow = window.open('', '_blank', 'width=420,height=720')
+    if (!printWindow) return
+
+    const visibility = receiptSettings.visibility || {}
+    const infoRows = [
+      [receiptOrder.labels.orderNumber, receiptOrder.orderNumber, visibility.orderNumber],
+      [receiptOrder.labels.date, receiptOrder.date, visibility.date],
+      [receiptOrder.labels.cashier, receiptOrder.cashier, visibility.cashier]
+    ]
+      .filter((row) => row[2])
+      .map(([label, value]) => `<div class="row"><span>${label}</span><span>${value}</span></div>`)
+      .join('')
+
+    const itemRows = receiptOrder.items
+      .map(
+        (item) => `
+          <div class="item">
+            <div class="item-head"><span>${item.name}</span><span>${item.subtotal}</span></div>
+            <div class="item-sub">${item.qtyText}</div>
+            ${item.note ? `<div class="item-note">- ${item.note}</div>` : ''}
+          </div>`
+      )
+      .join('')
+
+    const totalRows = [
+      [receiptOrder.labels.subtotal, receiptOrder.subtotal, visibility.subtotal],
+      [receiptOrder.labels.discount, receiptOrder.discount, visibility.discount],
+      [receiptOrder.labels.total, receiptOrder.total, visibility.total, true],
+      [receiptOrder.labels.cash, receiptOrder.cash, visibility.cash],
+      [receiptOrder.labels.change, receiptOrder.change, visibility.change]
+    ]
+      .filter((row) => row[2])
+      .map(
+        ([label, value, , emph]) =>
+          `<div class="row ${emph ? 'total' : ''}"><span>${label}</span><span>${value}</span></div>`
+      )
+      .join('')
+
+    const headerHtml = [
+      visibility.headerLine1 ? receiptSettings.headerLine1 : '',
+      visibility.headerLine2 ? receiptSettings.headerLine2 : '',
+      visibility.headerLine3 ? receiptSettings.headerLine3 : ''
+    ]
+      .filter(Boolean)
+      .map((line, index) => `<div class="header-line ${index === 0 ? 'strong' : ''}">${line}</div>`)
+      .join('')
+
+    const footerHtml = [
+      visibility.footerLine1 ? receiptSettings.footerLine1 : '',
+      visibility.footerLine2 ? receiptSettings.footerLine2 : '',
+      visibility.footerLine3 ? receiptSettings.footerLine3 : ''
+    ]
+      .filter(Boolean)
+      .map((line) => `<div class="footer-line">${line}</div>`)
+      .join('')
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>${receiptOrder.orderNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 16px; color: #111; }
+            .paper { max-width: 320px; margin: 0 auto; }
+            .center { text-align: center; }
+            .header-line { font-size: 12px; margin-bottom: 4px; }
+            .strong { font-weight: 700; font-size: 16px; }
+            .divider { border-top: 1px dashed #777; margin: 12px 0; }
+            .row, .item-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 6px; }
+            .item { margin-bottom: 10px; }
+            .item-head { font-weight: 700; margin-bottom: 4px; }
+            .item-sub, .item-note { font-size: 11px; color: #444; }
+            .item-note { padding-left: 8px; }
+            .total { font-weight: 700; }
+            .footer-line { font-size: 12px; margin-bottom: 4px; }
+          </style>
+        </head>
+        <body>
+          <div class="paper">
+            <div class="center">${headerHtml}</div>
+            <div class="divider"></div>
+            ${infoRows}
+            <div class="divider"></div>
+            ${itemRows}
+            <div class="divider"></div>
+            ${totalRows}
+            <div class="divider"></div>
+            <div class="center">${footerHtml}</div>
+          </div>
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
+  }
+
   const inputSx = {
     '& .MuiOutlinedInput-root': {
       bgcolor: theme.palette.custom.inputBg,
@@ -678,21 +840,51 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
   }
 
   if (done) {
+    const receiptSettings = receiptSettingsService.get()
+    const receiptOrder = {
+      orderNumber: done.no_transaksi || '-',
+      date: fmtDateTime(done.created_at),
+      cashier: done.kasir || user?.username || '-',
+      subtotal: fmt(done.subtotal || 0),
+      discount: done.diskon ? fmt(done.diskon) : 'Rp0',
+      total: fmt(done.total || 0),
+      cash: fmt(done.bayar || 0),
+      change: done.kembalian ? fmt(done.kembalian) : 'Rp0',
+      items: cart.map((item) => ({
+        key: item.cartId,
+        name: item.name,
+        qtyText: `${item.qty} x ${fmt(item.price)}`,
+        note: item.summaryLabel || item.note || '',
+        subtotal: fmt(item.price * item.qty)
+      })),
+      labels: {
+        orderNumber: t('receipt_settings.field_order_number'),
+        date: t('receipt_settings.field_date'),
+        cashier: t('receipt_settings.field_cashier'),
+        subtotal: t('receipt_settings.field_subtotal'),
+        discount: t('receipt_settings.field_discount'),
+        total: t('receipt_settings.field_total'),
+        cash: t('receipt_settings.field_cash'),
+        change: t('receipt_settings.field_change')
+      }
+    }
+
     return (
       <Dialog
         open={open}
-        maxWidth="xs"
+        maxWidth="sm"
         fullWidth
         PaperProps={{
           sx: {
             bgcolor: theme.palette.background.paper,
             backgroundImage: 'none',
             border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 3
+            borderRadius: 3,
+            maxWidth: 560
           }
         }}
       >
-        <DialogContent sx={{ textAlign: 'center', py: 5 }}>
+        <DialogContent sx={{ py: 3, px: 3 }}>
           <Box
             sx={{
               width: 64,
@@ -715,7 +907,8 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
               fontSize: 16,
               fontWeight: 700,
               color: 'text.primary',
-              mb: 0.5
+              mb: 0.5,
+              textAlign: 'center'
             }}
           >
             {t('pos.payment_success')}
@@ -725,110 +918,32 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
               fontFamily: 'Poppins, sans-serif',
               fontSize: 11,
               color: 'text.disabled',
-              mb: 3
+              mb: 2.5,
+              textAlign: 'center'
             }}
           >
             {done.no_transaksi}
           </Typography>
-          <Box
-            sx={{
-              mb: 2.5,
-              p: 2,
-              borderRadius: 2,
-              bgcolor: theme.palette.custom.elevation1,
-              border: `1px solid ${theme.palette.divider}`,
-              textAlign: 'left'
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.7 }}>
-              <Typography
-                sx={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: 11,
-                  color: 'text.secondary'
-                }}
-              >
-                {t('pos.total')}
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: 'text.primary'
-                }}
-              >
-                {fmt(done.total)}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                mb: done.kembalian > 0 ? 0.7 : 0
-              }}
+          <ReceiptPreview settings={receiptSettings} order={receiptOrder} compact />
+
+          <Box sx={{ display: 'flex', gap: 1.25, mt: 2.5 }}>
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<PrintOutlinedIcon />}
+              onClick={handlePrintPreview}
+              sx={{ textTransform: 'none' }}
             >
-              <Typography
-                sx={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: 11,
-                  color: 'text.secondary'
-                }}
-              >
-                {t('pos.pay')}
-              </Typography>
-              <Typography
-                sx={{
-                  fontFamily: 'Poppins, sans-serif',
-                  fontSize: 11,
-                  color: 'text.primary'
-                }}
-              >
-                {fmt(done.bayar)}
-              </Typography>
-            </Box>
-            {done.kembalian > 0 && (
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography
-                  sx={{
-                    fontFamily: 'Poppins, sans-serif',
-                    fontSize: 11,
-                    color: 'text.secondary'
-                  }}
-                >
-                  {t('pos.change')}
-                </Typography>
-                <Typography
-                  sx={{
-                    fontFamily: 'Poppins, sans-serif',
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: theme.palette.success.main
-                  }}
-                >
-                  {fmt(done.kembalian)}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-          <Box
-            onClick={handleDone}
-            sx={{
-              py: 1.5,
-              borderRadius: 2,
-              textAlign: 'center',
-              bgcolor: theme.palette.primary.main,
-              cursor: 'pointer',
-              fontFamily: 'Poppins, sans-serif',
-              color: '#fff',
-              fontWeight: 700,
-              fontSize: 13,
-              '&:hover': { bgcolor: theme.palette.primary.dark },
-              '&:active': { transform: 'scale(0.98)' },
-              transition: 'all 0.15s'
-            }}
-          >
-            {t('pos.new_transaction')}
+              {t('pos.print_receipt')}
+            </Button>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleDone}
+              sx={{ textTransform: 'none' }}
+            >
+              {t('pos.new_transaction')}
+            </Button>
           </Box>
         </DialogContent>
       </Dialog>
@@ -1070,18 +1185,62 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
 
         {/* Bayar input — only for tunai */}
         {metode === 'tunai' && (
-          <TextField
-            fullWidth
-            size="small"
-            label={t('pos.payment_amount')}
-            placeholder={total.toLocaleString('id-ID')}
-            value={bayarInput}
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, '')
-              setBayarInput(digits ? Number(digits).toLocaleString('id-ID') : '')
-            }}
-            sx={{ mb: 1, ...inputSx }}
-          />
+          <Box sx={{ mb: 1.25 }}>
+            <TextField
+              fullWidth
+              size="small"
+              label={t('pos.payment_amount')}
+              placeholder={total.toLocaleString('id-ID')}
+              value={bayarInput}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, '')
+                setBayarInput(digits ? Number(digits).toLocaleString('id-ID') : '')
+              }}
+              sx={{ ...inputSx }}
+            />
+
+            {paymentSuggestions.length > 0 && (
+              <Box sx={{ mt: 1.1 }}>
+                <Typography
+                  sx={{
+                    fontFamily: 'Poppins, sans-serif',
+                    fontSize: 10,
+                    color: 'text.disabled',
+                    mb: 0.8,
+                    letterSpacing: 1,
+                    textTransform: 'uppercase'
+                  }}
+                >
+                  {t('pos.payment_suggestions')}
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75 }}>
+                  {paymentSuggestions.map((amount) => {
+                    const selected = bayar === amount
+                    return (
+                      <Button
+                        key={amount}
+                        size="small"
+                        variant={selected ? 'contained' : 'outlined'}
+                        onClick={() => setBayarInput(fmtNumberId(amount))}
+                        sx={{
+                          minWidth: 0,
+                          px: 1.2,
+                          py: 0.7,
+                          borderRadius: 999,
+                          textTransform: 'none',
+                          fontSize: 11,
+                          fontWeight: 700,
+                          boxShadow: 'none'
+                        }}
+                      >
+                        {fmt(amount)}
+                      </Button>
+                    )
+                  })}
+                </Box>
+              </Box>
+            )}
+          </Box>
         )}
 
         {/* Kembalian — only for tunai */}
