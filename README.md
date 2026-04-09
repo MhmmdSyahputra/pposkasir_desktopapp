@@ -2,6 +2,10 @@
 
 <div align="center">
 
+[![Available on Microsoft Store](https://store-images.s-microsoft.com/image/apps.22118.9007199266252480.94f4e265-68d4-4ddc-a67b-b29c8d3021c8.b7a74ad0-b289-4f03-9d22-25f77151ffa1)](https://apps.microsoft.com/detail/9mw3s77v0pbq?hl=id-ID&gl=ID)
+
+<br />
+
 [![Windows](https://img.shields.io/badge/Windows-10%2B-blue?style=flat-square&logo=windows)](https://www.microsoft.com/store/apps/)
 [![Version](https://img.shields.io/badge/Version-1.0.1-green?style=flat-square)](package.json)
 [![License](https://img.shields.io/badge/License-MIT-orange?style=flat-square)](LICENSE)
@@ -59,10 +63,16 @@ Bekerja tanpa koneksi internet! Semua data disimpan lokal dengan database SQLite
 
 ## 📥 Download
 
-### Microsoft Store
-Aplikasi ini tersedia di Microsoft Store untuk kemudahan instalasi dan update otomatis.
+### 🎯 Recommended: Microsoft Store
+> 📌 **Cara termudah!** Instalasi sekali klik, update otomatis, dan fitur terbaru selalu tersedia.
 
-**[Download dari Microsoft Store →](https://apps.microsoft.com/detail/9mw3s77v0pbq?hl=id-ID&gl=ID)**
+[![Download from Microsoft Store](https://img.shields.io/badge/Download%20Now-Microsoft%20Store-0078D4?style=flat-square&logo=microsoft-store&logoColor=white&longCache=true&labelWidth=200)](https://apps.microsoft.com/detail/9mw3s77v0pbq?hl=id-ID&gl=ID)
+
+**Keuntungan:**
+- ✅ Instalasi otomatis ke folder yang tepat
+- ✅ Update otomatis tanpa perlu download manual
+- ✅ Integrasi dengan Windows yang sempurna
+- ✅ Kemudahan uninstall dari Control Panel
 
 ### Instalasi Manual
 1. Download installer dari [Release Page](../../releases)
