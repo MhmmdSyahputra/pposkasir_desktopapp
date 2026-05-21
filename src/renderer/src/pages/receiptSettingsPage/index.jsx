@@ -3,16 +3,20 @@ import {
   Alert,
   Box,
   Button,
-  Divider,
   FormControlLabel,
   Paper,
   Stack,
   Switch,
   TextField,
   Typography,
-  useTheme
+  useTheme,
+  Radio,
+  RadioGroup,
+  FormControl,
+  FormLabel,
+  CircularProgress
 } from '@mui/material'
-import { RestartAltRounded, SaveRounded } from '@mui/icons-material'
+import { RestartAltRounded, SaveRounded, PrintRounded } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../productPage/components/PageLayout'
 import { useNotifier } from '../../components/core/notificationProvider'
@@ -22,6 +26,7 @@ import {
 } from '../../services/receiptSettingsService'
 import { ReceiptPreview } from '../../components/core/receiptPreview'
 
+/* eslint-disable react/prop-types */
 const SectionCard = ({ title, subtitle, children, sx }) => {
   const theme = useTheme()
 
@@ -50,9 +55,14 @@ const SectionCard = ({ title, subtitle, children, sx }) => {
 
 export const ReceiptSettingsPage = () => {
   const { t } = useTranslation()
-  const theme = useTheme()
   const { show } = useNotifier()
   const [form, setForm] = useState(defaultReceiptSettings)
+  const [printingTest, setPrintingTest] = useState(false)
+
+  const handlePrinterTypeChange = (event) => {
+    const value = event.target.value
+    setForm((prev) => ({ ...prev, printerType: value }))
+  }
 
   useEffect(() => {
     setForm(receiptSettingsService.get())
@@ -108,6 +118,92 @@ export const ReceiptSettingsPage = () => {
     })
   }
 
+  const handlePrintTestReceipt = async () => {
+    setPrintingTest(true)
+    try {
+      const visibility = form.visibility || {}
+
+      const itemsHtml = [
+        { name: 'Nasi Goreng Spesial', qtyText: '1 x Rp22.000', subtotal: 'Rp22.000' },
+        { name: 'Es Teh Manis', qtyText: '1 x Rp6.000', subtotal: 'Rp6.000' }
+      ]
+        .map(
+          (item) => `
+            <div class="item">
+              <div class="item-name">${item.name}</div>
+              <div class="item-row">
+                <span>${item.qtyText}</span>
+                <span>${item.subtotal}</span>
+              </div>
+            </div>`
+        )
+        .join('')
+
+      const infoHtml = [
+        ['No. Transaksi', 'TEST-0001', visibility.orderNumber],
+        ['Tanggal', new Date().toLocaleString(), visibility.date],
+        ['Kasir', 'System Test', visibility.cashier]
+      ]
+        .filter((row) => row[2])
+        .map(
+          ([label, value]) =>
+            `<div class="item-row"><span>${label}</span><span>${value}</span></div>`
+        )
+        .join('')
+
+      const totalHtml = [
+        ['Subtotal', 'Rp28.000', visibility.subtotal],
+        ['Diskon', 'Rp2.000', visibility.discount],
+        ['TOTAL', 'Rp26.000', visibility.total, true],
+        ['Bayar', 'Rp30.000', visibility.cash],
+        ['Kembalian', 'Rp4.000', visibility.change]
+      ]
+        .filter((row) => row[2])
+        .map(
+          ([label, value, , emph]) =>
+            `<div class="item-row" style="${emph ? 'font-weight: bold; font-size: 13px; margin: 4px 0;' : ''}"><span>${label}</span><span>${value}</span></div>`
+        )
+        .join('')
+
+      const contentHTML = `
+        <div style="font-size: 11px;">
+          ${infoHtml}
+        </div>
+        <div class="line"></div>
+        <div>
+          ${itemsHtml}
+        </div>
+        <div class="line"></div>
+        <div>
+          ${totalHtml}
+        </div>
+      `
+
+      const payload = {
+        header1: visibility.headerLine1 ? form.headerLine1 : '',
+        header2: visibility.headerLine2 ? form.headerLine2 : '',
+        header3: visibility.headerLine3 ? form.headerLine3 : '',
+        contentHTML,
+        footer1: visibility.footerLine1 ? form.footerLine1 : '',
+        footer2: visibility.footerLine2 ? form.footerLine2 : '',
+        footer3: visibility.footerLine3 ? form.footerLine3 : ''
+      }
+
+      await window.api.printOrderReceipt(payload)
+      show({
+        message: t('receipt_settings.test_receipt_success'),
+        severity: 'success'
+      })
+    } catch (err) {
+      show({
+        message: t('receipt_settings.test_receipt_failed', { error: err.message }),
+        severity: 'error'
+      })
+    } finally {
+      setPrintingTest(false)
+    }
+  }
+
   return (
     <PageLayout
       breadcrumbs={[
@@ -117,7 +213,11 @@ export const ReceiptSettingsPage = () => {
       title={t('receipt_settings.page_title')}
       actions={
         <>
-          <Button startIcon={<RestartAltRounded />} onClick={handleReset} sx={{ textTransform: 'none' }}>
+          <Button
+            startIcon={<RestartAltRounded />}
+            onClick={handleReset}
+            sx={{ textTransform: 'none' }}
+          >
             {t('receipt_settings.reset_button')}
           </Button>
           <Button
@@ -197,10 +297,70 @@ export const ReceiptSettingsPage = () => {
             </SectionCard>
 
             <SectionCard
+              title={t('receipt_settings.printer_settings_title')}
+              subtitle={t('receipt_settings.printer_settings_subtitle')}
+            >
+              <Stack spacing={2}>
+                <FormControl component="fieldset">
+                  <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
+                    {t('receipt_settings.printer_type')}
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={form.printerType || 'system'}
+                    onChange={handlePrinterTypeChange}
+                  >
+                    <FormControlLabel
+                      value="system"
+                      control={<Radio size="small" />}
+                      label={t('receipt_settings.printer_type_system')}
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                    <FormControlLabel
+                      value="thermal"
+                      control={<Radio size="small" />}
+                      label={t('receipt_settings.printer_type_thermal')}
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                  </RadioGroup>
+                </FormControl>
+
+                <Stack spacing={1.5} sx={{ mt: 1 }}>
+                  <Stack direction="row" spacing={1.5}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={handlePrintTestReceipt}
+                      disabled={printingTest}
+                      startIcon={
+                        printingTest ? (
+                          <CircularProgress size={16} color="inherit" />
+                        ) : (
+                          <PrintRounded />
+                        )
+                      }
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {printingTest
+                        ? t('receipt_settings.printing_test')
+                        : t('receipt_settings.print_test_receipt')}
+                    </Button>
+                  </Stack>
+                </Stack>
+              </Stack>
+            </SectionCard>
+
+            <SectionCard
               title={t('receipt_settings.visibility_title')}
               subtitle={t('receipt_settings.visibility_subtitle')}
             >
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 1.25 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  gap: 1.25
+                }}
+              >
                 {[...infoRows, ...totalRows].map((row) => (
                   <Paper
                     key={row.key}
@@ -227,6 +387,9 @@ export const ReceiptSettingsPage = () => {
               <Stack spacing={1.25}>
                 <TextField
                   size="small"
+                  multiline
+                  minRows={2}
+                  maxRows={4}
                   label={t('receipt_settings.footer_line_1')}
                   value={form.footerLine1}
                   onChange={handleLineChange('footerLine1')}
@@ -242,6 +405,9 @@ export const ReceiptSettingsPage = () => {
                 />
                 <TextField
                   size="small"
+                  multiline
+                  minRows={2}
+                  maxRows={4}
                   label={t('receipt_settings.footer_line_2')}
                   value={form.footerLine2}
                   onChange={handleLineChange('footerLine2')}
@@ -257,6 +423,9 @@ export const ReceiptSettingsPage = () => {
                 />
                 <TextField
                   size="small"
+                  multiline
+                  minRows={2}
+                  maxRows={4}
                   label={t('receipt_settings.footer_line_3')}
                   value={form.footerLine3}
                   onChange={handleLineChange('footerLine3')}

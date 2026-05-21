@@ -44,7 +44,12 @@ export const useCreateProduct = () => {
   }, [])
 
   const handleChange = (field) => (e) => {
-    setForm((prev) => ({ ...prev, [field]: e.target.value }))
+    let val = e.target.value
+    if (field === 'harga_beli' || field === 'harga_jual') {
+      const digits = val.replace(/\D/g, '')
+      val = digits ? Number(digits).toLocaleString('id-ID') : ''
+    }
+    setForm((prev) => ({ ...prev, [field]: val }))
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: '' }))
   }
 
@@ -83,14 +88,17 @@ export const useCreateProduct = () => {
     }
     setSaving(true)
 
+    const cleanHargaBeli = Number(String(form.harga_beli).replace(/\D/g, '')) || 0
+    const cleanHargaJual = Number(String(form.harga_jual).replace(/\D/g, '')) || 0
+
     // 1. Create product record
     const res = await productService.create({
       kode: form.kode.trim() || undefined,
       nama: form.nama.trim(),
       kategori: form.kategori,
       satuan: form.satuan,
-      harga_beli: Number(form.harga_beli) || 0,
-      harga_jual: Number(form.harga_jual) || 0,
+      harga_beli: cleanHargaBeli,
+      harga_jual: cleanHargaJual,
       stok: Number(form.stok) || 0,
       min_stok: Number(form.min_stok) || 0,
       barcode: form.barcode.trim(),
@@ -129,7 +137,11 @@ export const useCreateProduct = () => {
   }, [])
 
   const createCategoryQuick = useCallback(async ({ nama, deskripsi = '' }) => {
-    const res = await categoryService.create({ nama: String(nama || '').trim(), deskripsi, aktif: 1 })
+    const res = await categoryService.create({
+      nama: String(nama || '').trim(),
+      deskripsi,
+      aktif: 1
+    })
     if (res.ok && res.data) {
       setCategories((prev) => {
         const exists = prev.some((c) => c.id === res.data.id)

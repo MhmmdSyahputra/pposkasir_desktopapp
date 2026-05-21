@@ -23,6 +23,8 @@ import {
   TableRow,
   TextField,
   Typography,
+  Tooltip,
+  alpha,
   useTheme
 } from '@mui/material'
 import {
@@ -34,7 +36,11 @@ import {
   MoreHorizRounded,
   SearchRounded,
   Inventory2Outlined,
-  VisibilityOutlined
+  VisibilityOutlined,
+  CheckCircleOutlineRounded,
+  ErrorOutlineRounded,
+  WarningAmberRounded,
+  BarChartRounded
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -241,6 +247,15 @@ export const ListProductPage = () => {
     '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main }
   }
 
+  const totalProducts = rows.length
+  const outOfStock = rows.filter((r) => r.stok === 0).length
+  const lowStock = rows.filter((r) => r.stok > 0 && r.min_stok > 0 && r.stok <= r.min_stok).length
+  const healthyStock = rows.filter((r) => r.stok > r.min_stok).length
+
+  const healthyPct = totalProducts ? Math.round((healthyStock / totalProducts) * 100) : 0
+  const lowPct = totalProducts ? Math.round((lowStock / totalProducts) * 100) : 0
+  const outPct = totalProducts ? Math.round((outOfStock / totalProducts) * 100) : 0
+
   return (
     <PageLayout
       breadcrumbs={[
@@ -277,6 +292,299 @@ export const ListProductPage = () => {
         </>
       }
     >
+      {/* ── Dashboard Summary ── */}
+      <Box
+        sx={{
+          mb: 3.5,
+          p: 2.5,
+          borderRadius: 3,
+          bgcolor: isDark ? 'rgba(255, 255, 255, 0.015)' : 'rgba(0, 0, 0, 0.01)',
+          border: `1px solid ${theme.palette.divider}`,
+          backgroundImage: `linear-gradient(135deg, ${isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.005)'} 0%, transparent 100%)`
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, mb: 2 }}>
+          <BarChartRounded sx={{ color: 'primary.main', fontSize: 22 }} />
+          <Typography
+            sx={{
+              fontFamily: 'Poppins, sans-serif',
+              fontWeight: 700,
+              fontSize: 14,
+              color: 'text.primary'
+            }}
+          >
+            Inventory Stock Analytics
+          </Typography>
+        </Box>
+
+        {/* Cards Row */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: 2,
+            mb: 2.5
+          }}
+        >
+          {/* Card 1: Total */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: isDark ? '#111622' : '#ffffff',
+              border: `1px solid ${theme.palette.divider}`,
+              borderLeft: `4px solid ${theme.palette.primary.main}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  color: 'text.disabled',
+                  fontWeight: 600,
+                  textTransform: 'uppercase'
+                }}
+              >
+                Total Produk
+              </Typography>
+              <Typography
+                sx={{ fontSize: 22, fontWeight: 700, fontFamily: 'Poppins, sans-serif', mt: 0.5 }}
+              >
+                {loading ? <Skeleton width={40} height={32} /> : totalProducts}
+              </Typography>
+            </Box>
+            <Inventory2Outlined sx={{ color: 'primary.main', opacity: 0.8, fontSize: 28 }} />
+          </Box>
+
+          {/* Card 2: Aman */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: isDark ? '#111622' : '#ffffff',
+              border: `1px solid ${theme.palette.divider}`,
+              borderLeft: `4px solid ${theme.palette.success.main}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  color: 'text.disabled',
+                  fontWeight: 600,
+                  textTransform: 'uppercase'
+                }}
+              >
+                Stok Aman
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  fontFamily: 'Poppins, sans-serif',
+                  mt: 0.5,
+                  color: 'success.main'
+                }}
+              >
+                {loading ? <Skeleton width={40} height={32} /> : healthyStock}
+              </Typography>
+            </Box>
+            <CheckCircleOutlineRounded sx={{ color: 'success.main', opacity: 0.8, fontSize: 28 }} />
+          </Box>
+
+          {/* Card 3: Menipis */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: isDark ? '#111622' : '#ffffff',
+              border: `1px solid ${theme.palette.divider}`,
+              borderLeft: `4px solid ${theme.palette.warning.main}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  color: 'text.disabled',
+                  fontWeight: 600,
+                  textTransform: 'uppercase'
+                }}
+              >
+                Stok Menipis
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  fontFamily: 'Poppins, sans-serif',
+                  mt: 0.5,
+                  color: 'warning.main'
+                }}
+              >
+                {loading ? <Skeleton width={40} height={32} /> : lowStock}
+              </Typography>
+            </Box>
+            <WarningAmberRounded sx={{ color: 'warning.main', opacity: 0.8, fontSize: 28 }} />
+          </Box>
+
+          {/* Card 4: Habis */}
+          <Box
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: isDark ? '#111622' : '#ffffff',
+              border: `1px solid ${theme.palette.divider}`,
+              borderLeft: `4px solid ${theme.palette.error.main}`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Box>
+              <Typography
+                sx={{
+                  fontSize: 11,
+                  color: 'text.disabled',
+                  fontWeight: 600,
+                  textTransform: 'uppercase'
+                }}
+              >
+                Stok Habis
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: 22,
+                  fontWeight: 700,
+                  fontFamily: 'Poppins, sans-serif',
+                  mt: 0.5,
+                  color: 'error.main'
+                }}
+              >
+                {loading ? <Skeleton width={40} height={32} /> : outOfStock}
+              </Typography>
+            </Box>
+            <ErrorOutlineRounded sx={{ color: 'error.main', opacity: 0.8, fontSize: 28 }} />
+          </Box>
+        </Box>
+
+        {/* Visual Bar Distribution Chart */}
+        <Box
+          sx={{
+            bgcolor: isDark ? 'rgba(255,255,255,0.01)' : 'rgba(0,0,0,0.005)',
+            p: 2,
+            borderRadius: 2,
+            border: `1px solid ${theme.palette.divider}`
+          }}
+        >
+          <Box
+            sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}
+          >
+            <Typography
+              sx={{
+                fontSize: 12,
+                fontWeight: 600,
+                color: 'text.secondary',
+                fontFamily: 'Poppins, sans-serif'
+              }}
+            >
+              Rasio Distribusi Stok
+            </Typography>
+            <Typography
+              sx={{ fontSize: 11, color: 'text.disabled', fontFamily: 'Poppins, sans-serif' }}
+            >
+              Berdasarkan batas stok minimum masing-masing produk
+            </Typography>
+          </Box>
+
+          {/* Multi-segment progress bar */}
+          <Box
+            sx={{
+              display: 'flex',
+              height: 12,
+              borderRadius: 6,
+              overflow: 'hidden',
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+              mb: 1.5
+            }}
+          >
+            {totalProducts === 0 ? (
+              <Box sx={{ flex: 1, bgcolor: 'text.disabled', opacity: 0.2 }} />
+            ) : (
+              <>
+                <Tooltip title={`Stok Aman: ${healthyPct}% (${healthyStock} produk)`} arrow>
+                  <Box
+                    sx={{
+                      width: `${healthyPct}%`,
+                      bgcolor: 'success.main',
+                      transition: 'width 0.3s ease-in-out'
+                    }}
+                  />
+                </Tooltip>
+                <Tooltip title={`Stok Menipis: ${lowPct}% (${lowStock} produk)`} arrow>
+                  <Box
+                    sx={{
+                      width: `${lowPct}%`,
+                      bgcolor: 'warning.main',
+                      transition: 'width 0.3s ease-in-out'
+                    }}
+                  />
+                </Tooltip>
+                <Tooltip title={`Stok Habis: ${outPct}% (${outOfStock} produk)`} arrow>
+                  <Box
+                    sx={{
+                      width: `${outPct}%`,
+                      bgcolor: 'error.main',
+                      transition: 'width 0.3s ease-in-out'
+                    }}
+                  />
+                </Tooltip>
+              </>
+            )}
+          </Box>
+
+          {/* Legend */}
+          <Box sx={{ display: 'flex', gap: 3.5, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
+              <Typography
+                sx={{ fontSize: 12, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}
+              >
+                Aman: <strong style={{ color: theme.palette.text.primary }}>{healthyPct}%</strong> (
+                {healthyStock} item)
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'warning.main' }} />
+              <Typography
+                sx={{ fontSize: 12, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}
+              >
+                Menipis: <strong style={{ color: theme.palette.text.primary }}>{lowPct}%</strong> (
+                {lowStock} item)
+              </Typography>
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'error.main' }} />
+              <Typography
+                sx={{ fontSize: 12, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}
+              >
+                Habis: <strong style={{ color: theme.palette.text.primary }}>{outPct}%</strong> (
+                {outOfStock} item)
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+
       {/* ── Toolbar ──────────────────────────────────────────────────── */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2.5, flexWrap: 'wrap' }}>
         <TextField
@@ -363,11 +671,30 @@ export const ListProductPage = () => {
                   <TableCell padding="checkbox" sx={{ ...cellSx, pl: 2 }} />
                   {COLUMNS.map((col) => (
                     <TableCell key={col.id} sx={cellSx}>
-                      <Skeleton
-                        variant="text"
-                        width={col.id === 'nama' ? '70%' : '55%'}
-                        sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
-                      />
+                      {col.id === 'nama' ? (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Skeleton
+                            variant="rounded"
+                            width={32}
+                            height={32}
+                            sx={{
+                              borderRadius: 1,
+                              bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'
+                            }}
+                          />
+                          <Skeleton
+                            variant="text"
+                            width="60%"
+                            sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
+                          />
+                        </Box>
+                      ) : (
+                        <Skeleton
+                          variant="text"
+                          width={col.id === 'kode' ? '80%' : '55%'}
+                          sx={{ bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' }}
+                        />
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
@@ -392,7 +719,43 @@ export const ListProductPage = () => {
                   </TableCell>
                   <TableCell sx={{ ...cellSx, color: 'text.disabled' }}>{row.kode}</TableCell>
                   <TableCell sx={{ ...cellSx, color: 'text.primary', fontWeight: 600 }}>
-                    {row.nama}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Box
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 1,
+                          bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          overflow: 'hidden',
+                          border: `1px solid ${theme.palette.divider}`,
+                          flexShrink: 0
+                        }}
+                      >
+                        {parseImages(row.images).length > 0 ? (
+                          <Box
+                            component="img"
+                            src={`ppos://localhost/${parseImages(row.images)[0]}`}
+                            sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
+                        ) : (
+                          <Inventory2Outlined sx={{ fontSize: 16, color: 'text.disabled' }} />
+                        )}
+                      </Box>
+                      <Typography
+                        noWrap
+                        sx={{
+                          fontSize: 13,
+                          fontWeight: 600,
+                          color: 'inherit',
+                          fontFamily: 'inherit'
+                        }}
+                      >
+                        {row.nama}
+                      </Typography>
+                    </Box>
                   </TableCell>
                   <TableCell sx={cellSx}>{row.kategori}</TableCell>
                   <TableCell sx={{ ...cellSx, textTransform: 'uppercase', fontSize: 11 }}>
@@ -409,9 +772,9 @@ export const ListProductPage = () => {
                         fontWeight: 700,
                         fontFamily: 'inherit',
                         color:
-                          row.stok <= 5
+                          row.stok === 0
                             ? 'error.main'
-                            : row.stok <= 20
+                            : row.stok <= row.min_stok
                               ? 'warning.main'
                               : 'primary.main'
                       }}

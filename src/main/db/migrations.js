@@ -228,5 +228,12 @@ export const migrations = [
           ON cashier_sessions(cashier_username, closed_at);
       `)
     }
+  },
+  {
+    version: 8,
+    description: 'Add nama_pelanggan column to transactions',
+    up: (db) => {
+      db.exec(`ALTER TABLE transactions ADD COLUMN nama_pelanggan TEXT DEFAULT ''`)
+    }
   }
 ]

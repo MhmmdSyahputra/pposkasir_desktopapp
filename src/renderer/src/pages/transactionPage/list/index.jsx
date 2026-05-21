@@ -20,6 +20,18 @@ import {
   useTheme
 } from '@mui/material'
 import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js'
+import { Bar, Doughnut } from 'react-chartjs-2'
+import {
+  AssessmentOutlined,
   CloseRounded,
   ReceiptLongOutlined,
   SearchRounded,
@@ -28,6 +40,8 @@ import {
 import { PageLayout } from '../../productPage/components/PageLayout'
 import { useTranslation } from 'react-i18next'
 import { useListTransaction } from './hook/useListTransaction'
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const fmtRp = (n) =>
@@ -573,6 +587,183 @@ export const ListTransactionPage = () => {
           value={total}
           sub={t('transaction.rows_displayed')}
         />
+      </Box>
+
+      {/* ── Visual Charts ────────────────────────────────────────────── */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+          gap: 2,
+          mb: 3,
+          minHeight: 220
+        }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            bgcolor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'text.secondary',
+              mb: 2,
+              fontFamily: 'Poppins'
+            }}
+          >
+            {t('report.breakdown_method')}
+          </Typography>
+          <Box sx={{ flex: 1, position: 'relative', minHeight: 160 }}>
+            {loading ? (
+              <Skeleton variant="rounded" height="100%" />
+            ) : (stats.byMethod || []).length === 0 ? (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
+                  {t('report.no_data')}
+                </Typography>
+              </Box>
+            ) : (
+              <Doughnut
+                data={{
+                  labels: (stats.byMethod || []).map(
+                    (m) => metodeLabel[m.metode_bayar] || m.metode_bayar
+                  ),
+                  datasets: [
+                    {
+                      data: (stats.byMethod || []).map((m) => m.total),
+                      backgroundColor: [
+                        theme.palette.primary.main,
+                        theme.palette.success.main,
+                        theme.palette.warning.main,
+                        theme.palette.info.main
+                      ].map((c) => alpha(c, 0.7)),
+                      borderColor: theme.palette.background.paper,
+                      borderWidth: 2
+                    }
+                  ]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'right',
+                      labels: {
+                        boxWidth: 8,
+                        usePointStyle: true,
+                        font: { size: 10, family: 'Poppins' },
+                        color: theme.palette.text.secondary
+                      }
+                    },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) => ` ${ctx.label}: ${fmtRp(ctx.raw)}`
+                      }
+                    }
+                  },
+                  cutout: '60%'
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 3,
+            bgcolor: theme.palette.background.paper,
+            border: `1px solid ${theme.palette.divider}`,
+            display: 'flex',
+            flexDirection: 'column'
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: 12,
+              fontWeight: 700,
+              color: 'text.secondary',
+              mb: 2,
+              fontFamily: 'Poppins'
+            }}
+          >
+            {t('report.top_products')}
+          </Typography>
+          <Box sx={{ flex: 1, position: 'relative', minHeight: 160 }}>
+            {loading ? (
+              <Skeleton variant="rounded" height="100%" />
+            ) : (stats.topProducts || []).length === 0 ? (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
+                  {t('report.no_data')}
+                </Typography>
+              </Box>
+            ) : (
+              <Bar
+                data={{
+                  labels: (stats.topProducts || []).map((p) => p.nama_produk),
+                  datasets: [
+                    {
+                      label: t('report.top_products_qty'),
+                      data: (stats.topProducts || []).map((p) => p.qty),
+                      backgroundColor: alpha(theme.palette.success.main, 0.6),
+                      borderRadius: 4,
+                      barThickness: 12
+                    }
+                  ]
+                }}
+                options={{
+                  indexAxis: 'y',
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: { display: false },
+                    y: {
+                      grid: { display: false },
+                      ticks: {
+                        font: { size: 10, family: 'Poppins' },
+                        color: theme.palette.text.primary,
+                        callback: function (val) {
+                          const label = this.getLabelForValue(val)
+                          return label.length > 12 ? label.substr(0, 12) + '...' : label
+                        }
+                      }
+                    }
+                  },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      callbacks: {
+                        label: (ctx) => ` ${ctx.raw} item`
+                      }
+                    }
+                  }
+                }}
+              />
+            )}
+          </Box>
+        </Box>
       </Box>
 
       {/* ── Toolbar ──────────────────────────────────────────────────── */}

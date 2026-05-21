@@ -418,6 +418,23 @@
     "field_discount": "Discount",
     "field_total": "Total",
     "field_cash": "Cash",
-    "field_change": "Change"
+    "field_change": "Change",
+    "printer_settings_title": "Printer Settings",
+    "printer_settings_subtitle": "Choose print method and connect to your default Windows printer",
+    "printer_type": "Print Method",
+    "printer_type_system": "System Print (Browser)",
+    "printer_type_thermal": "Default Windows Thermal Printer (Silent Print)",
+    "printer_ip": "Printer IP Address",
+    "printer_port": "Printer Port",
+    "test_connection": "Test Connection",
+    "testing_connection": "Testing...",
+    "connection_success": "Printer connection successful!",
+    "connection_failed": "Printer connection failed: {{error}}",
+    "print_test_receipt": "Print Test Receipt",
+    "printing_test": "Printing...",
+    "test_receipt_success": "Test receipt successfully sent to printer!",
+    "test_receipt_failed": "Failed to print test receipt: {{error}}",
+    "print_receipt_success": "Receipt printed successfully!",
+    "print_receipt_failed": "Failed to print receipt: {{error}}"
   }
 }

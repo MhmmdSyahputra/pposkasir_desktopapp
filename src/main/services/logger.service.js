@@ -161,3 +161,49 @@ export async function logAppToServer() {
     console.error('logAppToServer error:', err.message)
   }
 }
+
+/**
+ * Hit API mylog untuk mencatat aksi spesifik (seperti transaksi)
+ */
+export async function logActionToServer(type, payloadData, description = '') {
+  try {
+    const [deviceId, brand, deviceInfo] = await Promise.all([
+      getDeviceUuidAsync(),
+      getDeviceBrandAsync(),
+      Promise.resolve(getDeviceInfoAsync())
+    ])
+
+    const device = {
+      id: deviceId,
+      brand: `${brand.manufacturer} ${brand.model}`.trim(),
+      ...deviceInfo
+    }
+
+    const body = {
+      app: 'P-POS KASIR',
+      type: type, // e.g. 'transaction'
+      payload: JSON.stringify(payloadData),
+      device: JSON.stringify(device),
+      description: description
+    }
+
+    const request = net.request({
+      method: 'POST',
+      url: 'https://api.muhammadsyahputra.my.id/api/v1/desktop/log-app'
+    })
+
+    request.setHeader('Content-Type', 'application/json')
+
+    // Silent handling
+    request.on('error', () => {})
+    request.on('response', (res) => {
+      res.on('data', () => {})
+      res.on('end', () => {})
+    })
+
+    request.write(JSON.stringify(body))
+    request.end()
+  } catch (err) {
+    // Silent fail
+  }
+}

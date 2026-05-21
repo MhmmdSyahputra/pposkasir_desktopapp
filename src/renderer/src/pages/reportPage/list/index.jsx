@@ -21,6 +21,20 @@ import {
   useTheme
 } from '@mui/material'
 import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js'
+import { Line, Bar, Doughnut } from 'react-chartjs-2'
+import {
   AssessmentOutlined,
   DownloadRounded,
   PictureAsPdfRounded,
@@ -34,6 +48,19 @@ import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { PageLayout } from '../../productPage/components/PageLayout'
 import { useReport } from './hook/useReport'
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+)
 
 const fmtRp = (n) =>
   new Intl.NumberFormat('id-ID', {
@@ -316,7 +343,13 @@ export const ListReportPage = () => {
           bgcolor: theme.palette.background.paper
         }}
       >
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(6, 1fr)' }, gap: 1.25 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(6, 1fr)' },
+            gap: 1.25
+          }}
+        >
           <TextField
             size="small"
             type="date"
@@ -415,104 +448,390 @@ export const ListReportPage = () => {
         />
       </Box>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr 1fr' }, gap: 1.5, mb: 2.5 }}>
+      <Typography
+        variant="h6"
+        sx={{
+          fontSize: 16,
+          fontWeight: 800,
+          mb: 1.5,
+          fontFamily: 'Poppins, sans-serif',
+          color: 'text.primary',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}
+      >
+        <AssessmentOutlined sx={{ fontSize: 20, color: 'primary.main' }} />
+        Statistik Visual
+      </Typography>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1.5fr 1fr' },
+          gap: 1.5,
+          mb: 2.5,
+          minHeight: 340
+        }}
+      >
         <Box
           sx={{
             border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: theme.palette.background.paper,
-            p: 2
+            p: 2.5,
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.03)'
           }}
         >
-          <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1.2, fontWeight: 700 }}>
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: 'text.secondary',
+              mb: 2,
+              fontWeight: 700,
+              fontFamily: 'Poppins'
+            }}
+          >
             {t('report.breakdown_method')}
           </Typography>
-          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-            {(byMethod || []).map((m) => (
-              <Chip
-                key={m.metode_bayar}
-                icon={<AssessmentOutlined sx={{ fontSize: 14 }} />}
-                label={`${methodLabel[m.metode_bayar] || m.metode_bayar}: ${m.jumlah} • ${fmtRp(m.total)}`}
-                sx={{ fontSize: 11 }}
+          <Box
+            sx={{
+              flex: 1,
+              position: 'relative',
+              minHeight: 220,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {loading ? (
+              <Skeleton variant="circular" width={180} height={180} />
+            ) : byMethod.length === 0 ? (
+              <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
+                {t('report.no_data')}
+              </Typography>
+            ) : (
+              <Doughnut
+                data={{
+                  labels: byMethod.map((m) => methodLabel[m.metode_bayar] || m.metode_bayar),
+                  datasets: [
+                    {
+                      data: byMethod.map((m) => m.total),
+                      backgroundColor: [
+                        theme.palette.primary.main,
+                        theme.palette.success.main,
+                        theme.palette.warning.main,
+                        theme.palette.info.main,
+                        theme.palette.error.main
+                      ].map((c) => alpha(c, 0.75)),
+                      hoverBackgroundColor: [
+                        theme.palette.primary.main,
+                        theme.palette.success.main,
+                        theme.palette.warning.main,
+                        theme.palette.info.main,
+                        theme.palette.error.main
+                      ],
+                      borderColor: theme.palette.background.paper,
+                      borderWidth: 2,
+                      hoverOffset: 4
+                    }
+                  ]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 15,
+                        boxWidth: 8,
+                        font: { size: 10, family: 'Poppins', weight: 500 },
+                        color: theme.palette.text.secondary
+                      }
+                    },
+                    tooltip: {
+                      padding: 10,
+                      backgroundColor: theme.palette.background.paper,
+                      titleColor: theme.palette.text.primary,
+                      bodyColor: theme.palette.text.secondary,
+                      borderColor: theme.palette.divider,
+                      borderWidth: 1,
+                      callbacks: {
+                        label: (ctx) => ` ${ctx.label}: ${fmtRp(ctx.raw)}`
+                      }
+                    }
+                  },
+                  cutout: '70%'
+                }}
               />
-            ))}
+            )}
           </Box>
         </Box>
 
         <Box
           sx={{
             border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: theme.palette.background.paper,
-            p: 2
+            p: 2.5,
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.03)'
           }}
         >
-          <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1.2, fontWeight: 700 }}>
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: 'text.secondary',
+              mb: 2,
+              fontWeight: 700,
+              fontFamily: 'Poppins'
+            }}
+          >
             {t('report.trend_daily')}
           </Typography>
-          {loading ? (
-            <Skeleton variant="rounded" height={120} />
-          ) : daily.length === 0 ? (
-            <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>{t('report.no_data')}</Typography>
-          ) : (
-            daily.slice(-6).map((d) => (
-              <Box key={d.tanggal} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.6 }}>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>{d.tanggal}</Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.primary', fontWeight: 600 }}>
-                  {d.jumlah} • {fmtRp(d.total)}
+          <Box sx={{ flex: 1, position: 'relative', minHeight: 220 }}>
+            {loading ? (
+              <Skeleton variant="rounded" height="100%" />
+            ) : daily.length === 0 ? (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
+                  {t('report.no_data')}
                 </Typography>
               </Box>
-            ))
-          )}
+            ) : (
+              <Line
+                data={{
+                  labels: daily.map((d) => d.tanggal),
+                  datasets: [
+                    {
+                      label: t('report.summary_net_sales'),
+                      data: daily.map((d) => d.total),
+                      borderColor: theme.palette.primary.main,
+                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                      fill: true,
+                      tension: 0.4,
+                      pointRadius: 4,
+                      pointBackgroundColor: theme.palette.primary.main,
+                      pointBorderColor: theme.palette.background.paper,
+                      pointBorderWidth: 2,
+                      pointHoverRadius: 6,
+                      pointHoverBackgroundColor: theme.palette.primary.main,
+                      pointHoverBorderColor: theme.palette.background.paper,
+                      pointHoverBorderWidth: 2
+                    }
+                  ]
+                }}
+                options={{
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      grid: { color: theme.palette.divider, drawBorder: false },
+                      ticks: {
+                        font: { size: 10, family: 'Poppins' },
+                        color: theme.palette.text.disabled,
+                        padding: 8,
+                        callback: (val) =>
+                          val >= 1000000
+                            ? `${val / 1000000}jt`
+                            : val >= 1000
+                              ? `${val / 1000}rb`
+                              : val
+                      }
+                    },
+                    x: {
+                      grid: { display: false },
+                      ticks: {
+                        font: { size: 10, family: 'Poppins' },
+                        color: theme.palette.text.disabled,
+                        padding: 8
+                      }
+                    }
+                  },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      padding: 10,
+                      backgroundColor: theme.palette.background.paper,
+                      titleColor: theme.palette.text.primary,
+                      bodyColor: theme.palette.text.secondary,
+                      borderColor: theme.palette.divider,
+                      borderWidth: 1,
+                      callbacks: {
+                        label: (ctx) => ` ${ctx.dataset.label}: ${fmtRp(ctx.raw)}`
+                      }
+                    }
+                  }
+                }}
+              />
+            )}
+          </Box>
         </Box>
 
         <Box
           sx={{
             border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: theme.palette.background.paper,
-            p: 2
+            p: 2.5,
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.03)'
           }}
         >
-          <Typography sx={{ fontSize: 12, color: 'text.secondary', mb: 1.2, fontWeight: 700 }}>
+          <Typography
+            sx={{
+              fontSize: 13,
+              color: 'text.secondary',
+              mb: 2,
+              fontWeight: 700,
+              fontFamily: 'Poppins'
+            }}
+          >
             {t('report.top_products')}
           </Typography>
-          {loading ? (
-            <Skeleton variant="rounded" height={120} />
-          ) : topProducts.length === 0 ? (
-            <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>{t('report.no_data')}</Typography>
-          ) : (
-            topProducts.slice(0, 5).map((p, idx) => (
-              <Box key={`${p.nama_produk}_${idx}`} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.6 }}>
-                <Typography sx={{ fontSize: 11, color: 'text.secondary' }}>
-                  {idx + 1}. {p.nama_produk}
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.primary', fontWeight: 600 }}>
-                  {p.qty} • {fmtRp(p.total)}
+          <Box sx={{ flex: 1, position: 'relative', minHeight: 220 }}>
+            {loading ? (
+              <Skeleton variant="rounded" height="100%" />
+            ) : topProducts.length === 0 ? (
+              <Box
+                sx={{
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
+                <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
+                  {t('report.no_data')}
                 </Typography>
               </Box>
-            ))
-          )}
+            ) : (
+              <Bar
+                data={{
+                  labels: topProducts.slice(0, 5).map((p) => p.nama_produk),
+                  datasets: [
+                    {
+                      label: t('report.top_products_total'),
+                      data: topProducts.slice(0, 5).map((p) => p.total),
+                      backgroundColor: alpha(theme.palette.success.main, 0.7),
+                      hoverBackgroundColor: theme.palette.success.main,
+                      borderRadius: 6,
+                      barThickness: 16
+                    }
+                  ]
+                }}
+                options={{
+                  indexAxis: 'y',
+                  responsive: true,
+                  maintainAspectRatio: false,
+                  scales: {
+                    x: {
+                      beginAtZero: true,
+                      grid: { color: theme.palette.divider, drawBorder: false },
+                      ticks: {
+                        font: { size: 10, family: 'Poppins' },
+                        color: theme.palette.text.disabled,
+                        callback: (val) => (val >= 1000 ? `${val / 1000}rb` : val)
+                      }
+                    },
+                    y: {
+                      grid: { display: false },
+                      ticks: {
+                        font: { size: 10, family: 'Poppins', weight: 500 },
+                        color: theme.palette.text.primary,
+                        padding: 8,
+                        callback: function (val) {
+                          const label = this.getLabelForValue(val)
+                          return label.length > 12 ? label.substr(0, 12) + '...' : label
+                        }
+                      }
+                    }
+                  },
+                  plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                      padding: 10,
+                      backgroundColor: theme.palette.background.paper,
+                      titleColor: theme.palette.text.primary,
+                      bodyColor: theme.palette.text.secondary,
+                      borderColor: theme.palette.divider,
+                      borderWidth: 1,
+                      callbacks: {
+                        label: (ctx) => ` ${ctx.dataset.label}: ${fmtRp(ctx.raw)}`
+                      }
+                    }
+                  }
+                }}
+              />
+            )}
+          </Box>
         </Box>
       </Box>
 
+      <Typography
+        variant="h6"
+        sx={{
+          fontSize: 16,
+          fontWeight: 800,
+          mb: 1.5,
+          fontFamily: 'Poppins, sans-serif',
+          color: 'text.primary',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}
+      >
+        <TableChartRounded sx={{ fontSize: 20, color: 'primary.main' }} />
+        Rincian Transaksi
+      </Typography>
+
       <TableContainer
-        sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 2, overflow: 'hidden' }}
+        sx={{
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 2,
+          overflow: 'hidden',
+          boxShadow: isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.03)'
+        }}
       >
         <Table size="small">
           <TableHead>
             <TableRow>
-              {[t('transaction.col_no'), t('transaction.col_time'), t('transaction.col_items'), t('transaction.col_total'), t('transaction.col_method'), t('transaction.col_status')].map((h) => (
+              {[
+                t('transaction.col_no'),
+                t('transaction.col_time'),
+                t('transaction.col_items'),
+                t('transaction.col_total'),
+                t('transaction.col_method'),
+                t('transaction.col_status')
+              ].map((h) => (
                 <TableCell
                   key={h}
                   sx={{
-                    bgcolor: isDark ? '#0f1420' : theme.palette.custom.elevation1,
+                    bgcolor: isDark
+                      ? '#0f1420'
+                      : theme.palette.custom?.elevation1 || alpha(theme.palette.primary.main, 0.05),
                     color: 'text.disabled',
                     fontSize: 11,
                     fontWeight: 700,
                     fontFamily: 'Poppins, sans-serif',
                     textTransform: 'uppercase',
-                    letterSpacing: 0.5
+                    letterSpacing: 0.5,
+                    py: 1.5
                   }}
                 >
                   {h}
@@ -539,8 +858,12 @@ export const ListReportPage = () => {
               </TableRow>
             ) : (
               rows.map((r) => (
-                <TableRow key={r.id} hover>
-                  <TableCell sx={{ fontSize: 12 }}>{r.no_transaksi}</TableCell>
+                <TableRow
+                  key={r.id}
+                  hover
+                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                >
+                  <TableCell sx={{ fontSize: 12, fontWeight: 500 }}>{r.no_transaksi}</TableCell>
                   <TableCell sx={{ fontSize: 12 }}>{fmtDate(r.created_at)}</TableCell>
                   <TableCell sx={{ fontSize: 12 }}>{r.item_count || 0}</TableCell>
                   <TableCell sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main' }}>
@@ -553,20 +876,26 @@ export const ListReportPage = () => {
                     <Chip
                       size="small"
                       label={
-                        r.status === 'selesai' ? t('transaction.status_done') : t('transaction.status_void')
+                        r.status === 'selesai'
+                          ? t('transaction.status_done')
+                          : t('transaction.status_void')
                       }
                       sx={{
-                        fontSize: 11,
+                        fontSize: 10,
+                        fontWeight: 700,
+                        height: 20,
                         bgcolor:
                           r.status === 'selesai'
-                            ? alpha(theme.palette.success.main, 0.16)
-                            : alpha(theme.palette.error.main, 0.14),
+                            ? alpha(theme.palette.success.main, 0.12)
+                            : alpha(theme.palette.error.main, 0.1),
                         color:
-                          r.status === 'selesai' ? theme.palette.success.main : theme.palette.error.main,
+                          r.status === 'selesai'
+                            ? theme.palette.success.main
+                            : theme.palette.error.main,
                         border: `1px solid ${
                           r.status === 'selesai'
-                            ? alpha(theme.palette.success.main, 0.35)
-                            : alpha(theme.palette.error.main, 0.35)
+                            ? alpha(theme.palette.success.main, 0.25)
+                            : alpha(theme.palette.error.main, 0.25)
                         }`
                       }}
                     />
@@ -580,7 +909,7 @@ export const ListReportPage = () => {
 
       <Divider sx={{ my: 1.5 }} />
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary', fontWeight: 500 }}>
           {t('report.total_rows', { count: totalRows })}
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -589,12 +918,20 @@ export const ListReportPage = () => {
             variant="outlined"
             disabled={page <= 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
-            startIcon={<DownloadRounded sx={{ transform: 'rotate(180deg)' }} />}
-            sx={{ textTransform: 'none' }}
+            startIcon={<DownloadRounded sx={{ transform: 'rotate(180deg)', fontSize: 14 }} />}
+            sx={{ textTransform: 'none', borderRadius: 2, fontSize: 12, px: 2 }}
           >
             {t('report.prev')}
           </Button>
-          <Typography sx={{ fontSize: 12, minWidth: 90, textAlign: 'center', color: 'text.secondary' }}>
+          <Typography
+            sx={{
+              fontSize: 12,
+              minWidth: 90,
+              textAlign: 'center',
+              color: 'text.secondary',
+              fontWeight: 600
+            }}
+          >
             {t('transaction.page_label')} {page + 1} / {totalPages}
           </Typography>
           <Button
@@ -602,8 +939,8 @@ export const ListReportPage = () => {
             variant="outlined"
             disabled={page + 1 >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            endIcon={<DownloadRounded />}
-            sx={{ textTransform: 'none' }}
+            endIcon={<DownloadRounded sx={{ fontSize: 14 }} />}
+            sx={{ textTransform: 'none', borderRadius: 2, fontSize: 12, px: 2 }}
           >
             {t('report.next')}
           </Button>

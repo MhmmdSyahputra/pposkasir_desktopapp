@@ -5,6 +5,7 @@ import { createWindow } from './window.js'
 import { registerAppIpc } from './ipc/app.ipc.js'
 import { registerDeviceIpc } from './ipc/device.ipc.js'
 import { registerWindowIpc } from './ipc/window.ipc.js'
+import { registerPrinterIpc } from './ipc/printer.ipc.js'
 import {
   startNetworkMonitoring,
   stopNetworkMonitoring,
@@ -28,6 +29,7 @@ registerDeviceIpc()
 registerWindowIpc()
 registerNetworkIpc()
 registerDataIpc()
+registerPrinterIpc()
 
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electron')

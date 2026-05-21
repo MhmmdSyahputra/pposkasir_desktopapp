@@ -22,38 +22,45 @@
 ## 🌟 Fitur Unggulan
 
 ### ✅ **Offline Mode 100%**
+
 Bekerja tanpa koneksi internet! Semua data disimpan lokal dengan database SQLite terintegrasi. Sinkronisasi otomatis saat kembali online.
 
 ### 📱 Antarmuka Modern & Responsif
+
 - UI yang intuitif dengan Material Design
 - Mendukung output ke printer thermal
 - Bilingual (Indonesia & English)
 - Real-time notifications
 
 ### 💳 Manajemen Transaksi Lengkap
+
 - Sistem checkout yang cepat dan akurat
 - Saran nominal pembayaran otomatis
 - Riwayat transaksi komprehensif
 - Cetak & export laporan
 
 ### 📦 Fitur Produk & Inventory
+
 - Manajemen produk dengan kategori
 - Modifier/customization produk
 - Harga dasar dan harga jual
 - Edit & hapus produk
 
 ### 🧾 Customizable Receipt
+
 - Header & footer dapat diatur
 - Visibility toggle untuk setiap field
 - Preview real-time
 - Format thermal printer standard
 
 ### 🔍 Integrasi Perangkat
+
 - Barcode scanner support
 - Network printer discovery
 - Device pairing otomatis
 
 ### 📊 Laporan & Analytics
+
 - Riwayat transaksi detail
 - Export ke Excel
 - Filtered viewing
@@ -64,17 +71,20 @@ Bekerja tanpa koneksi internet! Semua data disimpan lokal dengan database SQLite
 ## 📥 Download
 
 ### 🎯 Recommended: Microsoft Store
+
 > 📌 **Cara termudah!** Instalasi sekali klik, update otomatis, dan fitur terbaru selalu tersedia.
 
 [![Download from Microsoft Store](https://img.shields.io/badge/Download%20Now-Microsoft%20Store-0078D4?style=flat-square&logo=microsoft-store&logoColor=white&longCache=true&labelWidth=200)](https://apps.microsoft.com/detail/9mw3s77v0pbq?hl=id-ID&gl=ID)
 
 **Keuntungan:**
+
 - ✅ Instalasi otomatis ke folder yang tepat
 - ✅ Update otomatis tanpa perlu download manual
 - ✅ Integrasi dengan Windows yang sempurna
 - ✅ Kemudahan uninstall dari Control Panel
 
 ### Instalasi Manual
+
 1. Download installer dari [Release Page](../../releases)
 2. Jalankan installer (PPOS-Kasir-1.0.1.exe)
 3. Ikuti wizard instalasi
@@ -85,6 +95,7 @@ Bekerja tanpa koneksi internet! Semua data disimpan lokal dengan database SQLite
 ## 🚀 Persiapan Awal
 
 ### Requirement Sistem
+
 - **OS**: Windows 10 atau lebih baru
 - **RAM**: Minimal 2GB
 - **Storage**: 500MB untuk instalasi
@@ -94,6 +105,7 @@ Bekerja tanpa koneksi internet! Semua data disimpan lokal dengan database SQLite
 ### Setup Development
 
 #### Prerequisites
+
 - Node.js v16+ ([Download](https://nodejs.org/))
 - npm atau yarn
 - Git
@@ -120,31 +132,37 @@ npm run build:win
 ## 📖 Fitur Utama
 
 ### 1. **Dashboard POS**
+
 Antarmuka kerja utama dengan:
+
 - Grid produk dengan pencarian real-time
 - Keranjang belanja dinamis
 - Hitung total otomatis
 - Checkout cepat
 
 ### 2. **Manajemen Stok**
+
 - CRUD operasi produk
 - Kategori produk
 - Modifier/customization
 - Tracking harga dasar vs jual
 
 ### 3. **Struk & Receipt**
+
 - Customizable receipt template
 - Print ke thermal printer
 - Export PDF
 - Preview before print
 
 ### 4. **Riwayat Transaksi**
+
 - Detail lengkap setiap transaksi
 - Filter by date range
 - View item breakdown
 - Edit mode untuk koreksi
 
 ### 5. **Pengaturan**
+
 - Settings umum
 - Customization receipt
 - Preferences bahasa
@@ -212,38 +230,41 @@ npm start           # Run production build
 
 ### Teknologi Stack
 
-| Kategori | Tech |
-|----------|------|
-| **Framework** | Electron, React 18 |
-| **UI Library** | Material-UI (MUI v7) |
-| **State Management** | React Hooks, Context API |
-| **Routing** | React Router v7 |
-| **Database** | SQLite dengan better-sqlite3 |
-| **Internationalization** | react-i18next |
-| **Build Tool** | Electron Vite |
-| **Styling** | Styled Components, Emotion |
-| **PDF Generation** | jsPDF, jsPDF-AutoTable |
-| **Excel Export** | XLSX |
-| **Code Quality** | ESLint, Prettier |
+| Kategori                 | Tech                         |
+| ------------------------ | ---------------------------- |
+| **Framework**            | Electron, React 18           |
+| **UI Library**           | Material-UI (MUI v7)         |
+| **State Management**     | React Hooks, Context API     |
+| **Routing**              | React Router v7              |
+| **Database**             | SQLite dengan better-sqlite3 |
+| **Internationalization** | react-i18next                |
+| **Build Tool**           | Electron Vite                |
+| **Styling**              | Styled Components, Emotion   |
+| **PDF Generation**       | jsPDF, jsPDF-AutoTable       |
+| **Excel Export**         | XLSX                         |
+| **Code Quality**         | ESLint, Prettier             |
 
 ---
 
 ## 🔐 Data & Offline
 
 ### Local Storage
+
 - **Database**: SQLite (built-in)
 - **User Settings**: Electron Store
 - **Receipt Settings**: localStorage
 - **Cache**: In-memory persistence
 
 ### Fitur Offline
+
 ✅ Semua operasi berfungsi penuh tanpa internet  
 ✅ Data tersimpan aman di database lokal  
 ✅ Transaction history tersedia offline  
 ✅ Receipt printing berfungsi normal  
-✅ Scanner & printer tetap kompatibel  
+✅ Scanner & printer tetap kompatibel
 
 ### Data Security
+
 - Data tersimpan lokal, tidak dikirim ke server
 - Backup otomatis per transaksi
 - No cloud dependency
@@ -253,40 +274,47 @@ npm start           # Run production build
 ## 📱 User Interface
 
 ### Dark Theme Support
+
 Aplikasi mendukung light & dark mode untuk kenyamanan penggunaan seharian.
 
 ### Responsive Design
+
 - Desktop-first layout
 - Adaptive untuk berbagai ukuran layar
 - Touch-friendly buttons
 
 ### Keyboard Shortcuts
-| Shortcut | Action |
-|----------|--------|
-| `Escape` | Close dialog |
-| `Enter` | Confirm/Submit |
-| `F5` | Refresh |
+
+| Shortcut | Action         |
+| -------- | -------------- |
+| `Escape` | Close dialog   |
+| `Enter`  | Confirm/Submit |
+| `F5`     | Refresh        |
 
 ---
 
 ## 🐛 Troubleshooting
 
 ### Printer tidak terdeteksi
+
 1. Pastikan printer terpasang dan online
 2. Jalankan discovery dari menu Settings
 3. Lakukan pairing device
 
 ### Barcode Scanner tidak berfungsi
+
 1. Periksa driver USB
 2. Restart aplikasi
 3. Scan test barcode
 
 ### Database Error
+
 1. Close aplikasi
 2. Hapus file database (app akan recreate)
 3. Update ke versi terbaru
 
 ### Performance Issue
+
 - Clear browser cache (Shift+Ctrl+Del)
 - Restart aplikasi
 - Reduce produk yang ditampilkan
@@ -314,6 +342,7 @@ Kontribusi selalu diterima dengan baik! Silakan:
 ## 📞 Support & Feedback
 
 Punya pertanyaan atau feedback?
+
 - 📧 Email: support@example.com
 - 🐛 Report bugs: [GitHub Issues](../../issues)
 - 💬 Discussions: [GitHub Discussions](../../discussions)

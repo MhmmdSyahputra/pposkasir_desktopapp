@@ -2,6 +2,27 @@ import { getDb } from '../database.js'
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+function _normalizeCartItem(item) {
+  const productId = item.product_id ?? item.id ?? null
+  const productName = item.nama_produk ?? item.name ?? ''
+  const unitPrice = Number(item.harga_satuan ?? item.price ?? 0) || 0
+  const basePrice =
+    Number(item.harga_dasar ?? item.basePrice ?? item.harga_satuan ?? item.price ?? 0) || 0
+  const quantity = Number(item.qty ?? 1) || 1
+  const lineSubtotal = Number(item.subtotal ?? unitPrice * quantity) || 0
+
+  return {
+    productId,
+    productName,
+    unitPrice,
+    basePrice,
+    quantity,
+    lineSubtotal,
+    note: item.catatan ?? item.note ?? '',
+    modifierSummary: item.modifier_summary ?? item.summaryLabel ?? ''
+  }
+}
+
 function _generateNoTrx(db) {
   const today = new Date()
   const ymd =
@@ -56,20 +77,50 @@ export function transactionCreate({
   kembalian = 0,
   metode_bayar = 'tunai',
   catatan = '',
-  kasir = ''
+  kasir = '',
+  nama_pelanggan = ''
 }) {
   const db = getDb()
-  const no_transaksi = _generateNoTrx(db)
+  const normalizedItems = items.map(_normalizeCartItem)
+  const insertTransactionStmt = db.prepare(
+    `INSERT INTO transactions
+       (no_transaksi, subtotal, diskon, pajak, total, bayar, kembalian, metode_bayar, catatan, kasir, status, nama_pelanggan)
+     VALUES
+       (@no_transaksi, @subtotal, @diskon, @pajak, @total, @bayar, @kembalian, @metode_bayar, @catatan, @kasir, 'selesai', @nama_pelanggan)`
+  )
 
-  const result = db
-    .prepare(
-      `INSERT INTO transactions
-         (no_transaksi, subtotal, diskon, pajak, total, bayar, kembalian, metode_bayar, catatan, kasir, status)
-       VALUES
-         (@no_transaksi, @subtotal, @diskon, @pajak, @total, @bayar, @kembalian, @metode_bayar, @catatan, @kasir, 'selesai')`
-    )
-    .run({
-      no_transaksi,
+  const itemStmt = db.prepare(
+    `INSERT INTO transaction_items
+       (transaction_id, product_id, nama_produk, harga_satuan, harga_dasar, qty, subtotal, catatan, modifier_summary)
+     VALUES
+       (@transaction_id, @product_id, @nama_produk, @harga_satuan, @harga_dasar, @qty, @subtotal, @catatan, @modifier_summary)`
+  )
+  const productStockStmt = db.prepare(`SELECT id, nama, stok FROM products WHERE id = ?`)
+  const decrementStockStmt = db.prepare(
+    `UPDATE products
+     SET stok = stok - @quantity,
+         updated_at = datetime('now', 'localtime')
+     WHERE id = @productId`
+  )
+
+  const txId = db.transaction(() => {
+    for (const item of normalizedItems) {
+      if (!item.productId) continue
+
+      const product = productStockStmt.get(item.productId)
+      if (!product) {
+        throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`)
+      }
+
+      if (Number(product.stok) < item.quantity) {
+        throw new Error(
+          `Stok ${product.nama} tidak cukup. Tersedia ${product.stok}, diminta ${item.quantity}`
+        )
+      }
+    }
+
+    const result = insertTransactionStmt.run({
+      no_transaksi: _generateNoTrx(db),
       subtotal,
       diskon,
       pajak,
@@ -78,42 +129,35 @@ export function transactionCreate({
       kembalian,
       metode_bayar,
       catatan,
-      kasir
+      kasir,
+      nama_pelanggan
     })
 
-  const txId = result.lastInsertRowid
+    const newTxId = result.lastInsertRowid
 
-  const itemStmt = db.prepare(
-    `INSERT INTO transaction_items
-       (transaction_id, product_id, nama_produk, harga_satuan, harga_dasar, qty, subtotal, catatan, modifier_summary)
-     VALUES
-       (@transaction_id, @product_id, @nama_produk, @harga_satuan, @harga_dasar, @qty, @subtotal, @catatan, @modifier_summary)`
-  )
-
-  const insertAll = db.transaction((cartItems) => {
-    for (const item of cartItems) {
-      const productId = item.product_id ?? item.id ?? null
-      const productName = item.nama_produk ?? item.name ?? ''
-      const unitPrice = Number(item.harga_satuan ?? item.price ?? 0) || 0
-      const basePrice =
-        Number(item.harga_dasar ?? item.basePrice ?? item.harga_satuan ?? item.price ?? 0) || 0
-      const quantity = Number(item.qty ?? 1) || 1
-      const lineSubtotal = Number(item.subtotal ?? unitPrice * quantity) || 0
-
+    for (const item of normalizedItems) {
       itemStmt.run({
-        transaction_id: txId,
-        product_id: productId,
-        nama_produk: productName,
-        harga_satuan: unitPrice,
-        harga_dasar: basePrice,
-        qty: quantity,
-        subtotal: lineSubtotal,
-        catatan: item.catatan ?? item.note ?? '',
-        modifier_summary: item.modifier_summary ?? item.summaryLabel ?? ''
+        transaction_id: newTxId,
+        product_id: item.productId,
+        nama_produk: item.productName,
+        harga_satuan: item.unitPrice,
+        harga_dasar: item.basePrice,
+        qty: item.quantity,
+        subtotal: item.lineSubtotal,
+        catatan: item.note,
+        modifier_summary: item.modifierSummary
+      })
+
+      if (!item.productId) continue
+
+      decrementStockStmt.run({
+        productId: item.productId,
+        quantity: item.quantity
       })
     }
-  })
-  insertAll(items)
+
+    return newTxId
+  })()
 
   return transactionGetById(txId)
 }
@@ -180,20 +224,48 @@ export function transactionGetAll({
 export function transactionGetStats({ tanggal = '' } = {}) {
   const db = getDb()
   const where = tanggal
-    ? `WHERE date(created_at) = @tanggal AND status = 'selesai'`
-    : `WHERE status = 'selesai'`
+    ? `WHERE date(t.created_at) = @tanggal AND t.status = 'selesai'`
+    : `WHERE t.status = 'selesai'`
   const params = tanggal ? { tanggal } : {}
 
-  const stats = db
+  const summary = db
     .prepare(
       `SELECT
          COUNT(*)          AS jumlah,
-         COALESCE(SUM(total), 0) AS omzet,
-         COALESCE(SUM(diskon), 0) AS total_diskon
-       FROM transactions ${where}`
+         COALESCE(SUM(t.total), 0) AS omzet,
+         COALESCE(SUM(t.diskon), 0) AS total_diskon
+       FROM transactions t ${where}`
     )
     .get(params)
-  return stats
+
+  const byMethod = db
+    .prepare(
+      `SELECT
+         t.metode_bayar,
+         COUNT(*) AS jumlah,
+         COALESCE(SUM(t.total), 0) AS total
+       FROM transactions t ${where}
+       GROUP BY t.metode_bayar
+       ORDER BY total DESC`
+    )
+    .all(params)
+
+  const topProducts = db
+    .prepare(
+      `SELECT
+         ti.nama_produk,
+         COALESCE(SUM(ti.qty), 0) AS qty,
+         COALESCE(SUM(ti.subtotal), 0) AS total
+       FROM transaction_items ti
+       JOIN transactions t ON t.id = ti.transaction_id
+       ${where}
+       GROUP BY ti.nama_produk
+       ORDER BY qty DESC
+       LIMIT 5`
+    )
+    .all(params)
+
+  return { ...summary, byMethod, topProducts }
 }
 
 /**
@@ -326,6 +398,28 @@ export function transactionGetReport({
 
 export function transactionVoid(id) {
   const db = getDb()
-  db.prepare(`UPDATE transactions SET status = 'batal' WHERE id = ?`).run(id)
+  db.transaction((transactionId) => {
+    const trx = db.prepare(`SELECT id, status FROM transactions WHERE id = ?`).get(transactionId)
+    if (!trx) throw new Error('Transaksi tidak ditemukan')
+    if (trx.status === 'batal') return
+
+    const restoreStockStmt = db.prepare(
+      `UPDATE products
+       SET stok = stok + @quantity,
+           updated_at = datetime('now', 'localtime')
+       WHERE id = @productId`
+    )
+
+    for (const item of _getItems(db, transactionId)) {
+      if (!item.product_id) continue
+      restoreStockStmt.run({
+        productId: item.product_id,
+        quantity: Number(item.qty) || 0
+      })
+    }
+
+    db.prepare(`UPDATE transactions SET status = 'batal' WHERE id = ?`).run(transactionId)
+  })(id)
+
   return transactionGetById(id)
 }

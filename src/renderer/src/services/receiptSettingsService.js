@@ -7,6 +7,9 @@ export const defaultReceiptSettings = {
   footerLine1: 'Barang yang sudah dibeli tidak dapat ditukar',
   footerLine2: 'Simpan struk ini sebagai bukti pembayaran',
   footerLine3: 'Instagram: @pposkasir',
+  printerType: 'thermal', // 'system' or 'thermal'
+  printerIp: '',
+  printerPort: '9100',
   visibility: {
     headerLine1: true,
     headerLine2: true,

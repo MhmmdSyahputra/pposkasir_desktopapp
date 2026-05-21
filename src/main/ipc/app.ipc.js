@@ -3,6 +3,7 @@ import { is } from '@electron-toolkit/utils'
 import { join } from 'path'
 import { readFileSync } from 'fs'
 import { app } from 'electron'
+import { logActionToServer } from '../services/logger.service.js'
 
 export function registerAppIpc() {
   const playMainNotificationCue = () => {
@@ -83,5 +84,9 @@ export function registerAppIpc() {
       console.error('Failed to show desktop notification:', error)
       return { status: false, message: error.message || 'Failed to show notification' }
     }
+  })
+
+  ipcMain.on('app:log-action', (_e, { type, payload, description }) => {
+    logActionToServer(type, payload, description)
   })
 }

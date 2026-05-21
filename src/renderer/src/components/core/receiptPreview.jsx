@@ -10,6 +10,11 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
     { key: 'date', label: order.labels.date, value: order.date },
     { key: 'cashier', label: order.labels.cashier, value: order.cashier }
   ]
+
+  if (order.customerName) {
+    infoRows.push({ key: 'customerName', label: 'Pelanggan', value: order.customerName })
+  }
+
   const totalRows = [
     { key: 'subtotal', label: order.labels.subtotal, value: order.subtotal },
     { key: 'discount', label: order.labels.discount, value: order.discount },
@@ -23,9 +28,19 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
       sx={{
         borderRadius: 2,
         border: `1px dashed ${theme.palette.divider}`,
-        bgcolor: theme.palette.mode === 'dark' ? '#121212' : '#fcfcfc',
+        bgcolor: '#fff',
+        color: '#000',
         p: compact ? 1.75 : 2,
-        fontFamily: 'monospace'
+        fontFamily: 'monospace',
+        '& .MuiTypography-root': {
+          color: '#000 !important'
+        },
+        '& .MuiDivider-root': {
+          borderColor: 'rgba(0,0,0,0.15) !important'
+        },
+        '& .MuiSvgIcon-root': {
+          color: 'rgba(0,0,0,0.4) !important'
+        }
       }}
     >
       <Box sx={{ textAlign: 'center', pb: 1.5 }}>
@@ -43,7 +58,7 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
       <Divider sx={{ my: 1.5 }} />
 
       {infoRows
-        .filter((row) => visibility[row.key] && row.value)
+        .filter((row) => (row.key === 'customerName' ? true : visibility[row.key]) && row.value)
         .map((row) => (
           <Box
             key={row.key}
@@ -123,16 +138,22 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
           )
         })}
 
-      <Box sx={{ textAlign: 'center', mt: 1.5 }}>
+      <Box sx={{ textAlign: 'center', mt: 1.5, whiteSpace: 'pre-wrap' }}>
         <ReceiptLongOutlined sx={{ color: 'text.disabled', fontSize: 18, mb: 0.5 }} />
         {visibility.footerLine1 && settings.footerLine1 ? (
-          <Typography sx={{ fontSize: 12 }}>{settings.footerLine1}</Typography>
+          <Typography sx={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
+            {settings.footerLine1}
+          </Typography>
         ) : null}
         {visibility.footerLine2 && settings.footerLine2 ? (
-          <Typography sx={{ fontSize: 12 }}>{settings.footerLine2}</Typography>
+          <Typography sx={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
+            {settings.footerLine2}
+          </Typography>
         ) : null}
         {visibility.footerLine3 && settings.footerLine3 ? (
-          <Typography sx={{ fontSize: 12 }}>{settings.footerLine3}</Typography>
+          <Typography sx={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
+            {settings.footerLine3}
+          </Typography>
         ) : null}
       </Box>
     </Box>

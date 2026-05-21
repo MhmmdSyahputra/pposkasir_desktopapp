@@ -418,6 +418,23 @@
     "field_discount": "Diskon",
     "field_total": "Total",
     "field_cash": "Bayar",
-    "field_change": "Kembalian"
+    "field_change": "Kembalian",
+    "printer_settings_title": "Pengaturan Printer",
+    "printer_settings_subtitle": "Pilih metode cetak struk dan hubungkan printer default Windows Anda",
+    "printer_type": "Metode Cetak",
+    "printer_type_system": "System Print (Browser)",
+    "printer_type_thermal": "Printer Thermal Default Windows (Silent Print)",
+    "printer_ip": "IP Address Printer",
+    "printer_port": "Port Printer",
+    "test_connection": "Uji Koneksi",
+    "testing_connection": "Menguji...",
+    "connection_success": "Koneksi printer berhasil!",
+    "connection_failed": "Koneksi printer gagal: {{error}}",
+    "print_test_receipt": "Cetak Struk Uji Coba",
+    "printing_test": "Mencetak...",
+    "test_receipt_success": "Struk uji coba berhasil dikirim ke printer!",
+    "test_receipt_failed": "Gagal mencetak struk uji coba: {{error}}",
+    "print_receipt_success": "Struk berhasil dicetak!",
+    "print_receipt_failed": "Gagal mencetak struk: {{error}}"
   }
 }

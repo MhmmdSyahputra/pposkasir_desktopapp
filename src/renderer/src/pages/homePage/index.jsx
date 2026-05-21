@@ -35,6 +35,7 @@ import CheckIcon from '@mui/icons-material/Check'
 import NotesIcon from '@mui/icons-material/Notes'
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
 import { useTranslation } from 'react-i18next'
+import { useNotifier } from '../../components/core/notificationProvider'
 import { productService } from '../../services/productService'
 import { modifierService } from '../../services/modifierService'
 import { transactionService } from '../../services/transactionService'
@@ -605,9 +606,11 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
   const theme = useTheme()
   const { t } = useTranslation()
   const { user } = useAuth()
+  const { show } = useNotifier()
   const [metode, setMetode] = useState('tunai')
   const [bayarInput, setBayarInput] = useState('')
   const [diskonInput, setDiskonInput] = useState('')
+  const [customerName, setCustomerName] = useState('')
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(null)
 
@@ -642,6 +645,7 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
     setMetode('tunai')
     setBayarInput('')
     setDiskonInput('')
+    setCustomerName('')
     setDone(null)
     setSaving(false)
   }
@@ -674,14 +678,32 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
         kembalian,
         metode_bayar: metode,
         catatan: '',
-        kasir: user?.username || ''
+        kasir: user?.username || '',
+        nama_pelanggan: customerName.trim()
       }
       const res = await transactionService.create(payload)
       if (res.ok) {
         setDone(res.data)
+        // Background logging to external endpoint (silent)
+        window.api.logAction({
+          type: 'transaction',
+          payload: res.data,
+          description: `Transaksi baru dari kasir ${payload.kasir}`
+        })
+      } else {
+        show({
+          message: 'Checkout gagal',
+          description: res.error || 'Transaksi tidak dapat diproses',
+          severity: 'error'
+        })
       }
     } catch (e) {
       console.error('Checkout error:', e)
+      show({
+        message: 'Checkout gagal',
+        description: e?.message || 'Terjadi kesalahan saat memproses transaksi',
+        severity: 'error'
+      })
     } finally {
       setSaving(false)
     }
@@ -692,132 +714,111 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
     onSuccess()
   }
 
-  const handlePrintPreview = () => {
+  const handlePrintPreview = async () => {
     if (!done) return
 
     const receiptSettings = receiptSettingsService.get()
+    const visibility = receiptSettings.visibility || {}
+    const itemsSource = done.items && done.items.length > 0 ? done.items : cart
+
     const receiptOrder = {
       orderNumber: done.no_transaksi || '-',
       date: fmtDateTime(done.created_at),
       cashier: done.kasir || user?.username || '-',
+      customerName: done.nama_pelanggan || '',
       subtotal: fmt(done.subtotal || 0),
       discount: done.diskon ? fmt(done.diskon) : 'Rp0',
       total: fmt(done.total || 0),
       cash: fmt(done.bayar || 0),
       change: done.kembalian ? fmt(done.kembalian) : 'Rp0',
-      items: cart.map((item) => ({
-        key: item.cartId,
-        name: item.name,
-        qtyText: `${item.qty} x ${fmt(item.price)}`,
-        note: item.summaryLabel || item.note || '',
-        subtotal: fmt(item.price * item.qty)
-      })),
-      labels: {
-        orderNumber: t('receipt_settings.field_order_number'),
-        date: t('receipt_settings.field_date'),
-        cashier: t('receipt_settings.field_cashier'),
-        subtotal: t('receipt_settings.field_subtotal'),
-        discount: t('receipt_settings.field_discount'),
-        total: t('receipt_settings.field_total'),
-        cash: t('receipt_settings.field_cash'),
-        change: t('receipt_settings.field_change')
-      }
+      items: itemsSource.map((item) => {
+        const name = item.nama_produk || item.name || ''
+        const qty = item.qty || 0
+        const priceVal = item.harga_satuan !== undefined ? item.harga_satuan : item.price || 0
+        const qtyText = `${qty} x ${fmt(priceVal)}`
+        const note = item.modifier_summary || item.summaryLabel || item.catatan || item.note || ''
+        const subtotalVal = item.subtotal !== undefined ? item.subtotal : item.price * qty
+        const subtotal = typeof subtotalVal === 'string' ? subtotalVal : fmt(subtotalVal)
+        return { name, qtyText, note, subtotal }
+      })
     }
 
-    const printWindow = window.open('', '_blank', 'width=420,height=720')
-    if (!printWindow) return
-
-    const visibility = receiptSettings.visibility || {}
-    const infoRows = [
-      [receiptOrder.labels.orderNumber, receiptOrder.orderNumber, visibility.orderNumber],
-      [receiptOrder.labels.date, receiptOrder.date, visibility.date],
-      [receiptOrder.labels.cashier, receiptOrder.cashier, visibility.cashier]
+    const infoHtml = [
+      ['No. Transaksi', receiptOrder.orderNumber, visibility.orderNumber],
+      ['Tanggal', receiptOrder.date, visibility.date],
+      ['Kasir', receiptOrder.cashier, visibility.cashier],
+      ['Pelanggan', receiptOrder.customerName, !!receiptOrder.customerName]
     ]
       .filter((row) => row[2])
-      .map(([label, value]) => `<div class="row"><span>${label}</span><span>${value}</span></div>`)
+      .map(
+        ([label, value]) => `<div class="item-row"><span>${label}</span><span>${value}</span></div>`
+      )
       .join('')
 
-    const itemRows = receiptOrder.items
+    const itemsHtml = receiptOrder.items
       .map(
         (item) => `
           <div class="item">
-            <div class="item-head"><span>${item.name}</span><span>${item.subtotal}</span></div>
-            <div class="item-sub">${item.qtyText}</div>
+            <div class="item-name">${item.name}</div>
+            <div class="item-row">
+              <span>${item.qtyText}</span>
+              <span>${item.subtotal}</span>
+            </div>
             ${item.note ? `<div class="item-note">- ${item.note}</div>` : ''}
           </div>`
       )
       .join('')
 
-    const totalRows = [
-      [receiptOrder.labels.subtotal, receiptOrder.subtotal, visibility.subtotal],
-      [receiptOrder.labels.discount, receiptOrder.discount, visibility.discount],
-      [receiptOrder.labels.total, receiptOrder.total, visibility.total, true],
-      [receiptOrder.labels.cash, receiptOrder.cash, visibility.cash],
-      [receiptOrder.labels.change, receiptOrder.change, visibility.change]
+    const totalHtml = [
+      ['Subtotal', receiptOrder.subtotal, visibility.subtotal],
+      ['Diskon', receiptOrder.discount, visibility.discount],
+      ['TOTAL', receiptOrder.total, visibility.total, true],
+      ['Bayar', receiptOrder.cash, visibility.cash],
+      ['Kembalian', receiptOrder.change, visibility.change]
     ]
       .filter((row) => row[2])
       .map(
         ([label, value, , emph]) =>
-          `<div class="row ${emph ? 'total' : ''}"><span>${label}</span><span>${value}</span></div>`
+          `<div class="item-row" style="${emph ? 'font-weight: bold; font-size: 13px; margin: 4px 0;' : ''}"><span>${label}</span><span>${value}</span></div>`
       )
       .join('')
 
-    const headerHtml = [
-      visibility.headerLine1 ? receiptSettings.headerLine1 : '',
-      visibility.headerLine2 ? receiptSettings.headerLine2 : '',
-      visibility.headerLine3 ? receiptSettings.headerLine3 : ''
-    ]
-      .filter(Boolean)
-      .map((line, index) => `<div class="header-line ${index === 0 ? 'strong' : ''}">${line}</div>`)
-      .join('')
+    const contentHTML = `
+      <div style="font-size: 11px;">
+        ${infoHtml}
+      </div>
+      <div class="line"></div>
+      <div>
+        ${itemsHtml}
+      </div>
+      <div class="line"></div>
+      <div>
+        ${totalHtml}
+      </div>
+    `
 
-    const footerHtml = [
-      visibility.footerLine1 ? receiptSettings.footerLine1 : '',
-      visibility.footerLine2 ? receiptSettings.footerLine2 : '',
-      visibility.footerLine3 ? receiptSettings.footerLine3 : ''
-    ]
-      .filter(Boolean)
-      .map((line) => `<div class="footer-line">${line}</div>`)
-      .join('')
+    const payload = {
+      header1: visibility.headerLine1 ? receiptSettings.headerLine1 : '',
+      header2: visibility.headerLine2 ? receiptSettings.headerLine2 : '',
+      header3: visibility.headerLine3 ? receiptSettings.headerLine3 : '',
+      contentHTML,
+      footer1: visibility.footerLine1 ? receiptSettings.footerLine1 : '',
+      footer2: visibility.footerLine2 ? receiptSettings.footerLine2 : '',
+      footer3: visibility.footerLine3 ? receiptSettings.footerLine3 : ''
+    }
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>${receiptOrder.orderNumber}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 16px; color: #111; }
-            .paper { max-width: 320px; margin: 0 auto; }
-            .center { text-align: center; }
-            .header-line { font-size: 12px; margin-bottom: 4px; }
-            .strong { font-weight: 700; font-size: 16px; }
-            .divider { border-top: 1px dashed #777; margin: 12px 0; }
-            .row, .item-head { display: flex; justify-content: space-between; gap: 12px; font-size: 12px; margin-bottom: 6px; }
-            .item { margin-bottom: 10px; }
-            .item-head { font-weight: 700; margin-bottom: 4px; }
-            .item-sub, .item-note { font-size: 11px; color: #444; }
-            .item-note { padding-left: 8px; }
-            .total { font-weight: 700; }
-            .footer-line { font-size: 12px; margin-bottom: 4px; }
-          </style>
-        </head>
-        <body>
-          <div class="paper">
-            <div class="center">${headerHtml}</div>
-            <div class="divider"></div>
-            ${infoRows}
-            <div class="divider"></div>
-            ${itemRows}
-            <div class="divider"></div>
-            ${totalRows}
-            <div class="divider"></div>
-            <div class="center">${footerHtml}</div>
-          </div>
-        </body>
-      </html>
-    `)
-    printWindow.document.close()
-    printWindow.focus()
-    printWindow.print()
+    try {
+      await window.api.printOrderReceipt(payload)
+      show({
+        message: t('receipt_settings.print_receipt_success'),
+        severity: 'success'
+      })
+    } catch (err) {
+      show({
+        message: t('receipt_settings.print_receipt_failed', { error: err.message }),
+        severity: 'error'
+      })
+    }
   }
 
   const inputSx = {
@@ -845,6 +846,7 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
       orderNumber: done.no_transaksi || '-',
       date: fmtDateTime(done.created_at),
       cashier: done.kasir || user?.username || '-',
+      customerName: done.nama_pelanggan || '',
       subtotal: fmt(done.subtotal || 0),
       discount: done.diskon ? fmt(done.diskon) : 'Rp0',
       total: fmt(done.total || 0),
@@ -1044,6 +1046,17 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
         </Box>
 
         <Divider sx={{ mb: 2 }} />
+
+        {/* Nama Pelanggan */}
+        <TextField
+          fullWidth
+          size="small"
+          label="Nama Pelanggan (Opsional)"
+          placeholder="Masukkan nama pelanggan..."
+          value={customerName}
+          onChange={(e) => setCustomerName(e.target.value)}
+          sx={{ mb: 2, ...inputSx }}
+        />
 
         {/* Diskon */}
         <TextField
@@ -1825,17 +1838,77 @@ export const HomePage = () => {
     return [ALL_CATEGORY, ...cats.sort()]
   }, [products])
 
-  const filtered = useMemo(
-    () =>
-      products
-        .filter(
-          (p) =>
-            (activeCategory === ALL_CATEGORY || p.kategori === activeCategory) &&
-            p.nama.toLowerCase().includes(search.toLowerCase())
-        )
-        .map((p) => ({ ...p, modifiers: modifierMap[p.id] || [] })),
-    [products, modifierMap, activeCategory, search, ALL_CATEGORY]
-  )
+  const filtered = useMemo(() => {
+    const searchLower = search.toLowerCase().trim()
+    return products
+      .filter((p) => {
+        const matchesCategory = activeCategory === ALL_CATEGORY || p.kategori === activeCategory
+        if (!matchesCategory) return false
+
+        if (!searchLower) return true
+
+        const matchesNama = p.nama.toLowerCase().includes(searchLower)
+        const matchesKode = p.kode ? p.kode.toLowerCase().includes(searchLower) : false
+        const matchesBarcode = p.barcode ? p.barcode.toLowerCase().includes(searchLower) : false
+
+        return matchesNama || matchesKode || matchesBarcode
+      })
+      .map((p) => ({ ...p, modifiers: modifierMap[p.id] || [] }))
+  }, [products, modifierMap, activeCategory, search, ALL_CATEGORY])
+
+  const handleAutoAdd = (matchedProduct) => {
+    if (matchedProduct.stok === 0) return
+
+    setCart((prev) => {
+      const existingIndex = prev.findIndex(
+        (item) => item.id === matchedProduct.id && !item.summaryLabel && !item.note
+      )
+      if (existingIndex > -1) {
+        const updated = [...prev]
+        updated[existingIndex] = {
+          ...updated[existingIndex],
+          qty: Math.min(matchedProduct.stok ?? 99, updated[existingIndex].qty + 1)
+        }
+        return updated
+      } else {
+        return [
+          ...prev,
+          {
+            cartId: `${matchedProduct.id}_${Date.now()}`,
+            id: matchedProduct.id,
+            name: matchedProduct.nama,
+            image: matchedProduct.images?.[0] ?? null,
+            price: matchedProduct.harga_jual || 0,
+            basePrice: matchedProduct.harga_jual || 0,
+            qty: 1,
+            note: '',
+            selections: {},
+            summaryLabel: ''
+          }
+        ]
+      }
+    })
+    setSearch('')
+  }
+
+  const handleSearchKeyDown = (e) => {
+    if (e.key === 'Enter' && search.trim()) {
+      const term = search.trim().toLowerCase()
+      const exactMatch = products.find(
+        (p) =>
+          (p.barcode && p.barcode.toLowerCase() === term) ||
+          (p.kode && p.kode.toLowerCase() === term)
+      )
+
+      if (exactMatch) {
+        handleAutoAdd(exactMatch)
+        e.preventDefault()
+      } else if (filtered.length === 1) {
+        handleAutoAdd(filtered[0])
+        e.preventDefault()
+      }
+    }
+  }
 
   return (
     <Box
@@ -1876,6 +1949,7 @@ export const HomePage = () => {
               placeholder={t('pos.search_product')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -2166,9 +2240,29 @@ export const HomePage = () => {
         open={checkoutOpen}
         onClose={() => setCheckoutOpen(false)}
         cart={cart}
-        onSuccess={() => {
+        onSuccess={async () => {
           setCart([])
           setCheckoutOpen(false)
+
+          try {
+            const prodRes = await productService.getAll({ aktif: 1 })
+            if (prodRes.ok) {
+              setProducts(
+                prodRes.data.map((p) => ({
+                  ...p,
+                  images: (() => {
+                    try {
+                      return JSON.parse(p.images || '[]')
+                    } catch {
+                      return []
+                    }
+                  })()
+                }))
+              )
+            }
+          } catch (e) {
+            console.error('POS reload error:', e)
+          }
         }}
       />
     </Box>

@@ -166,9 +166,15 @@ export function registerPrinterIpc() {
 
       // Footer
       printer.alignCenter()
-      if (printData.footer1) printer.println(printData.footer1)
-      if (printData.footer2) printer.println(printData.footer2)
-      if (printData.footer3) printer.println(printData.footer3)
+      if (printData.footer1) {
+        printData.footer1.split('\n').forEach((line) => printer.println(line))
+      }
+      if (printData.footer2) {
+        printData.footer2.split('\n').forEach((line) => printer.println(line))
+      }
+      if (printData.footer3) {
+        printData.footer3.split('\n').forEach((line) => printer.println(line))
+      }
 
       printer.cut()
       await printer.execute()

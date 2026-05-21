@@ -13,6 +13,8 @@ const api = {
     show: async (payload) => ipcRenderer.invoke('window:show-notification', payload)
   },
 
+  logAction: (payload) => ipcRenderer.send('app:log-action', payload),
+
   getMyConfig: async () => await ipcRenderer.invoke('get-my-config'),
   getImage: async () => await ipcRenderer.invoke('get-assets-path'),
   getNotificationSoundPath: async () => await ipcRenderer.invoke('get-notification-sound-path'),

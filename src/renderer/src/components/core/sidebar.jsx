@@ -33,10 +33,12 @@ import {
   ChevronRightRounded,
   ChevronLeftRounded,
   ExpandMoreRounded,
-  FiberManualRecord
+  FiberManualRecord,
+  WhatsApp
 } from '@mui/icons-material'
 import { useAuth } from '../../context/authContext'
 import { useNotifier } from './notificationProvider'
+import { CONFIG } from '../../utils/config'
 
 // ── sub-menu popover shown when sidebar is collapsed ─────────────────────
 const CollapsedSubMenu = ({ anchorEl, open, item, onClose, onOpen, navItemSx, theme }) => {
@@ -589,7 +591,52 @@ export const Sidebar = ({ routes = [] }) => {
         </Tooltip>
       </List>
 
-      <Box sx={{ mt: 'auto', width: '100%', display: 'flex', justifyContent: 'center', pb: 0.5 }}>
+      <Box
+        sx={{
+          mt: 'auto',
+          width: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          pb: 1
+        }}
+      >
+        <Tooltip
+          title={collapsed ? 'Hubungi Developer' : ''}
+          placement="right"
+          disableHoverListener={!collapsed}
+        >
+          <ListItemButton
+            onClick={() => {
+              const url = `https://wa.me/${CONFIG.developer.whatsapp}?text=${encodeURIComponent(CONFIG.developer.message)}`
+              window.open(url, '_blank')
+            }}
+            sx={{
+              ...navItemSx,
+              width: '100%',
+              mb: 0.5,
+              '&:hover': {
+                bgcolor: 'success.main',
+                color: 'white',
+                '& .MuiListItemIcon-root': { color: 'white' }
+              }
+            }}
+          >
+            <ListItemIcon sx={{ color: 'success.main', transition: 'color 0.2s' }}>
+              <WhatsApp fontSize="medium" />
+            </ListItemIcon>
+            {!collapsed && (
+              <ListItemText
+                primary="Hubungi Developer"
+                secondary="Support"
+                primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
+                secondaryTypographyProps={{ fontSize: 9, opacity: 0.8 }}
+              />
+            )}
+          </ListItemButton>
+        </Tooltip>
+
+        <Divider sx={{ width: '85%', borderColor: 'divider', opacity: 0.3, mb: 1 }} />
         <Tooltip
           title={collapsed ? 'Profile' : ''}
           placement="right"

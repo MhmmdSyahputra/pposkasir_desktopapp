@@ -17,6 +17,7 @@ Provide any relevant context that might help us answer your question better.
 ## 🔍 What I've Tried
 
 Have you tried looking for an answer in:
+
 - [ ] README.md
 - [ ] Existing issues
 - [ ] Documentation
