@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   Box,
   Button,
@@ -47,6 +47,8 @@ import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../components/PageLayout'
 import { useListProduct } from './hook/useListProduct'
 import { exportRowsToExcel } from '../../../utils/excelExport'
+import { importExcel } from '../../../utils/excelImport'
+import { productService } from '../../../services/productService'
 
 const fmtRp = (n) =>
   new Intl.NumberFormat('id-ID', {
@@ -102,8 +104,10 @@ export const ListProductPage = () => {
     { id: 'aksi', label: '', width: 48, align: 'center' }
   ]
 
-  const { rows, loading, search, setSearch, kategori, setKategori, categories, deleteProduct } =
+  const { rows, loading, search, setSearch, kategori, setKategori, categories, deleteProduct, fetchData } =
     useListProduct()
+
+  const fileInputRef = useRef(null)
 
   const [menuAnchor, setMenuAnchor] = useState(null)
   const [menuRow, setMenuRow] = useState(null)
@@ -164,6 +168,56 @@ export const ListProductPage = () => {
       ],
       rows
     })
+  }
+
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await importExcel(file)
+      if (data.length === 0) {
+        alert('File Excel kosong atau format tidak sesuai')
+        return
+      }
+
+      // Map excel keys to db keys
+      const mappedData = data.map((row) => ({
+        kode: row['Kode Produk'] || '',
+        nama: row['Nama Produk'] || '',
+        kategori: row['Kategori'] || '',
+        satuan: row['Satuan'] || '',
+        harga_beli: row['Harga Beli'] || 0,
+        harga_jual: row['Harga Jual'] || 0,
+        stok: row['Stok'] || 0,
+        min_stok: row['Min Stok'] || 0,
+        barcode: row['Barcode'] || '',
+        deskripsi: row['Deskripsi'] || '',
+        aktif: 1
+      }))
+
+      // Filter out invalid rows (e.g. empty name)
+      const validData = mappedData.filter((r) => r.nama)
+
+      if (validData.length === 0) {
+        alert('Tidak ada data produk yang valid (Nama Produk wajib diisi)')
+        return
+      }
+
+      const res = await productService.bulkCreate(validData)
+      if (res.ok) {
+        alert(`Berhasil mengimpor ${res.data.count} produk`)
+        fetchData(search, kategori) // refresh
+      } else {
+        alert(`Gagal mengimpor: ${res.error}`)
+      }
+    } catch (err) {
+      alert(`Terjadi kesalahan saat membaca file: ${err.message}`)
+    } finally {
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   // ── dynamic styles ──────────────────────────────────────────────────────
@@ -277,9 +331,17 @@ export const ListProductPage = () => {
             size="small"
             startIcon={<FileUploadRounded sx={{ fontSize: 15 }} />}
             sx={ghostBtn}
+            onClick={() => fileInputRef.current?.click()}
           >
             {t('product.import')}
           </Button>
+          <input
+            type="file"
+            hidden
+            accept=".xlsx, .xls"
+            ref={fileInputRef}
+            onChange={handleImportExcel}
+          />
           <Button
             size="small"
             variant="contained"

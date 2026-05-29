@@ -60,6 +60,27 @@ export function authLoginSuper({ username = '', password = '' }) {
   return sanitizeUser(user)
 }
 
+export function authChangeSuperPassword({ username = '', oldPassword = '', newPassword = '' }) {
+  const user = getUserByUsername(username)
+  if (!user || !user.aktif || user.role !== 'super') {
+    throw new Error('Akun super admin tidak ditemukan')
+  }
+
+  if (!verifySecret(oldPassword, user.password_hash)) {
+    throw new Error('Password lama salah')
+  }
+
+  if (newPassword.length < 6) {
+    throw new Error('Password baru minimal 6 karakter')
+  }
+
+  const newHash = hashSecret(newPassword)
+  const db = getDb()
+  db.prepare(`UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(newHash, user.id)
+
+  return true
+}
+
 export function authLoginCashier({ username = '', pin = '' }) {
   const user = getUserByUsername(username)
   if (!user || !user.aktif || user.role !== 'cashier') {

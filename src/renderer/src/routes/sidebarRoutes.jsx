@@ -3,7 +3,9 @@ import {
   ViewInAr,
   ReceiptLongOutlined,
   AssessmentOutlined,
-  FiberManualRecord
+  FiberManualRecord,
+  FileDownloadOutlined,
+  PersonRounded
 } from '@mui/icons-material'
 
 export const sidebarRoutes = [
@@ -51,6 +53,22 @@ export const sidebarRoutes = [
         active: true
       }
     ]
+  },
+  {
+    path: '/template',
+    label: 'Template Data',
+    labelKey: 'sidebar.template_data',
+    icon: FileDownloadOutlined,
+    active: true,
+    protected: false
+  },
+  {
+    path: '/kasir/list',
+    label: 'Kasir',
+    labelKey: 'sidebar.cashier',
+    icon: PersonRounded,
+    active: true,
+    protected: false
   },
   {
     path: '/riwayat/list',

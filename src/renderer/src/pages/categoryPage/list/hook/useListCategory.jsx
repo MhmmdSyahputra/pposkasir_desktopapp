@@ -26,5 +26,5 @@ export const useListCategory = () => {
     return res
   }, [])
 
-  return { rows, loading, search, setSearch, deleteCategory }
+  return { rows, loading, search, setSearch, deleteCategory, fetchData }
 }

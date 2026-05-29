@@ -13,7 +13,8 @@
     "yes_delete": "Yes, Delete",
     "export_excel": "Export Excel",
     "description": "Description",
-    "name": "Name"
+    "name": "Name",
+    "import": "Import"
   },
   "sidebar": {
     "home": "Home",
@@ -27,6 +28,7 @@
     "settings": "Settings",
     "settings_general": "General",
     "settings_receipt": "Receipt",
+    "cashier": "Cashier",
     "role_super": "Super Admin",
     "role_cashier": "Cashier",
     "cashier_session": "Cashier Session",
@@ -48,7 +50,8 @@
     "cashier_expected_cash": "Expected cash",
     "cashier_cash_diff": "Cash difference",
     "show_labels": "Show menu labels",
-    "hide_labels": "Hide menu labels"
+    "hide_labels": "Hide menu labels",
+    "template_data": "Template Data"
   },
   "titlebar": {
     "close_title": "Close Application?",
@@ -317,6 +320,8 @@
     "summary_gross_sales": "Gross Sales",
     "summary_total_discount": "Total Discount",
     "summary_net_sales": "Net Sales",
+    "summary_gross_profit": "Gross Profit",
+    "summary_cogs": "Total COGS",
     "summary_avg_sales": "Average per Transaction",
     "breakdown_method": "Payment Method Breakdown",
     "trend_daily": "Daily Trend",
@@ -362,6 +367,16 @@
     "cashier_load_failed": "Failed to load cashier accounts",
     "cashier_create_success": "Cashier account created",
     "cashier_create_failed": "Failed to create cashier account",
+    "change_pwd_title": "Account Security",
+    "change_pwd_subtitle": "Change password for Super Admin",
+    "change_pwd_old": "Old Password",
+    "change_pwd_new": "New Password",
+    "change_pwd_confirm": "Confirm New Password",
+    "change_pwd_button": "Change Password",
+    "change_pwd_saving": "Saving...",
+    "change_pwd_mismatch": "New password confirmation does not match",
+    "change_pwd_success": "Password changed successfully. Please login again.",
+    "change_pwd_failed": "Failed to change password",
     "dummy_title": "Seed Dummy Data",
     "dummy_subtitle": "Insert 10 realistic POS records: categories, units, food/beverage products, and modifiers",
     "dummy_info": "This feature adds realistic starter data for restaurant/cafe cashier simulation.",
@@ -436,5 +451,32 @@
     "test_receipt_failed": "Failed to print test receipt: {{error}}",
     "print_receipt_success": "Receipt printed successfully!",
     "print_receipt_failed": "Failed to print receipt: {{error}}"
+  },
+  "template": {
+    "page_title": "Template Data",
+    "breadcrumb": "Template Data",
+    "description": "Download Excel templates for bulk data entry before importing.",
+    "product_title": "Product Template",
+    "product_desc": "Template for importing product master data along with stock and prices.",
+    "category_title": "Category Template",
+    "category_desc": "Template for importing product categories in bulk.",
+    "view_detail": "View Details",
+    "download": "Download Template",
+    "info_product": "Product Template Info",
+    "info_category": "Category Template Info",
+    "info_desc": "Below is the explanation of the columns in the Excel template:",
+    "field_required": "Required",
+    "field_optional": "Optional",
+    "auto_generated": "Auto-generated if left blank.",
+    "req_name_product": "Required. The name of the product.",
+    "req_name_category": "Required. The name of the category.",
+    "desc_category": "Product category name.",
+    "desc_category_info": "Additional details or description of the category.",
+    "desc_unit": "Unit of measurement (Pcs, Kg, etc).",
+    "desc_price": "Numbers only. Default: 0.",
+    "desc_stock": "Numbers only. Default: 0.",
+    "desc_min_stock": "Stock alert limit. Default: 0.",
+    "desc_barcode": "Unique barcode (if any).",
+    "desc_extra": "Additional notes."
   }
 }

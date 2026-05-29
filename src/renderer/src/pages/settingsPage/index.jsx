@@ -23,10 +23,10 @@ import {
   PlaylistAddCheckRounded,
   PaletteRounded,
   DeleteSweepRounded,
-  PersonAddAltRounded,
   SettingsSuggestRounded,
   SystemUpdateAltRounded,
-  UpdateRounded
+  UpdateRounded,
+  LockResetRounded
 } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../productPage/components/PageLayout'
@@ -72,18 +72,12 @@ const InfoCard = ({ title, subtitle, icon, children }) => {
 export const SettingsPage = () => {
   const theme = useTheme()
   const { t } = useTranslation()
-  const { user, isSuper, logout, createCashier, listCashiers } = useAuth()
+  const { user, isSuper, logout } = useAuth()
   const { show } = useNotifier()
   const [appVersion, setAppVersion] = useState('-')
   const [checking, setChecking] = useState(false)
   const [downloadProgress, setDownloadProgress] = useState(0)
-  const [loadingCashier, setLoadingCashier] = useState(false)
-  const [creatingCashier, setCreatingCashier] = useState(false)
-  const [cashiers, setCashiers] = useState([])
-  const [cashierEmail, setCashierEmail] = useState('')
-  const [cashierUsername, setCashierUsername] = useState('')
-  const [cashierPin, setCashierPin] = useState('')
-  const [cashierError, setCashierError] = useState('')
+
   const [resetOpen, setResetOpen] = useState(false)
   const [resetText, setResetText] = useState('')
   const [resetPassword, setResetPassword] = useState('')
@@ -98,17 +92,12 @@ export const SettingsPage = () => {
     severity: 'info'
   })
 
-  const loadCashiers = async () => {
-    try {
-      setLoadingCashier(true)
-      const rows = await listCashiers()
-      setCashiers(rows)
-    } catch (error) {
-      setCashierError(error.message || t('settings.cashier_load_failed'))
-    } finally {
-      setLoadingCashier(false)
-    }
-  }
+  // Change Password state
+  const [pwdOld, setPwdOld] = useState('')
+  const [pwdNew, setPwdNew] = useState('')
+  const [pwdConfirm, setPwdConfirm] = useState('')
+  const [pwdLoading, setPwdLoading] = useState(false)
+  const [pwdError, setPwdError] = useState('')
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -122,12 +111,6 @@ export const SettingsPage = () => {
 
     loadVersion()
   }, [])
-
-  useEffect(() => {
-    if (!isSuper) return
-    loadCashiers()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSuper])
 
   useEffect(() => {
     const unsubProgress = window.api.onUpdateProgress((percent) => {
@@ -163,27 +146,38 @@ export const SettingsPage = () => {
     }
   }
 
-  const handleCreateCashier = async (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault()
-    setCashierError('')
+    setPwdError('')
+
+    if (pwdNew !== pwdConfirm) {
+      setPwdError(t('settings.change_pwd_mismatch'))
+      return
+    }
 
     try {
-      setCreatingCashier(true)
-      await createCashier({
-        email: cashierEmail,
-        username: cashierUsername,
-        pin: cashierPin
+      setPwdLoading(true)
+      const res = await window.api.auth.changeSuperPassword({
+        username: user?.username,
+        oldPassword: pwdOld,
+        newPassword: pwdNew
       })
 
-      setCashierEmail('')
-      setCashierUsername('')
-      setCashierPin('')
-      show({ message: t('settings.cashier_create_success'), severity: 'success' })
-      await loadCashiers()
+      if (!res?.ok) throw new Error(res?.error || t('settings.change_pwd_failed'))
+
+      show({ message: t('settings.change_pwd_success'), severity: 'success' })
+      setPwdOld('')
+      setPwdNew('')
+      setPwdConfirm('')
+
+      // Auto logout after successful password change
+      setTimeout(() => {
+        logout()
+      }, 1500)
     } catch (error) {
-      setCashierError(error.message || t('settings.cashier_create_failed'))
+      setPwdError(error.message || t('settings.change_pwd_failed'))
     } finally {
-      setCreatingCashier(false)
+      setPwdLoading(false)
     }
   }
 
@@ -212,9 +206,6 @@ export const SettingsPage = () => {
       setResetOpen(false)
       setResetText('')
       setResetPassword('')
-      if (isSuper) {
-        await loadCashiers()
-      }
     } catch (error) {
       setResetError(error.message || t('settings.reset_failed'))
     } finally {
@@ -381,99 +372,60 @@ export const SettingsPage = () => {
       {isSuper && (
         <Box sx={{ mt: 2 }}>
           <InfoCard
-            title={t('settings.cashier_title')}
-            subtitle={t('settings.cashier_subtitle')}
-            icon={PersonAddAltRounded}
+            title={t('settings.change_pwd_title')}
+            subtitle={t('settings.change_pwd_subtitle')}
+            icon={LockResetRounded}
           >
             <Box
               component="form"
-              onSubmit={handleCreateCashier}
+              onSubmit={handleChangePassword}
               sx={{
                 display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr 1fr auto' },
-                gap: 1,
+                gridTemplateColumns: { xs: '1fr', md: '1fr 1fr 1fr auto' },
+                gap: 1.5,
                 alignItems: 'start'
               }}
             >
               <TextField
                 size="small"
-                label={t('settings.cashier_email')}
-                value={cashierEmail}
-                onChange={(e) => setCashierEmail(e.target.value)}
-                type="email"
+                required
+                type="password"
+                label={t('settings.change_pwd_old')}
+                value={pwdOld}
+                onChange={(e) => setPwdOld(e.target.value)}
               />
               <TextField
                 size="small"
                 required
-                label={t('settings.cashier_username')}
-                value={cashierUsername}
-                onChange={(e) => setCashierUsername(e.target.value)}
+                type="password"
+                label={t('settings.change_pwd_new')}
+                value={pwdNew}
+                onChange={(e) => setPwdNew(e.target.value)}
+                inputProps={{ minLength: 6 }}
               />
               <TextField
                 size="small"
                 required
-                label={t('settings.cashier_pin')}
-                value={cashierPin}
-                onChange={(e) => setCashierPin(e.target.value.replace(/\D/g, ''))}
-                inputProps={{
-                  inputMode: 'numeric',
-                  pattern: '[0-9]*',
-                  minLength: 6,
-                  maxLength: 12
-                }}
+                type="password"
+                label={t('settings.change_pwd_confirm')}
+                value={pwdConfirm}
+                onChange={(e) => setPwdConfirm(e.target.value)}
+                inputProps={{ minLength: 6 }}
               />
               <Button
                 type="submit"
                 variant="contained"
-                disabled={creatingCashier}
+                disabled={pwdLoading}
                 sx={{ textTransform: 'none', minHeight: 40 }}
               >
-                {creatingCashier ? t('settings.creating') : t('settings.cashier_create')}
+                {pwdLoading ? t('settings.change_pwd_saving') : t('settings.change_pwd_button')}
               </Button>
             </Box>
 
-            {cashierError && (
+            {pwdError && (
               <Alert severity="error" sx={{ mt: 1.5 }}>
-                {cashierError}
+                {pwdError}
               </Alert>
-            )}
-
-            <Divider sx={{ my: 2 }} />
-
-            {loadingCashier ? (
-              <LinearProgress />
-            ) : cashiers.length === 0 ? (
-              <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
-                {t('settings.cashier_empty')}
-              </Typography>
-            ) : (
-              <Stack spacing={1}>
-                {cashiers.map((row) => (
-                  <Box
-                    key={row.id}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: 1.2,
-                      border: `1px solid ${theme.palette.divider}`,
-                      borderRadius: 1.5
-                    }}
-                  >
-                    <Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{row.username}</Typography>
-                      <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>
-                        {row.email || '-'}
-                      </Typography>
-                    </Box>
-                    <Chip
-                      size="small"
-                      color={row.aktif ? 'success' : 'default'}
-                      label={row.aktif ? t('common.active') : t('common.inactive')}
-                    />
-                  </Box>
-                ))}
-              </Stack>
             )}
           </InfoCard>
 

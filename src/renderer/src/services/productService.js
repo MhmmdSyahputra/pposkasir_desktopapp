@@ -7,5 +7,6 @@ export const productService = {
   create: (payload) => ch.create(payload),
   update: (id, data) => ch.update({ id, data }),
   delete: (id) => ch.delete(id),
-  adjustStok: (id, delta) => ch.adjustStok({ id, delta })
+  adjustStok: (id, delta) => ch.adjustStok({ id, delta }),
+  bulkCreate: (payload) => ch.bulkCreate(payload)
 }

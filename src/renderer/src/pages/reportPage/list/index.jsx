@@ -196,6 +196,14 @@ export const ListReportPage = () => {
         Value: data.summary?.omzet_bersih || 0
       },
       {
+        Metric: t('report.summary_cogs'),
+        Value: data.summary?.total_hpp || 0
+      },
+      {
+        Metric: t('report.summary_gross_profit'),
+        Value: data.summary?.laba_kotor || 0
+      },
+      {
         Metric: t('report.summary_avg_sales'),
         Value: Number(data.summary?.rata_rata_transaksi || 0).toFixed(0)
       }
@@ -260,6 +268,8 @@ export const ListReportPage = () => {
         [t('report.summary_gross_sales'), fmtRp(data.summary?.subtotal_bruto || 0)],
         [t('report.summary_total_discount'), fmtRp(data.summary?.total_diskon || 0)],
         [t('report.summary_net_sales'), fmtRp(data.summary?.omzet_bersih || 0)],
+        [t('report.summary_cogs'), fmtRp(data.summary?.total_hpp || 0)],
+        [t('report.summary_gross_profit'), fmtRp(data.summary?.laba_kotor || 0)],
         [t('report.summary_avg_sales'), fmtRp(data.summary?.rata_rata_transaksi || 0)]
       ],
       styles: { fontSize: 9 }
@@ -421,7 +431,7 @@ export const ListReportPage = () => {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' },
           gap: 1.5,
           mb: 2.5
         }}
@@ -435,6 +445,11 @@ export const ListReportPage = () => {
           label={t('report.summary_net_sales')}
           value={loading ? '...' : fmtRp(summary?.omzet_bersih || 0)}
           accent="primary.main"
+        />
+        <SummaryCard
+          label={t('report.summary_gross_profit')}
+          value={loading ? '...' : fmtRp(summary?.laba_kotor || 0)}
+          accent="success.main"
         />
         <SummaryCard
           label={t('report.summary_total_discount')}

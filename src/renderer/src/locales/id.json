@@ -13,7 +13,8 @@
     "yes_delete": "Ya, Hapus",
     "export_excel": "Export Excel",
     "description": "Deskripsi",
-    "name": "Nama"
+    "name": "Nama",
+    "import": "Impor"
   },
   "sidebar": {
     "home": "Home",
@@ -27,6 +28,7 @@
     "settings": "Pengaturan",
     "settings_general": "Umum",
     "settings_receipt": "Struk",
+    "cashier": "Kasir",
     "role_super": "Super Admin",
     "role_cashier": "Kasir",
     "cashier_session": "Sesi Kasir",
@@ -48,7 +50,8 @@
     "cashier_expected_cash": "Kas seharusnya",
     "cashier_cash_diff": "Selisih kas",
     "show_labels": "Tampilkan label menu",
-    "hide_labels": "Sembunyikan label menu"
+    "hide_labels": "Sembunyikan label menu",
+    "template_data": "Template Data"
   },
   "titlebar": {
     "close_title": "Tutup Aplikasi?",
@@ -317,6 +320,8 @@
     "summary_gross_sales": "Penjualan Bruto",
     "summary_total_discount": "Total Diskon",
     "summary_net_sales": "Omzet Bersih",
+    "summary_gross_profit": "Laba Kotor",
+    "summary_cogs": "Total Modal",
     "summary_avg_sales": "Rata-rata per Transaksi",
     "breakdown_method": "Breakdown Metode Bayar",
     "trend_daily": "Tren Harian",
@@ -362,6 +367,16 @@
     "cashier_load_failed": "Gagal memuat akun kasir",
     "cashier_create_success": "Akun kasir berhasil dibuat",
     "cashier_create_failed": "Gagal membuat akun kasir",
+    "change_pwd_title": "Keamanan Akun",
+    "change_pwd_subtitle": "Ubah password untuk Super Admin",
+    "change_pwd_old": "Password Lama",
+    "change_pwd_new": "Password Baru",
+    "change_pwd_confirm": "Konfirmasi Password Baru",
+    "change_pwd_button": "Ganti Password",
+    "change_pwd_saving": "Menyimpan...",
+    "change_pwd_mismatch": "Konfirmasi password baru tidak cocok",
+    "change_pwd_success": "Password berhasil diubah. Silakan login kembali.",
+    "change_pwd_failed": "Gagal mengganti password",
     "dummy_title": "Isi Dummy Data",
     "dummy_subtitle": "Tambah 10 data POS realistis: kategori, satuan, produk makanan/minuman, dan modifier",
     "dummy_info": "Fitur ini menambahkan data awal yang realistis untuk simulasi kasir restoran/kedai.",
@@ -436,5 +451,32 @@
     "test_receipt_failed": "Gagal mencetak struk uji coba: {{error}}",
     "print_receipt_success": "Struk berhasil dicetak!",
     "print_receipt_failed": "Gagal mencetak struk: {{error}}"
+  },
+  "template": {
+    "page_title": "Template Data",
+    "breadcrumb": "Template Data",
+    "description": "Unduh template Excel untuk mengisi data secara massal sebelum melakukan proses impor.",
+    "product_title": "Template Produk",
+    "product_desc": "Template untuk import master data produk beserta stok dan harga.",
+    "category_title": "Template Kategori",
+    "category_desc": "Template untuk import data kategori produk secara massal.",
+    "view_detail": "Lihat Detail",
+    "download": "Download Template",
+    "info_product": "Info Template Produk",
+    "info_category": "Info Template Kategori",
+    "info_desc": "Berikut adalah penjelasan kolom-kolom yang ada di dalam template Excel:",
+    "field_required": "Wajib",
+    "field_optional": "Opsional",
+    "auto_generated": "Dibuat otomatis jika dikosongkan.",
+    "req_name_product": "Wajib diisi. Nama dari produk tersebut.",
+    "req_name_category": "Wajib diisi. Nama dari kategori tersebut.",
+    "desc_category": "Nama kategori produk.",
+    "desc_category_info": "Keterangan tambahan atau penjelasan kategori.",
+    "desc_unit": "Satuan ukuran (Pcs, Kg, dll).",
+    "desc_price": "Hanya angka. Default: 0.",
+    "desc_stock": "Hanya angka. Default: 0.",
+    "desc_min_stock": "Batas peringatan stok. Default: 0.",
+    "desc_barcode": "Kode barcode unik (jika ada).",
+    "desc_extra": "Keterangan tambahan."
   }
 }

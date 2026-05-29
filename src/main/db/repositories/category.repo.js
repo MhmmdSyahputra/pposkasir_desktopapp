@@ -61,3 +61,28 @@ export function categoryDelete(id) {
   getDb().prepare(`DELETE FROM categories WHERE id = ?`).run(id)
   return { id }
 }
+
+export function categoryBulkCreate(categoriesArray) {
+  const db = getDb()
+  let insertedCount = 0
+
+  const insert = db.prepare(`
+    INSERT INTO categories (nama, deskripsi, aktif)
+    VALUES (@nama, @deskripsi, @aktif)
+  `)
+
+  const transaction = db.transaction((categories) => {
+    for (const c of categories) {
+      if (!c.nama) continue // skip empty name
+      insert.run({
+        nama: c.nama,
+        deskripsi: c.deskripsi || '',
+        aktif: c.aktif !== undefined ? (c.aktif ? 1 : 0) : 1
+      })
+      insertedCount++
+    }
+  })
+
+  transaction(categoriesArray)
+  return { count: insertedCount }
+}

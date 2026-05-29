@@ -15,7 +15,9 @@ import {
   ListTransactionPage,
   ListReportPage,
   SettingsPage,
-  ReceiptSettingsPage
+  ReceiptSettingsPage,
+  TemplatePage,
+  CashierPage
 } from '../pages'
 
 export const appRoutes = [
@@ -41,6 +43,8 @@ export const appRoutes = [
   { path: '/riwayat/list', element: <ListTransactionPage />, active: true, protected: false },
   // laporan
   { path: '/laporan/list', element: <ListReportPage />, active: true, protected: false },
+  // kasir
+  { path: '/kasir/list', element: <CashierPage />, active: true, protected: false },
   // settings
   { path: '/settings', element: <SettingsPage />, active: true, protected: false },
   {
@@ -48,6 +52,7 @@ export const appRoutes = [
     element: <ReceiptSettingsPage />,
     active: true,
     protected: false
-  }
+  },
+  { path: '/template', element: <TemplatePage />, active: true, protected: false }
   // { path: '*', element: <NotFoundPage />, active: true, protected: false }
 ]

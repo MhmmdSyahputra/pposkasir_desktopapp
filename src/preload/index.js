@@ -13,6 +13,18 @@ const api = {
     show: async (payload) => ipcRenderer.invoke('window:show-notification', payload)
   },
 
+  windowManagement: {
+    openMirror: () => ipcRenderer.send('window-open-mirror'),
+    toggleMirror: () => ipcRenderer.send('window-toggle-mirror'),
+    closeMirror: () => ipcRenderer.send('window-close-mirror'),
+    syncMirrorCart: (data) => ipcRenderer.send('window-sync-mirror-cart', data),
+    onMirrorCartUpdated: (callback) => {
+      const handler = (_event, data) => callback(data)
+      ipcRenderer.on('window-on-mirror-cart-updated', handler)
+      return () => ipcRenderer.removeListener('window-on-mirror-cart-updated', handler)
+    }
+  },
+
   logAction: (payload) => ipcRenderer.send('app:log-action', payload),
 
   getMyConfig: async () => await ipcRenderer.invoke('get-my-config'),
@@ -54,6 +66,7 @@ const api = {
 
   auth: {
     loginSuper: (payload) => ipcRenderer.invoke('auth:loginSuper', payload),
+    changeSuperPassword: (payload) => ipcRenderer.invoke('auth:changeSuperPassword', payload),
     loginCashier: (payload) => ipcRenderer.invoke('auth:loginCashier', payload),
     cashierCreate: (payload) => ipcRenderer.invoke('auth:cashierCreate', payload),
     cashierGetAll: () => ipcRenderer.invoke('auth:cashierGetAll'),
@@ -77,7 +90,8 @@ const api = {
     create: (payload) => ipcRenderer.invoke('product:create', payload),
     update: (payload) => ipcRenderer.invoke('product:update', payload),
     delete: (id) => ipcRenderer.invoke('product:delete', id),
-    adjustStok: (payload) => ipcRenderer.invoke('product:adjustStok', payload)
+    adjustStok: (payload) => ipcRenderer.invoke('product:adjustStok', payload),
+    bulkCreate: (payload) => ipcRenderer.invoke('product:bulkCreate', payload)
   },
 
   category: {
@@ -85,7 +99,8 @@ const api = {
     getById: (id) => ipcRenderer.invoke('category:getById', id),
     create: (payload) => ipcRenderer.invoke('category:create', payload),
     update: (payload) => ipcRenderer.invoke('category:update', payload),
-    delete: (id) => ipcRenderer.invoke('category:delete', id)
+    delete: (id) => ipcRenderer.invoke('category:delete', id),
+    bulkCreate: (payload) => ipcRenderer.invoke('category:bulkCreate', payload)
   },
 
   unit: {

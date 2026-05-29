@@ -7,6 +7,10 @@ import { Sidebar } from './components/core/sidebar'
 import { NotificationProvider } from './components/core/notificationProvider'
 import { useAuth } from './context/authContext'
 import { LoginPage } from './pages/loginPage'
+import { MirrorPage } from './pages'
+
+const query = new URLSearchParams(window.location.search)
+const initialRoute = query.get('route')
 
 // eslint-disable-next-line react/prop-types
 const SidebarLayout = ({ children }) => {
@@ -64,6 +68,14 @@ const renderRoute = (route, key) => {
 
 const App = () => {
   const { isAuthenticated } = useAuth()
+
+  if (initialRoute === '/mirror') {
+    return (
+      <NotificationProvider>
+        <MirrorPage />
+      </NotificationProvider>
+    )
+  }
 
   return (
     <NotificationProvider>

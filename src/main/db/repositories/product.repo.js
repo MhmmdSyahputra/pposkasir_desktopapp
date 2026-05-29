@@ -133,6 +133,44 @@ export function productAdjustStok(id, delta) {
   return productGetById(id)
 }
 
+export function productBulkCreate(productsArray) {
+  const db = getDb()
+  let insertedCount = 0
+
+  const insert = db.prepare(`
+    INSERT INTO products
+      (kode, nama, kategori, satuan, harga_beli, harga_jual, stok, min_stok, barcode, deskripsi, aktif, images)
+    VALUES
+      (@kode, @nama, @kategori, @satuan, @harga_beli, @harga_jual, @stok, @min_stok, @barcode, @deskripsi, @aktif, @images)
+  `)
+
+  const transaction = db.transaction((products) => {
+    for (const p of products) {
+      // Auto-generate kode if not provided
+      const finalKode = p.kode || _generateKode(db)
+      
+      insert.run({
+        kode: finalKode,
+        nama: p.nama,
+        kategori: p.kategori || '',
+        satuan: p.satuan || '',
+        harga_beli: Number(p.harga_beli) || 0,
+        harga_jual: Number(p.harga_jual) || 0,
+        stok: Number(p.stok) || 0,
+        min_stok: Number(p.min_stok) || 0,
+        barcode: p.barcode || '',
+        deskripsi: p.deskripsi || '',
+        aktif: p.aktif !== undefined ? (p.aktif ? 1 : 0) : 1,
+        images: p.images || '[]'
+      })
+      insertedCount++
+    }
+  })
+
+  transaction(productsArray)
+  return { count: insertedCount }
+}
+
 // ── private ─────────────────────────────────────────────────────────────────
 
 function _generateKode(db) {

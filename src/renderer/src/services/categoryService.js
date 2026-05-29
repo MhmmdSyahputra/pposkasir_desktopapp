@@ -5,5 +5,6 @@ export const categoryService = {
   getById: (id) => ch.getById(id),
   create: (payload) => ch.create(payload),
   update: (id, data) => ch.update({ id, data }),
-  delete: (id) => ch.delete(id)
+  delete: (id) => ch.delete(id),
+  bulkCreate: (payload) => ch.bulkCreate(payload)
 }

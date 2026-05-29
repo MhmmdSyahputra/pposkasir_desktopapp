@@ -4,7 +4,8 @@ import {
   categoryGetById,
   categoryCreate,
   categoryUpdate,
-  categoryDelete
+  categoryDelete,
+  categoryBulkCreate
 } from '../../db/repositories/category.repo.js'
 
 export function registerCategoryIpc() {
@@ -44,6 +45,14 @@ export function registerCategoryIpc() {
   ipcMain.handle('category:delete', (_e, id) => {
     try {
       return { ok: true, data: categoryDelete(id) }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('category:bulkCreate', (_e, payload) => {
+    try {
+      return { ok: true, data: categoryBulkCreate(payload) }
     } catch (err) {
       return { ok: false, error: err.message }
     }

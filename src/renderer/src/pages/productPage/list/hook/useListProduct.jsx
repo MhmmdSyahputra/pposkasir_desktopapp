@@ -36,5 +36,5 @@ export const useListProduct = () => {
     return res
   }, [])
 
-  return { rows, loading, search, setSearch, kategori, setKategori, categories, deleteProduct }
+  return { rows, loading, search, setSearch, kategori, setKategori, categories, deleteProduct, fetchData }
 }

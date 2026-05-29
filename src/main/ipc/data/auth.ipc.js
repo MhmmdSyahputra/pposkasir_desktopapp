@@ -7,13 +7,22 @@ import {
   authGetActiveCashierSession,
   authOpenCashierSession,
   authCloseCashierSession,
-  authGetCashierSessionHistory
+  authGetCashierSessionHistory,
+  authChangeSuperPassword
 } from '../../db/repositories/auth.repo.js'
 
 export function registerAuthIpc() {
   ipcMain.handle('auth:loginSuper', (_e, payload) => {
     try {
       return { ok: true, data: authLoginSuper(payload || {}) }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('auth:changeSuperPassword', (_e, payload) => {
+    try {
+      return { ok: true, data: authChangeSuperPassword(payload || {}) }
     } catch (err) {
       return { ok: false, error: err.message }
     }

@@ -34,6 +34,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import CheckIcon from '@mui/icons-material/Check'
 import NotesIcon from '@mui/icons-material/Notes'
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
+import MonitorRoundedIcon from '@mui/icons-material/MonitorRounded'
 import { useTranslation } from 'react-i18next'
 import { useNotifier } from '../../components/core/notificationProvider'
 import { productService } from '../../services/productService'
@@ -1499,6 +1500,19 @@ export const POSNavbar = ({ itemCount = 0, onClear }) => {
             >
               {t('pos.order_menu')}
             </Typography>
+            <Tooltip title="Buka Layar Pelanggan (Mirror)">
+              <IconButton 
+                sx={{ color: '#fff' }} 
+                size="small"
+                onClick={() => {
+                  if (window.api && window.api.windowManagement) {
+                    window.api.windowManagement.toggleMirror()
+                  }
+                }}
+              >
+                <MonitorRoundedIcon />
+              </IconButton>
+            </Tooltip>
             <IconButton sx={{ color: '#fff' }} size="small">
               {/* <SearchIcon /> */}
             </IconButton>
@@ -1800,6 +1814,25 @@ export const HomePage = () => {
   const [products, setProducts] = useState([])
   const [modifierMap, setModifierMap] = useState({})
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (window.api && window.api.windowManagement) {
+      const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0)
+      window.api.windowManagement.syncMirrorCart({
+        items: cart.map(c => ({
+          ...c,
+          nama: c.name,
+          hargaJual: c.price,
+          diskon: 0
+        })),
+        subtotal: subtotal,
+        totalDiscount: 0,
+        totalTax: 0,
+        finalTotal: subtotal
+      })
+    }
+  }, [cart])
+
 
   useEffect(() => {
     const load = async () => {

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   Box,
   Button,
@@ -30,6 +30,7 @@ import {
   DeleteOutlineRounded,
   EditOutlined,
   FileDownloadRounded,
+  FileUploadRounded,
   MoreHorizRounded,
   SearchRounded
 } from '@mui/icons-material'
@@ -38,6 +39,8 @@ import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../../productPage/components/PageLayout'
 import { useListCategory } from './hook/useListCategory'
 import { exportRowsToExcel } from '../../../utils/excelExport'
+import { importExcel } from '../../../utils/excelImport'
+import { categoryService } from '../../../services/categoryService'
 
 // ── empty state ───────────────────────────────────────────────────────────
 const EmptyState = () => {
@@ -74,7 +77,8 @@ export const ListCategoryPage = () => {
   const theme = useTheme()
   const { t } = useTranslation()
   const isDark = theme.palette.mode === 'dark'
-  const { rows, loading, search, setSearch, deleteCategory } = useListCategory()
+  const { rows, loading, search, setSearch, deleteCategory, fetchData } = useListCategory()
+  const fileInputRef = useRef(null)
 
   const COLUMNS = [
     { id: 'nama', label: t('category.col_name') },
@@ -118,6 +122,47 @@ export const ListCategoryPage = () => {
       ],
       rows
     })
+  }
+
+  const handleImportExcel = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      const data = await importExcel(file)
+      if (data.length === 0) {
+        alert('File Excel kosong atau format tidak sesuai')
+        return
+      }
+
+      // Map excel keys to db keys
+      const mappedData = data.map((row) => ({
+        nama: row['Nama Kategori'] || '',
+        deskripsi: row['Deskripsi'] || '',
+        aktif: 1
+      }))
+
+      // Filter out invalid rows (e.g. empty name)
+      const validData = mappedData.filter((r) => r.nama)
+
+      if (validData.length === 0) {
+        alert('Tidak ada data kategori yang valid (Nama Kategori wajib diisi)')
+        return
+      }
+
+      const res = await categoryService.bulkCreate(validData)
+      if (res.ok) {
+        alert(`Berhasil mengimpor ${res.data.count} kategori`)
+        fetchData(search) // refresh
+      } else {
+        alert(`Gagal mengimpor: ${res.error}`)
+      }
+    } catch (err) {
+      alert(`Terjadi kesalahan saat membaca file: ${err.message}`)
+    } finally {
+      // Reset input
+      if (fileInputRef.current) fileInputRef.current.value = ''
+    }
   }
 
   const cellSx = {
@@ -180,6 +225,21 @@ export const ListCategoryPage = () => {
           >
             {t('common.export_excel')}
           </Button>
+          <Button
+            size="small"
+            startIcon={<FileUploadRounded sx={{ fontSize: 15 }} />}
+            sx={ghostBtn}
+            onClick={() => fileInputRef.current?.click()}
+          >
+            {t('common.import')}
+          </Button>
+          <input
+            type="file"
+            hidden
+            accept=".xlsx, .xls"
+            ref={fileInputRef}
+            onChange={handleImportExcel}
+          />
           <Button
             size="small"
             variant="contained"

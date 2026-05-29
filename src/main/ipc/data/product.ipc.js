@@ -6,7 +6,8 @@ import {
   productCreate,
   productUpdate,
   productDelete,
-  productAdjustStok
+  productAdjustStok,
+  productBulkCreate
 } from '../../db/repositories/product.repo.js'
 
 export function registerProductIpc() {
@@ -63,6 +64,14 @@ export function registerProductIpc() {
   ipcMain.handle('product:adjustStok', (_e, { id, delta }) => {
     try {
       return { ok: true, data: productAdjustStok(id, delta) }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('product:bulkCreate', (_e, payload) => {
+    try {
+      return { ok: true, data: productBulkCreate(payload) }
     } catch (err) {
       return { ok: false, error: err.message }
     }

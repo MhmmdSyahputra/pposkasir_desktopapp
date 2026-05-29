@@ -233,10 +233,13 @@ export function transactionGetStats({ tanggal = '' } = {}) {
       `SELECT
          COUNT(*)          AS jumlah,
          COALESCE(SUM(t.total), 0) AS omzet,
-         COALESCE(SUM(t.diskon), 0) AS total_diskon
+         COALESCE(SUM(t.diskon), 0) AS total_diskon,
+         COALESCE(SUM((SELECT SUM(ti.qty * ti.harga_dasar) FROM transaction_items ti WHERE ti.transaction_id = t.id)), 0) AS total_hpp
        FROM transactions t ${where}`
     )
     .get(params)
+    
+  summary.laba_kotor = summary.omzet - summary.total_hpp
 
   const byMethod = db
     .prepare(
@@ -326,10 +329,15 @@ export function transactionGetReport({
          COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.subtotal ELSE 0 END), 0) AS subtotal_bruto,
          COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.diskon ELSE 0 END), 0) AS total_diskon,
          COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.total ELSE 0 END), 0) AS omzet_bersih,
-         COALESCE(AVG(CASE WHEN t.status = 'selesai' THEN t.total ELSE NULL END), 0) AS rata_rata_transaksi
+         COALESCE(AVG(CASE WHEN t.status = 'selesai' THEN t.total ELSE NULL END), 0) AS rata_rata_transaksi,
+         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN (SELECT SUM(ti.qty * ti.harga_dasar) FROM transaction_items ti WHERE ti.transaction_id = t.id) ELSE 0 END), 0) AS total_hpp
        FROM transactions t ${where}`
     )
     .get(params)
+
+  if (summary) {
+    summary.laba_kotor = summary.omzet_bersih - summary.total_hpp
+  }
 
   const byMethod = db
     .prepare(

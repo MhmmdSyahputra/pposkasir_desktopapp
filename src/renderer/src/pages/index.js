@@ -15,6 +15,9 @@ import { ListTransactionPage } from './transactionPage/list'
 import { ListReportPage } from './reportPage/list'
 import { SettingsPage } from './settingsPage'
 import { ReceiptSettingsPage } from './receiptSettingsPage'
+import { TemplatePage } from './templatePage'
+import { CashierPage } from './cashierPage'
+import { MirrorPage } from './mirrorPage'
 
 export {
   HomePage,
@@ -33,5 +36,8 @@ export {
   ListTransactionPage,
   ListReportPage,
   SettingsPage,
-  ReceiptSettingsPage
+  ReceiptSettingsPage,
+  TemplatePage,
+  CashierPage,
+  MirrorPage
 }
