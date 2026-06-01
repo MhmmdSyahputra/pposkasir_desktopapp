@@ -14,9 +14,15 @@ import {
   RadioGroup,
   FormControl,
   FormLabel,
-  CircularProgress
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemText,
+  Chip,
+  Tabs,
+  Tab
 } from '@mui/material'
-import { RestartAltRounded, SaveRounded, PrintRounded } from '@mui/icons-material'
+import { RestartAltRounded, SaveRounded, PrintRounded, CheckCircleRounded, ComputerRounded } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../productPage/components/PageLayout'
 import { useNotifier } from '../../components/core/notificationProvider'
@@ -58,6 +64,60 @@ export const ReceiptSettingsPage = () => {
   const { show } = useNotifier()
   const [form, setForm] = useState(defaultReceiptSettings)
   const [printingTest, setPrintingTest] = useState(false)
+  const [printers, setPrinters] = useState([])
+  const [loadingPrinters, setLoadingPrinters] = useState(false)
+  const [activeTab, setActiveTab] = useState(0)
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue)
+  }
+
+  const fetchPrinters = async () => {
+    try {
+      setLoadingPrinters(true)
+      const result = await window.api.systemPrinter.getSystemPrinters()
+      if (result.success) {
+        setPrinters(result.data)
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingPrinters(false)
+    }
+  }
+
+  const handleSetDefaultPrinter = async (printerName) => {
+    try {
+      const result = await window.api.systemPrinter.setSystemDefaultPrinter(printerName)
+      if (result.success) {
+        show({ message: `Printer ${printerName} berhasil di set sebagai default`, severity: 'success' })
+        fetchPrinters()
+      } else {
+        show({ message: result.error || 'Gagal mengubah default printer', severity: 'error' })
+      }
+    } catch (err) {
+      show({ message: err.message, severity: 'error' })
+    }
+  }
+
+  const handleTestPrintSystem = async (printerName) => {
+    try {
+      const result = await window.api.systemPrinter.testPrintSystem(printerName)
+      if (result.success) {
+        show({ message: `Test page dikirim ke ${printerName}`, severity: 'success' })
+      } else {
+        show({ message: result.error || 'Gagal melakukan test print', severity: 'error' })
+      }
+    } catch (err) {
+      show({ message: err.message, severity: 'error' })
+    }
+  }
+
+  useEffect(() => {
+    if (form.printerType === 'system') {
+      fetchPrinters()
+    }
+  }, [form.printerType])
 
   const handlePrinterTypeChange = (event) => {
     const value = event.target.value
@@ -242,11 +302,74 @@ export const ReceiptSettingsPage = () => {
             alignItems: 'start'
           }}
         >
-          <Stack spacing={2} sx={{ minWidth: 0 }}>
-            <SectionCard
-              title={t('receipt_settings.header_title')}
-              subtitle={t('receipt_settings.header_subtitle')}
-            >
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs value={activeTab} onChange={handleTabChange} sx={{ minHeight: 40 }}>
+                <Tab label="Pengaturan Struk" sx={{ textTransform: 'none', minHeight: 40, fontWeight: 600 }} />
+                <Tab label="Daftar Printer Windows" sx={{ textTransform: 'none', minHeight: 40, fontWeight: 600 }} />
+              </Tabs>
+            </Box>
+
+            {activeTab === 0 && (
+              <Stack spacing={2}>
+                <SectionCard
+                  title={t('receipt_settings.printer_settings_title')}
+                  subtitle={t('receipt_settings.printer_settings_subtitle')}
+                >
+                  <Stack spacing={2}>
+                    <FormControl component="fieldset">
+                      <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
+                        {t('receipt_settings.printer_type')}
+                      </FormLabel>
+                      <RadioGroup
+                        row
+                        value={form.printerType || 'system'}
+                        onChange={handlePrinterTypeChange}
+                      >
+                        <FormControlLabel
+                          value="system"
+                          control={<Radio size="small" />}
+                          label={t('receipt_settings.printer_type_system')}
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                        <FormControlLabel
+                          value="thermal"
+                          control={<Radio size="small" />}
+                          label={t('receipt_settings.printer_type_thermal')}
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                      </RadioGroup>
+                    </FormControl>
+
+                    <Stack spacing={1.5} sx={{ mt: 2 }}>
+                      <Stack direction="row" spacing={1.5}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          onClick={handlePrintTestReceipt}
+                          disabled={printingTest}
+                          startIcon={
+                            printingTest ? (
+                              <CircularProgress size={16} color="inherit" />
+                            ) : (
+                              <PrintRounded />
+                            )
+                          }
+                          sx={{ textTransform: 'none' }}
+                        >
+                          {printingTest
+                            ? t('receipt_settings.printing_test')
+                            : t('receipt_settings.print_test_receipt')}
+                        </Button>
+                      </Stack>
+                    </Stack>
+                  </Stack>
+                </SectionCard>
+
+                <SectionCard
+                  title={t('receipt_settings.header_title')}
+                  subtitle={t('receipt_settings.header_subtitle')}
+                >
               <Stack spacing={1.25}>
                 <TextField
                   size="small"
@@ -293,60 +416,6 @@ export const ReceiptSettingsPage = () => {
                   }
                   label={t('receipt_settings.show_this_line')}
                 />
-              </Stack>
-            </SectionCard>
-
-            <SectionCard
-              title={t('receipt_settings.printer_settings_title')}
-              subtitle={t('receipt_settings.printer_settings_subtitle')}
-            >
-              <Stack spacing={2}>
-                <FormControl component="fieldset">
-                  <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
-                    {t('receipt_settings.printer_type')}
-                  </FormLabel>
-                  <RadioGroup
-                    row
-                    value={form.printerType || 'system'}
-                    onChange={handlePrinterTypeChange}
-                  >
-                    <FormControlLabel
-                      value="system"
-                      control={<Radio size="small" />}
-                      label={t('receipt_settings.printer_type_system')}
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                    <FormControlLabel
-                      value="thermal"
-                      control={<Radio size="small" />}
-                      label={t('receipt_settings.printer_type_thermal')}
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                  </RadioGroup>
-                </FormControl>
-
-                <Stack spacing={1.5} sx={{ mt: 1 }}>
-                  <Stack direction="row" spacing={1.5}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={handlePrintTestReceipt}
-                      disabled={printingTest}
-                      startIcon={
-                        printingTest ? (
-                          <CircularProgress size={16} color="inherit" />
-                        ) : (
-                          <PrintRounded />
-                        )
-                      }
-                      sx={{ textTransform: 'none' }}
-                    >
-                      {printingTest
-                        ? t('receipt_settings.printing_test')
-                        : t('receipt_settings.print_test_receipt')}
-                    </Button>
-                  </Stack>
-                </Stack>
               </Stack>
             </SectionCard>
 
@@ -441,7 +510,92 @@ export const ReceiptSettingsPage = () => {
                 />
               </Stack>
             </SectionCard>
-          </Stack>
+              </Stack>
+            )}
+
+            {activeTab === 1 && (
+              <Stack spacing={2}>
+                <SectionCard
+                  title="Daftar Printer Windows"
+                  subtitle="Pilih printer yang akan digunakan sebagai default Windows untuk cetak struk"
+                >
+                  <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+                    <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover', borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Daftar System Printer</Typography>
+                      </Box>
+                      <Button size="small" variant="outlined" onClick={fetchPrinters} disabled={loadingPrinters} sx={{ textTransform: 'none', fontSize: 12 }}>
+                        {loadingPrinters ? 'Memuat...' : 'Refresh'}
+                      </Button>
+                    </Box>
+                    <List sx={{ p: 0, overflow: 'auto' }}>
+                      {printers.map((printer, idx) => {
+                        const isDefault = printer.isDefault;
+                        return (
+                          <ListItem
+                            key={idx}
+                            divider={idx !== printers.length - 1}
+                            sx={{ 
+                              py: 1.5, px: 2, 
+                              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1,
+                              bgcolor: isDefault ? 'success.main' + '0A' : 'transparent',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <ComputerRounded sx={{ color: isDefault ? 'success.main' : 'text.secondary', fontSize: 28 }} />
+                                <ListItemText
+                                  primary={
+                                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                      <Typography sx={{ fontSize: 14, fontWeight: isDefault ? 700 : 500, color: isDefault ? 'success.main' : 'text.primary' }}>
+                                        {printer.name}
+                                      </Typography>
+                                      {isDefault && (
+                                        <Chip size="small" label="Default" color="success" sx={{ height: 20, fontSize: 10, fontWeight: 600 }} />
+                                      )}
+                                    </Box>
+                                  }
+                                  secondary={printer.description || 'System Printer'}
+                                  slotProps={{ secondary: { sx: { fontSize: 12 } } }}
+                                />
+                              </Box>
+                              <Stack direction="row" spacing={1}>
+                                {!isDefault && (
+                                  <Button
+                                    size="small"
+                                    variant="contained"
+                                    onClick={() => handleSetDefaultPrinter(printer.name)}
+                                    sx={{ textTransform: 'none', fontSize: 11, py: 0.5, boxShadow: 'none' }}
+                                  >
+                                    Set as Default
+                                  </Button>
+                                )}
+                                <Button
+                                  size="small"
+                                  variant={isDefault ? 'outlined' : 'text'}
+                                  color="secondary"
+                                  onClick={() => handleTestPrintSystem(printer.name)}
+                                  startIcon={<PrintRounded sx={{ fontSize: 14 }} />}
+                                  sx={{ textTransform: 'none', fontSize: 11, py: 0.5 }}
+                                >
+                                  Test Print
+                                </Button>
+                              </Stack>
+                            </Box>
+                          </ListItem>
+                        )
+                      })}
+                      {printers.length === 0 && !loadingPrinters && (
+                        <ListItem sx={{ py: 3, justifyContent: 'center' }}>
+                          <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Tidak ada printer terdeteksi.</Typography>
+                        </ListItem>
+                      )}
+                    </List>
+                  </Box>
+                </SectionCard>
+              </Stack>
+            )}
+          </Box>
 
           <SectionCard
             title={t('receipt_settings.preview_title')}

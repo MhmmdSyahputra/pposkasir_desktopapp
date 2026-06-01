@@ -1,5 +1,9 @@
 import { ipcMain, BrowserWindow, app } from 'electron'
 import path from 'path'
+import { exec } from 'child_process'
+import util from 'util'
+
+const execPromise = util.promisify(exec)
 import ThermalPrinter from 'node-thermal-printer'
 const { printer: ThermalPrinterLib, types: PrinterTypes } = ThermalPrinter
 
@@ -198,6 +202,61 @@ export function registerPrinterIpc() {
       return { connected: isConnected }
     } catch (err) {
       return { connected: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('get-system-printers', async (event) => {
+    try {
+      // getPrintersAsync() hanya bisa dipanggil dari webContents, event.sender adalah webContents
+      let printers = await event.sender.getPrintersAsync()
+      
+      // Patch isDefault for Windows karena Electron terkadang gagal mendapatkan status default
+      if (process.platform === 'win32') {
+        try {
+          const { stdout } = await execPromise(`reg query "HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows" /v Device`)
+          const match = stdout.match(/Device\s+REG_SZ\s+([^,\r\n]+)/)
+          if (match && match[1]) {
+            const defaultPrinterName = match[1].trim()
+            printers = printers.map(p => ({
+              ...p,
+              isDefault: p.name === defaultPrinterName
+            }))
+          }
+        } catch (psErr) {
+          console.error('Failed to get default printer via Registry:', psErr)
+        }
+      }
+
+      return { success: true, data: printers }
+    } catch (err) {
+      console.error('Failed to get system printers:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('set-system-default-printer', async (_, printerName) => {
+    try {
+      if (!printerName) throw new Error('Nama printer wajib diisi')
+      // Menggunakan command bawaan Windows (rundll32) untuk set default printer
+      const command = `rundll32 printui.dll,PrintUIEntry /y /n "${printerName}"`
+      await execPromise(command)
+      return { success: true }
+    } catch (err) {
+      console.error('Failed to set default printer:', err)
+      return { success: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('test-print-system', async (_, printerName) => {
+    try {
+      if (!printerName) throw new Error('Nama printer wajib diisi')
+      // Menggunakan command bawaan Windows untuk print test page
+      const command = `rundll32 printui.dll,PrintUIEntry /k /n "${printerName}"`
+      await execPromise(command)
+      return { success: true }
+    } catch (err) {
+      console.error('Failed to print test page:', err)
+      return { success: false, error: err.message }
     }
   })
 }

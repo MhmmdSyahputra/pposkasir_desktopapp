@@ -7,7 +7,8 @@ export const useListTransaction = () => {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({ jumlah: 0, omzet: 0, total_diskon: 0 })
   const [search, setSearch] = useState('')
-  const [tanggal, setTanggal] = useState(() => new Date().toISOString().slice(0, 10))
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [endDate, setEndDate] = useState(() => new Date().toISOString().slice(0, 10))
   const [page, setPage] = useState(0)
   const [detail, setDetail] = useState(null)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -21,11 +22,12 @@ export const useListTransaction = () => {
       const [listRes, statsRes] = await Promise.all([
         transactionService.getAll({
           search: search.trim(),
-          tanggal,
+          startDate,
+          endDate,
           limit: LIMIT,
           offset: page * LIMIT
         }),
-        transactionService.getStats({ tanggal })
+        transactionService.getStats({ startDate, endDate })
       ])
       if (listRes.ok) {
         setRows(listRes.data.rows)
@@ -39,7 +41,7 @@ export const useListTransaction = () => {
     } finally {
       setLoading(false)
     }
-  }, [search, tanggal, page])
+  }, [search, startDate, endDate, page])
 
   // debounce search changes
   useEffect(() => {
@@ -49,7 +51,7 @@ export const useListTransaction = () => {
       loadData()
     }, 300)
     return () => clearTimeout(debounceRef.current)
-  }, [search, tanggal]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [search, startDate, endDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // page change triggers immediate load
   useEffect(() => {
@@ -89,8 +91,10 @@ export const useListTransaction = () => {
     stats,
     search,
     setSearch,
-    tanggal,
-    setTanggal,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
     page,
     setPage,
     LIMIT,

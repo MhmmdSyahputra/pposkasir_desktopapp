@@ -31,6 +31,8 @@ export const useCreateProduct = () => {
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
 
+  const [lastProducts, setLastProducts] = useState([])
+
   useEffect(() => {
     categoryService.getAll({ search: '' }).then((r) => {
       if (r.ok) setCategories(r.data)
@@ -40,6 +42,12 @@ export const useCreateProduct = () => {
     })
     modifierService.getAll().then((r) => {
       if (r.ok) setModifierGroups(r.data)
+    })
+    productService.getAll({ search: '' }).then((r) => {
+      if (r.ok) {
+        const sorted = r.data.sort((a, b) => b.id - a.id).slice(0, 5)
+        setLastProducts(sorted)
+      }
     })
   }, [])
 
@@ -108,7 +116,18 @@ export const useCreateProduct = () => {
 
     if (!res.ok) {
       setSaving(false)
-      setErrors({ general: res.error ?? 'Gagal menyimpan produk' })
+      const errStr = String(res.error || '').toLowerCase()
+      if (errStr.includes('unique') || errStr.includes('constraint')) {
+        if (errStr.includes('kode')) {
+          setErrors({ kode: 'Kode produk ini sudah digunakan' })
+        } else if (errStr.includes('barcode')) {
+          setErrors({ barcode: 'Barcode/SKU ini sudah digunakan' })
+        } else {
+          setErrors({ general: 'Data sudah ada (duplikat)' })
+        }
+      } else {
+        setErrors({ general: res.error ?? 'Gagal menyimpan produk' })
+      }
       return
     }
 
@@ -187,6 +206,7 @@ export const useCreateProduct = () => {
     createCategoryQuick,
     createUnitQuick,
     saving,
-    errors
+    errors,
+    lastProducts
   }
 }

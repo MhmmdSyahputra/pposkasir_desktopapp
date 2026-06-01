@@ -147,6 +147,70 @@ export function authCashierGetAll() {
     .map(sanitizeUser)
 }
 
+export function authCashierUpdate({ id, email = '', username = '', aktif }) {
+  const db = getDb()
+  const normalizedUsername = normalize(username)
+  const normalizedEmail = normalize(email)
+
+  if (!normalizedUsername || normalizedUsername.length < 4) {
+    throw new Error('Username minimal 4 karakter')
+  }
+
+  if (normalizedEmail && !EMAIL_REGEX.test(normalizedEmail)) {
+    throw new Error('Format email tidak valid')
+  }
+
+  try {
+    db.prepare(
+      `UPDATE users SET email = @email, username = @username, aktif = @aktif, updated_at = CURRENT_TIMESTAMP WHERE id = @id AND role = 'cashier'`
+    ).run({
+      id: Number(id),
+      email: normalizedEmail || null,
+      username: normalizedUsername,
+      aktif: aktif ? 1 : 0
+    })
+    return authUserById(id)
+  } catch (error) {
+    if (String(error.message || '').includes('UNIQUE')) {
+      throw new Error('Username atau email sudah terdaftar')
+    }
+    throw error
+  }
+}
+
+export function authCashierDelete({ id }) {
+  const db = getDb()
+  const user = authUserById(id)
+  if (!user || user.role !== 'cashier') {
+    throw new Error('Kasir tidak ditemukan')
+  }
+  
+  try {
+    db.prepare(`DELETE FROM users WHERE id = ? AND role = 'cashier'`).run(Number(id))
+  } catch (error) {
+    if (String(error.message || '').includes('FOREIGN KEY')) {
+      throw new Error('Tidak dapat menghapus kasir karena memiliki riwayat transaksi. Silakan nonaktifkan akun sebagai gantinya.')
+    }
+    throw error
+  }
+  return true
+}
+
+export function authCashierResetPin({ id, pin = '' }) {
+  const db = getDb()
+  const normalizedPin = normalize(pin)
+  
+  if (!/^\\d{6,12}$/.test(normalizedPin)) {
+    throw new Error('PIN harus 6-12 digit angka')
+  }
+  
+  db.prepare(`UPDATE users SET pin_hash = @pin_hash, updated_at = CURRENT_TIMESTAMP WHERE id = @id AND role = 'cashier'`).run({
+    id: Number(id),
+    pin_hash: hashSecret(normalizedPin)
+  })
+  return true
+}
+
 export function authUserById(id) {
   const db = getDb()
   const row = db

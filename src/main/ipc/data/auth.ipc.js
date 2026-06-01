@@ -8,7 +8,10 @@ import {
   authOpenCashierSession,
   authCloseCashierSession,
   authGetCashierSessionHistory,
-  authChangeSuperPassword
+  authChangeSuperPassword,
+  authCashierUpdate,
+  authCashierDelete,
+  authCashierResetPin
 } from '../../db/repositories/auth.repo.js'
 
 export function registerAuthIpc() {
@@ -47,6 +50,30 @@ export function registerAuthIpc() {
   ipcMain.handle('auth:cashierGetAll', () => {
     try {
       return { ok: true, data: authCashierGetAll() }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('auth:cashierUpdate', (_e, payload) => {
+    try {
+      return { ok: true, data: authCashierUpdate(payload || {}) }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('auth:cashierDelete', (_e, payload) => {
+    try {
+      return { ok: true, data: authCashierDelete(payload || {}) }
+    } catch (err) {
+      return { ok: false, error: err.message }
+    }
+  })
+
+  ipcMain.handle('auth:cashierResetPin', (_e, payload) => {
+    try {
+      return { ok: true, data: authCashierResetPin(payload || {}) }
     } catch (err) {
       return { ok: false, error: err.message }
     }

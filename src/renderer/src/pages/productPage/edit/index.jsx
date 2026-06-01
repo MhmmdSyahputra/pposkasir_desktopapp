@@ -497,7 +497,6 @@ export const EditProductPage = () => {
               />
             </Stack>
 
-            {/* Barcode */}
             <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
               <TextField
                 label={t('product.barcode_sku')}
@@ -506,6 +505,8 @@ export const EditProductPage = () => {
                 value={form.barcode}
                 onChange={handleChange('barcode')}
                 placeholder={t('product.barcode_placeholder')}
+                error={Boolean(errors.barcode)}
+                helperText={errors.barcode || ' '}
                 sx={inputSx}
               />
             </Stack>
@@ -635,6 +636,26 @@ export const EditProductPage = () => {
                             : t('modifier.type_multiple')}{' '}
                           · {g.options?.length ?? 0} opsi{g.wajib ? ` · ${t('pos.required')}` : ''}
                         </Typography>
+                        {g.options && g.options.length > 0 && (
+                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.75 }}>
+                            {g.options.map((opt) => (
+                              <Chip
+                                key={opt.id}
+                                label={opt.nama}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  bgcolor: active
+                                    ? alpha(theme.palette.primary.main, 0.1)
+                                    : theme.palette.action.hover,
+                                  color: active ? 'primary.main' : 'text.secondary',
+                                  border: `1px solid ${active ? alpha(theme.palette.primary.main, 0.2) : 'transparent'}`
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        )}
                       </Box>
                       {g.wajib ? (
                         <Chip

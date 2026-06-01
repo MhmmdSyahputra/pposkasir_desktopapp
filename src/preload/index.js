@@ -64,12 +64,23 @@ const api = {
 
   getAppVersion: async () => await ipcRenderer.invoke('get-app-version'),
 
+  systemPrinter: {
+    getSystemPrinters: async () => await ipcRenderer.invoke('get-system-printers'),
+    setSystemDefaultPrinter: async (printerName) =>
+      await ipcRenderer.invoke('set-system-default-printer', printerName),
+    testPrintSystem: async (printerName) =>
+      await ipcRenderer.invoke('test-print-system', printerName)
+  },
+
   auth: {
     loginSuper: (payload) => ipcRenderer.invoke('auth:loginSuper', payload),
     changeSuperPassword: (payload) => ipcRenderer.invoke('auth:changeSuperPassword', payload),
     loginCashier: (payload) => ipcRenderer.invoke('auth:loginCashier', payload),
     cashierCreate: (payload) => ipcRenderer.invoke('auth:cashierCreate', payload),
     cashierGetAll: () => ipcRenderer.invoke('auth:cashierGetAll'),
+    cashierUpdate: (payload) => ipcRenderer.invoke('auth:cashierUpdate', payload),
+    cashierDelete: (payload) => ipcRenderer.invoke('auth:cashierDelete', payload),
+    cashierResetPin: (payload) => ipcRenderer.invoke('auth:cashierResetPin', payload),
     getActiveCashierSession: (payload) =>
       ipcRenderer.invoke('auth:getActiveCashierSession', payload),
     openCashierSession: (payload) => ipcRenderer.invoke('auth:openCashierSession', payload),

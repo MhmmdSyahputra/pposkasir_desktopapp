@@ -20,14 +20,16 @@ import {
   Tooltip,
   Typography,
   alpha,
-  useTheme
+  useTheme,
+  IconButton
 } from '@mui/material'
 import {
   SaveRounded,
   AddPhotoAlternateRounded,
   DeleteRounded,
   InfoOutlined,
-  TuneRounded
+  TuneRounded,
+  HistoryRounded
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -98,7 +100,8 @@ export const CreateProductPage = () => {
     createCategoryQuick,
     createUnitQuick,
     saving,
-    errors
+    errors,
+    lastProducts
   } = useCreateProduct()
 
   const fileInputRef = useRef(null)
@@ -355,7 +358,44 @@ export const CreateProductPage = () => {
                   value={form.kode}
                   onChange={handleChange('kode')}
                   placeholder={t('product.code_placeholder')}
+                  error={Boolean(errors.kode)}
+                  helperText={errors.kode || ' '}
                   sx={inputSx}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Tooltip
+                          title={
+                            <Box sx={{ p: 0.5 }}>
+                              <Typography sx={{ fontSize: 11, fontWeight: 700, mb: 1, fontFamily: 'Poppins, sans-serif' }}>
+                                5 Kode Terakhir:
+                              </Typography>
+                              {lastProducts.length === 0 ? (
+                                <Typography sx={{ fontSize: 10, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}>
+                                  Belum ada data
+                                </Typography>
+                              ) : (
+                                lastProducts.map((p) => (
+                                  <Box key={p.id} sx={{ display: 'flex', gap: 1, mb: 0.5, alignItems: 'center' }}>
+                                    <Chip label={p.kode || '-'} size="small" sx={{ height: 16, fontSize: 9, fontWeight: 600 }} />
+                                    <Typography sx={{ fontSize: 10, fontFamily: 'Poppins, sans-serif' }}>
+                                      {p.nama}
+                                    </Typography>
+                                  </Box>
+                                ))
+                              )}
+                            </Box>
+                          }
+                          placement="top"
+                          arrow
+                        >
+                          <IconButton size="small" edge="end">
+                            <HistoryRounded sx={{ fontSize: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </InputAdornment>
+                    )
+                  }}
                 />
               </FormControl>
             </Stack>
@@ -435,6 +475,8 @@ export const CreateProductPage = () => {
                 value={form.barcode}
                 onChange={handleChange('barcode')}
                 placeholder={t('product.barcode_placeholder')}
+                error={Boolean(errors.barcode)}
+                helperText={errors.barcode || ' '}
                 sx={inputSx}
               />
             </Stack>
@@ -551,6 +593,26 @@ export const CreateProductPage = () => {
                             : t('modifier.type_multiple')}{' '}
                           · {g.options?.length ?? 0} opsi{g.wajib ? ` · ${t('pos.required')}` : ''}
                         </Typography>
+                        {g.options && g.options.length > 0 && (
+                          <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.75 }}>
+                            {g.options.map((opt) => (
+                              <Chip
+                                key={opt.id}
+                                label={opt.nama}
+                                size="small"
+                                sx={{
+                                  height: 20,
+                                  fontSize: 10,
+                                  bgcolor: active
+                                    ? alpha(theme.palette.primary.main, 0.1)
+                                    : theme.palette.action.hover,
+                                  color: active ? 'primary.main' : 'text.secondary',
+                                  border: `1px solid ${active ? alpha(theme.palette.primary.main, 0.2) : 'transparent'}`
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        )}
                       </Box>
                       {g.wajib ? (
                         <Chip

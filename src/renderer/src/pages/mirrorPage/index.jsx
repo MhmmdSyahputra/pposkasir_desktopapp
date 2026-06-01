@@ -191,7 +191,7 @@ export const MirrorPage = () => {
                     <Box sx={{ display: 'flex', gap: 2 }}>
                       <Avatar
                         variant="rounded"
-                        src={item.image ? `ppos://${item.image}` : undefined}
+                        src={item.image ? `ppos://localhost/${item.image}` : undefined}
                         sx={{ width: 64, height: 64, bgcolor: 'rgba(255,255,255,0.05)' }}
                       >
                         {!item.image && item.nama?.charAt(0)}
@@ -200,7 +200,7 @@ export const MirrorPage = () => {
                         <Typography sx={{ fontWeight: 600, fontSize: 16 }}>{item.nama}</Typography>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
                           <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-                            {item.qty} x {formatCurrency(item.hargaJual)}
+                            {item.qty} x {formatCurrency(item.basePrice ?? item.hargaJual)}
                           </Typography>
                           <Typography sx={{ fontWeight: 700, fontSize: 15, color: 'primary.main' }}>
                             {formatCurrency(item.qty * item.hargaJual)}

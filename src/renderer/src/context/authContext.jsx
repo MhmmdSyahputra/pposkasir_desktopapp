@@ -29,6 +29,9 @@ const AuthContext = createContext({
   loginCashier: async () => {},
   logout: () => {},
   createCashier: async () => {},
+  updateCashier: async () => {},
+  deleteCashier: async () => {},
+  resetPinCashier: async () => {},
   listCashiers: async () => [],
   openCashierSession: async () => {},
   closeCashierSession: async () => {},
@@ -107,6 +110,33 @@ export const AuthProvider = ({ children }) => {
     [user?.username]
   )
 
+  const updateCashier = useCallback(
+    async (payload) => {
+      const res = await authService.cashierUpdate(payload)
+      if (!res?.ok) throw new Error(res?.error || 'Gagal memperbarui akun kasir')
+      return res.data
+    },
+    []
+  )
+
+  const deleteCashier = useCallback(
+    async (payload) => {
+      const res = await authService.cashierDelete(payload)
+      if (!res?.ok) throw new Error(res?.error || 'Gagal menghapus akun kasir')
+      return res.data
+    },
+    []
+  )
+
+  const resetPinCashier = useCallback(
+    async (payload) => {
+      const res = await authService.cashierResetPin(payload)
+      if (!res?.ok) throw new Error(res?.error || 'Gagal mereset PIN kasir')
+      return res.data
+    },
+    []
+  )
+
   const listCashiers = useCallback(async () => {
     const res = await authService.cashierGetAll()
     if (!res?.ok) throw new Error(res?.error || 'Gagal memuat akun kasir')
@@ -167,6 +197,9 @@ export const AuthProvider = ({ children }) => {
       loginCashier,
       logout,
       createCashier,
+      updateCashier,
+      deleteCashier,
+      resetPinCashier,
       listCashiers,
       openCashierSession,
       closeCashierSession,
@@ -176,6 +209,9 @@ export const AuthProvider = ({ children }) => {
       activeSession,
       closeCashierSession,
       createCashier,
+      updateCashier,
+      deleteCashier,
+      resetPinCashier,
       listCashierSessions,
       listCashiers,
       loginCashier,

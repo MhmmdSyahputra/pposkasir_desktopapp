@@ -16,18 +16,26 @@ export const useHome = () => {
           modifierService.getAllProductGroups()
         ])
         if (prodRes.ok) {
-          setProducts(
-            prodRes.data.map((p) => ({
-              ...p,
-              images: (() => {
-                try {
-                  return JSON.parse(p.images || '[]')
-                } catch {
-                  return []
-                }
-              })()
-            }))
-          )
+          const mapped = prodRes.data.map((p) => ({
+            ...p,
+            images: (() => {
+              try {
+                return JSON.parse(p.images || '[]')
+              } catch {
+                return []
+              }
+            })()
+          }))
+          
+          const sorted = mapped.sort((a, b) => {
+            const aStok = Number(a.stok || 0)
+            const bStok = Number(b.stok || 0)
+            if (aStok <= 0 && bStok > 0) return 1
+            if (bStok <= 0 && aStok > 0) return -1
+            return 0
+          })
+
+          setProducts(sorted)
         }
         if (modRes.ok) setModifierMap(modRes.data)
       } catch (e) {

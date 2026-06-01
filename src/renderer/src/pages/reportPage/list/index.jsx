@@ -48,6 +48,7 @@ import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { PageLayout } from '../../productPage/components/PageLayout'
 import { useReport } from './hook/useReport'
+import { DatePicker } from '../../../components/ui/DatePicker'
 
 ChartJS.register(
   CategoryScale,
@@ -360,21 +361,15 @@ export const ListReportPage = () => {
             gap: 1.25
           }}
         >
-          <TextField
-            size="small"
-            type="date"
+          <DatePicker
             label={t('report.start_date')}
-            value={filters.startDate}
-            onChange={(e) => updateFilter('startDate', e.target.value)}
-            InputLabelProps={{ shrink: true }}
+            value={filters.startDate || ''}
+            onChange={(val) => updateFilter('startDate', val)}
           />
-          <TextField
-            size="small"
-            type="date"
+          <DatePicker
             label={t('report.end_date')}
-            value={filters.endDate}
-            onChange={(e) => updateFilter('endDate', e.target.value)}
-            InputLabelProps={{ shrink: true }}
+            value={filters.endDate || ''}
+            onChange={(val) => updateFilter('endDate', val)}
           />
           <Select
             size="small"

@@ -10,9 +10,24 @@ import {
   Stack,
   TextField,
   Typography,
-  useTheme
+  useTheme,
+  IconButton,
+  Menu,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControlLabel,
+  Switch
 } from '@mui/material'
-import { PersonAddAltRounded } from '@mui/icons-material'
+import {
+  PersonAddAltRounded,
+  MoreVert,
+  EditRounded,
+  DeleteRounded,
+  VpnKeyRounded
+} from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../productPage/components/PageLayout'
 import { useAuth } from '../../context/authContext'
@@ -21,7 +36,14 @@ import { useNotifier } from '../../components/core/notificationProvider'
 export const CashierPage = () => {
   const theme = useTheme()
   const { t } = useTranslation()
-  const { isSuper, createCashier, listCashiers } = useAuth()
+  const {
+    isSuper,
+    createCashier,
+    listCashiers,
+    updateCashier,
+    deleteCashier,
+    resetPinCashier
+  } = useAuth()
   const { show } = useNotifier()
 
   const [loadingCashier, setLoadingCashier] = useState(false)
@@ -31,6 +53,24 @@ export const CashierPage = () => {
   const [cashierUsername, setCashierUsername] = useState('')
   const [cashierPin, setCashierPin] = useState('')
   const [cashierError, setCashierError] = useState('')
+
+  // Menu State
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [selectedRow, setSelectedRow] = useState(null)
+
+  // Edit State
+  const [editModal, setEditModal] = useState(false)
+  const [editForm, setEditForm] = useState({ id: null, email: '', username: '', aktif: true })
+  const [savingEdit, setSavingEdit] = useState(false)
+
+  // Delete State
+  const [deleteModal, setDeleteModal] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
+  // Reset PIN State
+  const [resetModal, setResetModal] = useState(false)
+  const [resetPin, setResetPin] = useState('')
+  const [savingPin, setSavingPin] = useState(false)
 
   const loadCashiers = async () => {
     try {
@@ -65,12 +105,84 @@ export const CashierPage = () => {
       setCashierEmail('')
       setCashierUsername('')
       setCashierPin('')
-      show({ message: t('settings.cashier_create_success'), severity: 'success' })
+      show({ message: t('settings.cashier_create_success', 'Kasir berhasil dibuat'), severity: 'success' })
       await loadCashiers()
     } catch (error) {
       setCashierError(error.message || t('settings.cashier_create_failed'))
     } finally {
       setCreatingCashier(false)
+    }
+  }
+
+  const openMenu = (e, row) => {
+    setAnchorEl(e.currentTarget)
+    setSelectedRow(row)
+  }
+
+  const closeMenu = () => {
+    setAnchorEl(null)
+  }
+
+  const handleEditClick = () => {
+    setEditForm({
+      id: selectedRow.id,
+      email: selectedRow.email || '',
+      username: selectedRow.username || '',
+      aktif: selectedRow.aktif
+    })
+    setEditModal(true)
+    closeMenu()
+  }
+
+  const handleDeleteClick = () => {
+    setDeleteModal(true)
+    closeMenu()
+  }
+
+  const handleResetPinClick = () => {
+    setResetPin('')
+    setResetModal(true)
+    closeMenu()
+  }
+
+  const submitEdit = async () => {
+    try {
+      setSavingEdit(true)
+      await updateCashier(editForm)
+      show({ message: 'Akun kasir berhasil diperbarui', severity: 'success' })
+      setEditModal(false)
+      loadCashiers()
+    } catch (error) {
+      show({ message: error.message || 'Gagal memperbarui kasir', severity: 'error' })
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  const submitDelete = async () => {
+    try {
+      setDeleting(true)
+      await deleteCashier({ id: selectedRow.id })
+      show({ message: 'Akun kasir berhasil dihapus', severity: 'success' })
+      setDeleteModal(false)
+      loadCashiers()
+    } catch (error) {
+      show({ message: error.message || 'Gagal menghapus kasir', severity: 'error' })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const submitResetPin = async () => {
+    try {
+      setSavingPin(true)
+      await resetPinCashier({ id: selectedRow.id, pin: resetPin })
+      show({ message: 'PIN kasir berhasil direset', severity: 'success' })
+      setResetModal(false)
+    } catch (error) {
+      show({ message: error.message || 'Gagal mereset PIN kasir', severity: 'error' })
+    } finally {
+      setSavingPin(false)
     }
   }
 
@@ -87,7 +199,7 @@ export const CashierPage = () => {
       breadcrumbs={[{ label: t('settings.cashier_title') }]}
       title={t('settings.cashier_title')}
     >
-      <Box sx={{ maxWidth: 800 }}>
+      <Box sx={{ width: '100%' }}>
         <Paper
           elevation={0}
           sx={{
@@ -194,17 +306,148 @@ export const CashierPage = () => {
                       {row.email || '-'}
                     </Typography>
                   </Box>
-                  <Chip
-                    size="small"
-                    color={row.aktif ? 'success' : 'default'}
-                    label={row.aktif ? t('common.active') : t('common.inactive')}
-                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip
+                      size="small"
+                      color={row.aktif ? 'success' : 'default'}
+                      label={row.aktif ? t('common.active') : t('common.inactive')}
+                    />
+                    <IconButton size="small" onClick={(e) => openMenu(e, row)}>
+                      <MoreVert fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
               ))}
             </Stack>
           )}
         </Paper>
       </Box>
+
+      {/* Action Menu */}
+      <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={closeMenu}>
+        <MenuItem onClick={handleEditClick} sx={{ fontSize: 13, gap: 1 }}>
+          <EditRounded fontSize="small" /> Edit Kasir
+        </MenuItem>
+        <MenuItem onClick={handleResetPinClick} sx={{ fontSize: 13, gap: 1 }}>
+          <VpnKeyRounded fontSize="small" /> Reset PIN
+        </MenuItem>
+        <MenuItem onClick={handleDeleteClick} sx={{ fontSize: 13, gap: 1, color: 'error.main' }}>
+          <DeleteRounded fontSize="small" /> Hapus Kasir
+        </MenuItem>
+      </Menu>
+
+      {/* Edit Modal */}
+      <Dialog open={editModal} onClose={() => setEditModal(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: 16, fontWeight: 700 }}>Edit Kasir</DialogTitle>
+        <DialogContent dividers>
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              size="small"
+              label="Email"
+              value={editForm.email}
+              onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+              type="email"
+              fullWidth
+            />
+            <TextField
+              size="small"
+              required
+              label="Username"
+              value={editForm.username}
+              onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+              fullWidth
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={editForm.aktif}
+                  onChange={(e) => setEditForm({ ...editForm, aktif: e.target.checked })}
+                  color="primary"
+                />
+              }
+              label={editForm.aktif ? 'Akun Aktif' : 'Akun Nonaktif'}
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditModal(false)} sx={{ textTransform: 'none' }}>
+            Batal
+          </Button>
+          <Button
+            onClick={submitEdit}
+            variant="contained"
+            disabled={savingEdit}
+            sx={{ textTransform: 'none' }}
+          >
+            {savingEdit ? 'Menyimpan...' : 'Simpan'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Reset PIN Modal */}
+      <Dialog open={resetModal} onClose={() => setResetModal(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: 16, fontWeight: 700 }}>Reset PIN Kasir</DialogTitle>
+        <DialogContent dividers>
+          <Typography sx={{ fontSize: 13, mb: 2 }}>
+            Masukkan PIN baru untuk <b>{selectedRow?.username}</b>
+          </Typography>
+          <TextField
+            size="small"
+            required
+            label="PIN Baru"
+            value={resetPin}
+            onChange={(e) => setResetPin(e.target.value.replace(/\D/g, ''))}
+            inputProps={{
+              inputMode: 'numeric',
+              pattern: '[0-9]*',
+              minLength: 6,
+              maxLength: 12
+            }}
+            fullWidth
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setResetModal(false)} sx={{ textTransform: 'none' }}>
+            Batal
+          </Button>
+          <Button
+            onClick={submitResetPin}
+            variant="contained"
+            disabled={savingPin || resetPin.length < 6}
+            sx={{ textTransform: 'none' }}
+          >
+            {savingPin ? 'Mereset...' : 'Reset PIN'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Modal */}
+      <Dialog open={deleteModal} onClose={() => setDeleteModal(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontSize: 16, fontWeight: 700 }}>Hapus Kasir</DialogTitle>
+        <DialogContent dividers>
+          <Typography sx={{ fontSize: 13 }}>
+            Apakah Anda yakin ingin menghapus akun kasir <b>{selectedRow?.username}</b>?
+          </Typography>
+          <Typography sx={{ fontSize: 12, color: 'error.main', mt: 1 }}>
+            Jika kasir ini sudah pernah melakukan transaksi, kasir tidak dapat dihapus. Anda dapat menonaktifkannya melalui opsi Edit.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteModal(false)} sx={{ textTransform: 'none' }}>
+            Batal
+          </Button>
+          <Button
+            onClick={submitDelete}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+            sx={{ textTransform: 'none' }}
+          >
+            {deleting ? 'Menghapus...' : 'Ya, Hapus'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </PageLayout>
   )
 }

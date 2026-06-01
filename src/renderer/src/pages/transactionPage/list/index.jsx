@@ -40,6 +40,10 @@ import {
 import { PageLayout } from '../../productPage/components/PageLayout'
 import { useTranslation } from 'react-i18next'
 import { useListTransaction } from './hook/useListTransaction'
+import { receiptSettingsService } from '../../../services/receiptSettingsService'
+import { useNotifier } from '../../../components/core/notificationProvider'
+import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
+import { DatePicker } from '../../../components/ui/DatePicker'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
 
@@ -154,7 +158,113 @@ const EmptyState = ({ colSpan }) => {
 const DetailDialog = ({ detail, onClose, onVoid }) => {
   const theme = useTheme()
   const { t } = useTranslation()
+  const { show } = useNotifier()
   if (!detail) return null
+
+  const handleReprint = async () => {
+    if (!detail) return
+
+    const receiptSettings = receiptSettingsService.get()
+    const visibility = receiptSettings.visibility || {}
+
+    const receiptOrder = {
+      orderNumber: detail.no_transaksi || '-',
+      date: fmtDate(detail.created_at),
+      cashier: detail.kasir || '-',
+      customerName: detail.nama_pelanggan || '',
+      subtotal: fmtRp(detail.subtotal || 0),
+      discount: detail.diskon ? fmtRp(detail.diskon) : 'Rp0',
+      total: fmtRp(detail.total || 0),
+      cash: fmtRp(detail.bayar || 0),
+      change: detail.kembalian ? fmtRp(detail.kembalian) : 'Rp0',
+      items: (detail.items || []).map((item) => {
+        const name = item.nama_produk || ''
+        const qty = item.qty || 0
+        const priceVal = item.harga_satuan || 0
+        const qtyText = `${qty} x ${fmtRp(priceVal)}`
+        const note = item.modifier_summary || item.catatan || ''
+        const subtotal = fmtRp(item.subtotal || priceVal * qty)
+        return { name, qtyText, note, subtotal }
+      })
+    }
+
+    const infoHtml = [
+      ['No. Transaksi', receiptOrder.orderNumber, visibility.orderNumber],
+      ['Tanggal', receiptOrder.date, visibility.date],
+      ['Kasir', receiptOrder.cashier, visibility.cashier],
+      ['Pelanggan', receiptOrder.customerName, !!receiptOrder.customerName]
+    ]
+      .filter((row) => row[2])
+      .map(
+        ([label, value]) => `<div class="item-row"><span>${label}</span><span>${value}</span></div>`
+      )
+      .join('')
+
+    const itemsHtml = receiptOrder.items
+      .map(
+        (item) => `
+          <div class="item">
+            <div class="item-name">${item.name}</div>
+            <div class="item-row">
+              <span>${item.qtyText}</span>
+              <span>${item.subtotal}</span>
+            </div>
+            ${item.note ? `<div class="item-note">- ${item.note}</div>` : ''}
+          </div>`
+      )
+      .join('')
+
+    const totalHtml = [
+      ['Subtotal', receiptOrder.subtotal, visibility.subtotal],
+      ['Diskon', receiptOrder.discount, visibility.discount],
+      ['TOTAL', receiptOrder.total, visibility.total, true],
+      ['Bayar', receiptOrder.cash, visibility.cash],
+      ['Kembalian', receiptOrder.change, visibility.change]
+    ]
+      .filter((row) => row[2])
+      .map(
+        ([label, value, , emph]) =>
+          `<div class="item-row" style="${emph ? 'font-weight: bold; font-size: 13px; margin: 4px 0;' : ''}"><span>${label}</span><span>${value}</span></div>`
+      )
+      .join('')
+
+    const contentHTML = `
+      <div style="font-size: 11px;">
+        ${infoHtml}
+      </div>
+      <div class="line"></div>
+      <div>
+        ${itemsHtml}
+      </div>
+      <div class="line"></div>
+      <div>
+        ${totalHtml}
+      </div>
+    `
+
+    const payload = {
+      header1: visibility.headerLine1 ? receiptSettings.headerLine1 : '',
+      header2: visibility.headerLine2 ? receiptSettings.headerLine2 : '',
+      header3: visibility.headerLine3 ? receiptSettings.headerLine3 : '',
+      contentHTML,
+      footer1: visibility.footerLine1 ? receiptSettings.footerLine1 : '',
+      footer2: visibility.footerLine2 ? receiptSettings.footerLine2 : '',
+      footer3: visibility.footerLine3 ? receiptSettings.footerLine3 : ''
+    }
+
+    try {
+      await window.api.printOrderReceipt(payload)
+      show({
+        message: t('receipt_settings.print_receipt_success', 'Struk berhasil dicetak'),
+        severity: 'success'
+      })
+    } catch (err) {
+      show({
+        message: t('receipt_settings.print_receipt_failed', { error: err.message, defaultValue: 'Gagal mencetak struk' }),
+        severity: 'error'
+      })
+    }
+  }
 
   const metodeLabel = {
     tunai: t('transaction.method_cash'),
@@ -463,19 +573,52 @@ const DetailDialog = ({ detail, onClose, onVoid }) => {
           )}
         </Box>
 
-        {/* Void button */}
-        {isSelesai && (
+        {/* Actions button */}
+        <Box sx={{ display: 'flex', gap: 1.5 }}>
+          {isSelesai && (
+            <Box
+              onClick={() => onVoid(detail.id)}
+              sx={{
+                flex: 1,
+                py: 1.3,
+                borderRadius: 2,
+                textAlign: 'center',
+                border: `1px solid ${alpha(theme.palette.error.main, 0.4)}`,
+                bgcolor: alpha(theme.palette.error.main, 0.08),
+                cursor: 'pointer',
+                fontFamily: 'Poppins, sans-serif',
+                color: theme.palette.error.main,
+                fontWeight: 700,
+                fontSize: 12,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 0.8,
+                '&:hover': {
+                  bgcolor: alpha(theme.palette.error.main, 0.15),
+                  borderColor: theme.palette.error.main
+                },
+                '&:active': { transform: 'scale(0.98)' },
+                transition: 'all 0.15s'
+              }}
+            >
+              <WarningAmberRounded sx={{ fontSize: 15 }} />
+              {t('transaction.void_btn')}
+            </Box>
+          )}
+
           <Box
-            onClick={() => onVoid(detail.id)}
+            onClick={handleReprint}
             sx={{
+              flex: 1,
               py: 1.3,
               borderRadius: 2,
               textAlign: 'center',
-              border: `1px solid ${alpha(theme.palette.error.main, 0.4)}`,
-              bgcolor: alpha(theme.palette.error.main, 0.08),
+              border: `1px solid ${theme.palette.primary.main}`,
+              bgcolor: theme.palette.primary.main,
               cursor: 'pointer',
               fontFamily: 'Poppins, sans-serif',
-              color: theme.palette.error.main,
+              color: '#fff',
               fontWeight: 700,
               fontSize: 12,
               display: 'flex',
@@ -483,17 +626,16 @@ const DetailDialog = ({ detail, onClose, onVoid }) => {
               justifyContent: 'center',
               gap: 0.8,
               '&:hover': {
-                bgcolor: alpha(theme.palette.error.main, 0.15),
-                borderColor: theme.palette.error.main
+                bgcolor: theme.palette.primary.dark,
               },
               '&:active': { transform: 'scale(0.98)' },
               transition: 'all 0.15s'
             }}
           >
-            <WarningAmberRounded sx={{ fontSize: 15 }} />
-            {t('transaction.void_btn')}
+            <PrintOutlinedIcon sx={{ fontSize: 16 }} />
+            {t('pos.print_receipt', 'Cetak Struk')}
           </Box>
-        )}
+        </Box>
       </DialogContent>
     </Dialog>
   )
@@ -510,8 +652,10 @@ export const ListTransactionPage = () => {
     stats,
     search,
     setSearch,
-    tanggal,
-    setTanggal,
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
     page,
     setPage,
     LIMIT,
@@ -571,7 +715,7 @@ export const ListTransactionPage = () => {
         <StatsCard
           label={t('transaction.today_count')}
           value={stats.jumlah}
-          sub={`${t('transaction.date_label')} ${tanggal}`}
+          sub={`${startDate} s/d ${endDate}`}
         />
         <StatsCard
           label={t('transaction.today_revenue')}
@@ -796,27 +940,18 @@ export const ListTransactionPage = () => {
             }
           }}
         />
-        <TextField
-          size="small"
-          type="date"
-          value={fmtDateInput(tanggal)}
-          onChange={(e) => setTanggal(e.target.value)}
-          sx={{
-            width: 160,
-            '& .MuiOutlinedInput-root': {
-              bgcolor: theme.palette.custom.inputBg,
-              borderRadius: 2,
-              '& fieldset': { borderColor: theme.palette.custom.inputBorder },
-              '&:hover fieldset': { borderColor: theme.palette.custom.inputBorderHover },
-              '&.Mui-focused fieldset': { borderColor: 'primary.main' }
-            },
-            '& input': {
-              color: 'text.primary',
-              fontFamily: 'Poppins, sans-serif',
-              fontSize: 12,
-              colorScheme: 'dark'
-            }
-          }}
+        <DatePicker
+          placeholder="Tanggal Mulai"
+          value={fmtDateInput(startDate)}
+          onChange={(val) => setStartDate(val)}
+          sx={{ width: 140 }}
+        />
+        <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>-</Typography>
+        <DatePicker
+          placeholder="Tanggal Selesai"
+          value={fmtDateInput(endDate)}
+          onChange={(val) => setEndDate(val)}
+          sx={{ width: 140 }}
         />
         <Box sx={{ flex: 1 }} />
         <Typography

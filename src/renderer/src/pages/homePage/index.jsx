@@ -115,7 +115,7 @@ const OptionChip = ({ option, selected, onClick }) => {
 }
 
 // ─── CUSTOMIZE DIALOG ─────────────────────────────────────────────────────────
-const CustomizeDialog = ({ product, open, onClose, onConfirm }) => {
+const CustomizeDialog = ({ product, editItem, open, onClose, onConfirm }) => {
   const theme = useTheme()
   const { t } = useTranslation()
   const groups = product?.modifiers || []
@@ -125,9 +125,18 @@ const CustomizeDialog = ({ product, open, onClose, onConfirm }) => {
   const [note, setNote] = useState('')
   const [showNote, setShowNote] = useState(false)
   const [lastProductId, setLastProductId] = useState(null)
+  const [lastCartId, setLastCartId] = useState(null)
 
-  if (product && product.id !== lastProductId) {
+  if (editItem && editItem.cartId !== lastCartId) {
+    setLastCartId(editItem.cartId)
+    setLastProductId(product?.id)
+    setSelections(editItem.selections || {})
+    setQty(editItem.qty || 1)
+    setNote(editItem.note || '')
+    setShowNote(!!editItem.note)
+  } else if (!editItem && product && product.id !== lastProductId) {
     setLastProductId(product.id)
+    setLastCartId(null)
     setSelections({})
     setQty(1)
     setNote('')
@@ -177,9 +186,22 @@ const CustomizeDialog = ({ product, open, onClose, onConfirm }) => {
     return parts.join(', ')
   }
 
+  const buildModifiersArray = () => {
+    const mods = []
+    groups.forEach((g) => {
+      const sel = selections[g.id] || []
+      g.options
+        .filter((o) => sel.includes(o.id))
+        .forEach((o) => {
+          mods.push({ nama: o.emoji ? `${o.emoji} ${o.nama}` : o.nama, harga: o.harga_tambah || 0 })
+        })
+    })
+    return mods
+  }
+
   const handleConfirm = () => {
     onConfirm({
-      cartId: `${product.id}_${Date.now()}`,
+      cartId: editItem ? editItem.cartId : `${product.id}_${Date.now()}`,
       id: product.id,
       name: product.nama,
       image: product.images?.[0] ?? null,
@@ -188,7 +210,8 @@ const CustomizeDialog = ({ product, open, onClose, onConfirm }) => {
       qty,
       note: note.trim(),
       selections,
-      summaryLabel: buildSummaryLabel()
+      summaryLabel: buildSummaryLabel(),
+      modifiers: buildModifiersArray()
     })
     onClose()
   }
@@ -685,11 +708,20 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
       const res = await transactionService.create(payload)
       if (res.ok) {
         setDone(res.data)
+        let appVersion = ''
+        try {
+          if (window.api && window.api.getAppVersion) {
+            appVersion = await window.api.getAppVersion()
+          }
+        } catch (err) {
+          appVersion = 'unknown'
+        }
+
         // Background logging to external endpoint (silent)
         window.api.logAction({
           type: 'transaction',
           payload: res.data,
-          description: `Transaksi baru dari kasir ${payload.kasir}`
+          description: `Transaksi baru dari kasir ${payload.kasir} (v${appVersion})`
         })
       } else {
         show({
@@ -1554,7 +1586,7 @@ export const POSNavbar = ({ itemCount = 0, onClear }) => {
 }
 
 // ─── CART PANEL ───────────────────────────────────────────────────────────────
-const CartPanel = ({ items, onRemove, onCheckout }) => {
+const CartPanel = ({ items, onRemove, onEdit, onCheckout }) => {
   const theme = useTheme()
   const { t } = useTranslation()
   const total = items.reduce((s, i) => s + i.price * i.qty, 0)
@@ -1607,12 +1639,14 @@ const CartPanel = ({ items, onRemove, onCheckout }) => {
             {items.map((item) => (
               <Box
                 key={item.cartId}
+                onClick={() => onEdit && onEdit(item)}
                 sx={{
                   p: 1.5,
                   mb: 1,
                   borderRadius: 2,
                   bgcolor: theme.palette.custom.elevation1,
                   border: `1px solid ${theme.palette.divider}`,
+                  cursor: onEdit ? 'pointer' : 'default',
                   '&:hover': { bgcolor: theme.palette.custom.subtle },
                   transition: 'all 0.15s'
                 }}
@@ -1690,7 +1724,22 @@ const CartPanel = ({ items, onRemove, onCheckout }) => {
                         {fmt(item.price * item.qty)}
                       </Typography>
                     </Box>
-                    {item.summaryLabel && (
+                    {item.modifiers && item.modifiers.length > 0 ? (
+                      <Box sx={{ mt: 0.5, pl: 1, borderLeft: `2px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+                        {item.modifiers.map((mod, i) => (
+                          <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.2 }}>
+                            <Typography sx={{ color: 'text.disabled', fontFamily: 'Poppins, sans-serif', fontSize: 10 }}>
+                              + {mod.nama}
+                            </Typography>
+                            {mod.harga > 0 && (
+                              <Typography sx={{ color: 'text.disabled', fontFamily: 'Poppins, sans-serif', fontSize: 10 }}>
+                                {fmt(mod.harga)}
+                              </Typography>
+                            )}
+                          </Box>
+                        ))}
+                      </Box>
+                    ) : item.summaryLabel ? (
                       <Typography
                         sx={{
                           color: 'text.disabled',
@@ -1702,7 +1751,7 @@ const CartPanel = ({ items, onRemove, onCheckout }) => {
                       >
                         {item.summaryLabel}
                       </Typography>
-                    )}
+                    ) : null}
                     {item.note && (
                       <Typography
                         sx={{
@@ -1731,10 +1780,13 @@ const CartPanel = ({ items, onRemove, onCheckout }) => {
                           fontSize: 10
                         }}
                       >
-                        {fmt(item.price)} × {item.qty}
+                        {fmt(item.basePrice ?? item.price)} × {item.qty}
                       </Typography>
                       <Typography
-                        onClick={() => onRemove(item.cartId)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onRemove(item.cartId)
+                        }}
                         sx={{
                           color: alpha(theme.palette.error.main, 0.55),
                           fontFamily: 'Poppins, sans-serif',
@@ -1811,6 +1863,7 @@ export const HomePage = () => {
   const [viewMode, setViewMode] = useState('grid')
   const [dialogProduct, setDialogProduct] = useState(null)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
+  const [editCartItem, setEditCartItem] = useState(null)
   const [products, setProducts] = useState([])
   const [modifierMap, setModifierMap] = useState({})
   const [loading, setLoading] = useState(true)
@@ -1873,7 +1926,7 @@ export const HomePage = () => {
 
   const filtered = useMemo(() => {
     const searchLower = search.toLowerCase().trim()
-    return products
+    const result = products
       .filter((p) => {
         const matchesCategory = activeCategory === ALL_CATEGORY || p.kategori === activeCategory
         if (!matchesCategory) return false
@@ -1887,6 +1940,14 @@ export const HomePage = () => {
         return matchesNama || matchesKode || matchesBarcode
       })
       .map((p) => ({ ...p, modifiers: modifierMap[p.id] || [] }))
+
+    return result.sort((a, b) => {
+      const aStok = Number(a.stok || 0)
+      const bStok = Number(b.stok || 0)
+      if (aStok <= 0 && bStok > 0) return 1
+      if (bStok <= 0 && aStok > 0) return -1
+      return 0
+    })
   }, [products, modifierMap, activeCategory, search, ALL_CATEGORY])
 
   const handleAutoAdd = (matchedProduct) => {
@@ -2258,6 +2319,13 @@ export const HomePage = () => {
           <CartPanel
             items={cart}
             onRemove={(cartId) => setCart((prev) => prev.filter((i) => i.cartId !== cartId))}
+            onEdit={(item) => {
+              const prod = products.find((p) => p.id === item.id)
+              if (prod) {
+                setDialogProduct({ ...prod, modifiers: modifierMap[prod.id] || [] })
+                setEditCartItem(item)
+              }
+            }}
             onCheckout={() => setCheckoutOpen(true)}
           />
         </Box>
@@ -2265,9 +2333,22 @@ export const HomePage = () => {
 
       <CustomizeDialog
         product={dialogProduct}
+        editItem={editCartItem}
         open={!!dialogProduct}
-        onClose={() => setDialogProduct(null)}
-        onConfirm={(item) => setCart((prev) => [...prev, item])}
+        onClose={() => {
+          setDialogProduct(null)
+          setEditCartItem(null)
+        }}
+        onConfirm={(item) => {
+          setCart((prev) => {
+            if (editCartItem) {
+              return prev.map((c) => c.cartId === item.cartId ? item : c)
+            }
+            return [...prev, item]
+          })
+          setDialogProduct(null)
+          setEditCartItem(null)
+        }}
       />
       <CheckoutDialog
         open={checkoutOpen}

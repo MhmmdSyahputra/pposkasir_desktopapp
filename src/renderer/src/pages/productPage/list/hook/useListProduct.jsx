@@ -20,7 +20,16 @@ export const useListProduct = () => {
   const fetchData = useCallback(async (q, kat) => {
     setLoading(true)
     const res = await productService.getAll({ search: q, kategori: kat })
-    if (res.ok) setRows(res.data)
+    if (res.ok) {
+      const sorted = [...res.data].sort((a, b) => {
+        const aStok = Number(a.stok || 0)
+        const bStok = Number(b.stok || 0)
+        if (aStok <= 0 && bStok > 0) return 1
+        if (bStok <= 0 && aStok > 0) return -1
+        return 0
+      })
+      setRows(sorted)
+    }
     setLoading(false)
   }, [])
 

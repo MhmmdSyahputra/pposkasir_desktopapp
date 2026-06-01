@@ -148,7 +148,16 @@ export const useEditProduct = () => {
     if (res.ok) {
       navigate('/produk/list')
     } else {
-      setErrors({ general: res.error ?? 'Gagal menyimpan perubahan' })
+      const errStr = String(res.error || '').toLowerCase()
+      if (errStr.includes('unique') || errStr.includes('constraint')) {
+        if (errStr.includes('barcode')) {
+          setErrors({ barcode: 'Barcode/SKU ini sudah digunakan' })
+        } else {
+          setErrors({ general: 'Data sudah ada (duplikat)' })
+        }
+      } else {
+        setErrors({ general: res.error ?? 'Gagal menyimpan perubahan' })
+      }
     }
   }
 

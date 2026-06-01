@@ -175,14 +175,16 @@ export function transactionGetById(id) {
  * @param {object} opts
  * @param {string} [opts.search]      – no_transaksi or kasir
  * @param {string} [opts.status]      – selesai | batal
- * @param {string} [opts.tanggal]     – exact date YYYY-MM-DD
+ * @param {string} [opts.startDate]   – exact date YYYY-MM-DD
+ * @param {string} [opts.endDate]     – exact date YYYY-MM-DD
  * @param {number} [opts.limit]
  * @param {number} [opts.offset]
  */
 export function transactionGetAll({
   search = '',
   status = '',
-  tanggal = '',
+  startDate = '',
+  endDate = '',
   limit = 50,
   offset = 0
 } = {}) {
@@ -198,9 +200,13 @@ export function transactionGetAll({
     conditions.push(`t.status = @status`)
     params.status = status
   }
-  if (tanggal) {
-    conditions.push(`date(t.created_at) = @tanggal`)
-    params.tanggal = tanggal
+  if (startDate) {
+    conditions.push(`date(t.created_at) >= @startDate`)
+    params.startDate = startDate
+  }
+  if (endDate) {
+    conditions.push(`date(t.created_at) <= @endDate`)
+    params.endDate = endDate
   }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -221,12 +227,21 @@ export function transactionGetAll({
   return { rows, total }
 }
 
-export function transactionGetStats({ tanggal = '' } = {}) {
+export function transactionGetStats({ startDate = '', endDate = '' } = {}) {
   const db = getDb()
-  const where = tanggal
-    ? `WHERE date(t.created_at) = @tanggal AND t.status = 'selesai'`
-    : `WHERE t.status = 'selesai'`
-  const params = tanggal ? { tanggal } : {}
+  const conditions = [`t.status = 'selesai'`]
+  const params = {}
+
+  if (startDate) {
+    conditions.push(`date(t.created_at) >= @startDate`)
+    params.startDate = startDate
+  }
+  if (endDate) {
+    conditions.push(`date(t.created_at) <= @endDate`)
+    params.endDate = endDate
+  }
+
+  const where = `WHERE ${conditions.join(' AND ')}`
 
   const summary = db
     .prepare(
