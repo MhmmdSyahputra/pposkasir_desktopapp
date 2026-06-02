@@ -478,5 +478,12 @@
     "desc_min_stock": "Stock alert limit. Default: 0.",
     "desc_barcode": "Unique barcode (if any).",
     "desc_extra": "Additional notes."
+  },
+  "rating": {
+    "title": "Enjoying P-POS Kasir?",
+    "description": "Help us keep growing by leaving your best 5-star rating on the Microsoft Store. Your support means a lot to us!",
+    "button_rate": "Rate Us Now",
+    "button_later": "Maybe Later",
+    "button_never": "Don't Ask Again"
   }
 }

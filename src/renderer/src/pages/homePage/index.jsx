@@ -19,7 +19,8 @@ import {
   Dialog,
   DialogContent,
   Divider,
-  Collapse
+  Collapse,
+  Stack
 } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search'
 import GridViewIcon from '@mui/icons-material/GridView'
@@ -35,6 +36,7 @@ import CheckIcon from '@mui/icons-material/Check'
 import NotesIcon from '@mui/icons-material/Notes'
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
 import MonitorRoundedIcon from '@mui/icons-material/MonitorRounded'
+import StarRoundedIcon from '@mui/icons-material/StarRounded'
 import { useTranslation } from 'react-i18next'
 import { useNotifier } from '../../components/core/notificationProvider'
 import { productService } from '../../services/productService'
@@ -1342,6 +1344,156 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
   )
 }
 
+// ─── RATING DIALOG ────────────────────────────────────────────────────────────
+const RatingDialog = ({ open, onClose }) => {
+  const theme = useTheme()
+  const { t } = useTranslation()
+  const [hoverRating, setHoverRating] = useState(0)
+
+  const handleRate = () => {
+    // Open the Windows Store link directly using ProductId
+    window.open('ms-windows-store://review/?ProductId=9MW3S77V0PBQ', '_blank')
+    localStorage.setItem('ppos.rating.prompted', 'true')
+    onClose()
+  }
+
+  const handleLater = () => {
+    // Reset counter to 0 so it prompts again after another 5 transactions
+    localStorage.setItem('ppos.rating.transactionCount', '0')
+    onClose()
+  }
+
+  const handleNever = () => {
+    // Never ask again
+    localStorage.setItem('ppos.rating.prompted', 'true')
+    onClose()
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={handleLater}
+      maxWidth="xs"
+      fullWidth
+      PaperProps={{
+        sx: {
+          bgcolor: theme.palette.background.paper,
+          border: `1px solid ${theme.palette.divider}`,
+          borderRadius: 3.5,
+          backgroundImage: `radial-gradient(ellipse at 50% 0%, ${alpha(theme.palette.primary.main, 0.1)} 0%, transparent 60%)`,
+          p: 3,
+          textAlign: 'center'
+        }
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        {[1, 2, 3, 4, 5].map((star) => (
+          <StarRoundedIcon
+            key={star}
+            onMouseEnter={() => setHoverRating(star)}
+            onMouseLeave={() => setHoverRating(0)}
+            onClick={handleRate}
+            sx={{
+              fontSize: 40,
+              color: star <= (hoverRating || 5) ? '#FFC107' : theme.palette.text.disabled,
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+              transform: star <= hoverRating ? 'scale(1.15)' : 'scale(1)',
+              '&:hover': {
+                transform: 'scale(1.2)'
+              }
+            }}
+          />
+        ))}
+      </Box>
+
+      <Typography
+        sx={{
+          fontFamily: 'Poppins, sans-serif',
+          fontSize: 16,
+          fontWeight: 700,
+          color: 'text.primary',
+          mb: 1
+        }}
+      >
+        {t('rating.title', 'Suka dengan P-POS Kasir?')}
+      </Typography>
+
+      <Typography
+        sx={{
+          fontFamily: 'Poppins, sans-serif',
+          fontSize: 12.5,
+          color: 'text.secondary',
+          lineHeight: 1.5,
+          mb: 3
+        }}
+      >
+        {t(
+          'rating.description',
+          'Bantu kami untuk terus tumbuh dengan memberikan ulasan terbaik Anda di Microsoft Store. Dukungan Anda sangat berarti!'
+        )}
+      </Typography>
+
+      <Stack spacing={1}>
+        <Button
+          fullWidth
+          variant="contained"
+          onClick={handleRate}
+          sx={{
+            py: 1.2,
+            borderRadius: 2,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: 13,
+            fontWeight: 700,
+            textTransform: 'none',
+            boxShadow: 'none',
+            '&:hover': {
+              boxShadow: 'none'
+            }
+          }}
+        >
+          {t('rating.button_rate', 'Beri Rating Sekarang')}
+        </Button>
+
+        <Button
+          fullWidth
+          variant="outlined"
+          onClick={handleLater}
+          sx={{
+            py: 1,
+            borderRadius: 2,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: 12.5,
+            fontWeight: 600,
+            textTransform: 'none'
+          }}
+        >
+          {t('rating.button_later', 'Nanti Saja')}
+        </Button>
+
+        <Button
+          fullWidth
+          variant="text"
+          onClick={handleNever}
+          sx={{
+            py: 0.8,
+            fontFamily: 'Poppins, sans-serif',
+            fontSize: 11.5,
+            color: 'text.disabled',
+            textTransform: 'none',
+            '&:hover': {
+              color: 'text.secondary',
+              bgcolor: 'transparent'
+            }
+          }}
+        >
+          {t('rating.button_never', 'Jangan Tanya Lagi')}
+        </Button>
+      </Stack>
+    </Dialog>
+  )
+}
+
 // ─── PRODUCT CARD ─────────────────────────────────────────────────────────────
 const ProductCard = ({ product, onSelect }) => {
   const theme = useTheme()
@@ -1533,8 +1685,8 @@ export const POSNavbar = ({ itemCount = 0, onClear }) => {
               {t('pos.order_menu')}
             </Typography>
             <Tooltip title="Buka Layar Pelanggan (Mirror)">
-              <IconButton 
-                sx={{ color: '#fff' }} 
+              <IconButton
+                sx={{ color: '#fff' }}
                 size="small"
                 onClick={() => {
                   if (window.api && window.api.windowManagement) {
@@ -1725,14 +1877,40 @@ const CartPanel = ({ items, onRemove, onEdit, onCheckout }) => {
                       </Typography>
                     </Box>
                     {item.modifiers && item.modifiers.length > 0 ? (
-                      <Box sx={{ mt: 0.5, pl: 1, borderLeft: `2px solid ${alpha(theme.palette.divider, 0.5)}` }}>
+                      <Box
+                        sx={{
+                          mt: 0.5,
+                          pl: 1,
+                          borderLeft: `2px solid ${alpha(theme.palette.divider, 0.5)}`
+                        }}
+                      >
                         {item.modifiers.map((mod, i) => (
-                          <Box key={i} sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.2 }}>
-                            <Typography sx={{ color: 'text.disabled', fontFamily: 'Poppins, sans-serif', fontSize: 10 }}>
+                          <Box
+                            key={i}
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              mb: 0.2
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                color: 'text.disabled',
+                                fontFamily: 'Poppins, sans-serif',
+                                fontSize: 10
+                              }}
+                            >
                               + {mod.nama}
                             </Typography>
                             {mod.harga > 0 && (
-                              <Typography sx={{ color: 'text.disabled', fontFamily: 'Poppins, sans-serif', fontSize: 10 }}>
+                              <Typography
+                                sx={{
+                                  color: 'text.disabled',
+                                  fontFamily: 'Poppins, sans-serif',
+                                  fontSize: 10
+                                }}
+                              >
                                 {fmt(mod.harga)}
                               </Typography>
                             )}
@@ -1867,12 +2045,28 @@ export const HomePage = () => {
   const [products, setProducts] = useState([])
   const [modifierMap, setModifierMap] = useState({})
   const [loading, setLoading] = useState(true)
+  const [ratingOpen, setRatingOpen] = useState(false)
+
+  const handleTransactionSuccess = () => {
+    const isPrompted = localStorage.getItem('ppos.rating.prompted') === 'true'
+    if (isPrompted) return
+
+    const count = parseInt(localStorage.getItem('ppos.rating.transactionCount') || '0', 10)
+    const nextCount = count + 1
+    localStorage.setItem('ppos.rating.transactionCount', nextCount.toString())
+
+    if (nextCount > 0 && nextCount % 5 === 0) {
+      setTimeout(() => {
+        setRatingOpen(true)
+      }, 1000)
+    }
+  }
 
   useEffect(() => {
     if (window.api && window.api.windowManagement) {
-      const subtotal = cart.reduce((s, i) => s + (i.price * i.qty), 0)
+      const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
       window.api.windowManagement.syncMirrorCart({
-        items: cart.map(c => ({
+        items: cart.map((c) => ({
           ...c,
           nama: c.name,
           hargaJual: c.price,
@@ -1885,7 +2079,6 @@ export const HomePage = () => {
       })
     }
   }, [cart])
-
 
   useEffect(() => {
     const load = async () => {
@@ -2342,7 +2535,7 @@ export const HomePage = () => {
         onConfirm={(item) => {
           setCart((prev) => {
             if (editCartItem) {
-              return prev.map((c) => c.cartId === item.cartId ? item : c)
+              return prev.map((c) => (c.cartId === item.cartId ? item : c))
             }
             return [...prev, item]
           })
@@ -2357,6 +2550,7 @@ export const HomePage = () => {
         onSuccess={async () => {
           setCart([])
           setCheckoutOpen(false)
+          handleTransactionSuccess()
 
           try {
             const prodRes = await productService.getAll({ aktif: 1 })
@@ -2379,6 +2573,7 @@ export const HomePage = () => {
           }
         }}
       />
+      <RatingDialog open={ratingOpen} onClose={() => setRatingOpen(false)} />
     </Box>
   )
 }

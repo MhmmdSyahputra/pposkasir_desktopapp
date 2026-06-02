@@ -478,5 +478,12 @@
     "desc_min_stock": "Batas peringatan stok. Default: 0.",
     "desc_barcode": "Kode barcode unik (jika ada).",
     "desc_extra": "Keterangan tambahan."
+  },
+  "rating": {
+    "title": "Suka dengan P-POS Kasir?",
+    "description": "Bantu kami untuk terus tumbuh dengan memberikan ulasan terbaik Anda di Microsoft Store. Dukungan Anda sangat berarti!",
+    "button_rate": "Beri Rating Sekarang",
+    "button_later": "Nanti Saja",
+    "button_never": "Jangan Tanya Lagi"
   }
 }
