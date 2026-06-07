@@ -60,7 +60,7 @@ export function createMirrorWindow() {
     height: 600,
     show: false,
     autoHideMenuBar: true,
-    titleBarStyle: 'default', // standard title bar for secondary display
+    frame: false,
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -71,6 +71,11 @@ export function createMirrorWindow() {
 
   mirrorWindow.on('ready-to-show', () => {
     mirrorWindow.show()
+  })
+
+  mirrorWindow.webContents.setWindowOpenHandler((details) => {
+    shell.openExternal(details.url)
+    return { action: 'deny' }
   })
 
   mirrorWindow.on('closed', () => {

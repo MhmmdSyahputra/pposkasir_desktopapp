@@ -16,6 +16,15 @@ export function registerWindowIpc() {
     }
   })
 
+  ipcMain.on('window-fullscreen', (event) => {
+    const window = BrowserWindow.fromWebContents(event.sender)
+    if (window?.isFullScreen()) {
+      window.setFullScreen(false)
+    } else {
+      window?.setFullScreen(true)
+    }
+  })
+
   ipcMain.on('window-close', (event) => {
     const window = BrowserWindow.fromWebContents(event.sender)
     window?.close()

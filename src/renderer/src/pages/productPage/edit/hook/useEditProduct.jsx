@@ -21,7 +21,9 @@ export const useEditProduct = () => {
     min_stok: '',
     barcode: '',
     deskripsi: '',
-    aktif: true
+    aktif: true,
+    is_bundle: false,
+    bundle_items: []
   })
   const [images, setImages] = useState([]) // current state (new + existing)
   const [origImages, setOrigImages] = useState([]) // snapshot at load time
@@ -32,6 +34,8 @@ export const useEditProduct = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
+  
+  const [allProducts, setAllProducts] = useState([])
 
   useEffect(() => {
     Promise.all([
@@ -39,8 +43,9 @@ export const useEditProduct = () => {
       categoryService.getAll(),
       unitService.getAll(),
       modifierService.getAll(),
-      modifierService.getProductGroups(Number(id))
-    ]).then(([pRes, cRes, uRes, mRes, pmRes]) => {
+      modifierService.getProductGroups(Number(id)),
+      productService.getAll({ search: '' })
+    ]).then(([pRes, cRes, uRes, mRes, pmRes, allPRes]) => {
       if (pRes.ok && pRes.data) {
         const d = pRes.data
         setForm({
@@ -54,7 +59,9 @@ export const useEditProduct = () => {
           min_stok: d.min_stok ?? '',
           barcode: d.barcode || '',
           deskripsi: d.deskripsi || '',
-          aktif: Boolean(d.aktif)
+          aktif: Boolean(d.aktif),
+          is_bundle: Boolean(d.is_bundle),
+          bundle_items: d.bundle_items || []
         })
         const imgs = imageService.parseImages(d.images)
         setImages(imgs)
@@ -64,6 +71,10 @@ export const useEditProduct = () => {
       if (uRes.ok) setUnits(uRes.data)
       if (mRes.ok) setModifierGroups(mRes.data)
       if (pmRes.ok) setSelectedModifierIds(pmRes.data.map((g) => g.id))
+      if (allPRes.ok) {
+        const singles = allPRes.data.filter((p) => !p.is_bundle && p.id !== Number(id))
+        setAllProducts(singles)
+      }
       setLoading(false)
     })
   }, [id])
@@ -79,6 +90,34 @@ export const useEditProduct = () => {
   }
 
   const handleToggleAktif = () => setForm((prev) => ({ ...prev, aktif: !prev.aktif }))
+
+  const handleToggleBundle = () => {
+    setForm((prev) => ({ ...prev, is_bundle: !prev.is_bundle }))
+  }
+
+  const addBundleItem = (product) => {
+    setForm((prev) => {
+      if (prev.bundle_items.find(i => i.product_id === product.id)) return prev
+      return {
+        ...prev,
+        bundle_items: [...prev.bundle_items, { product_id: product.id, product_nama: product.nama, qty: 1 }]
+      }
+    })
+  }
+
+  const removeBundleItem = (productId) => {
+    setForm((prev) => ({
+      ...prev,
+      bundle_items: prev.bundle_items.filter(i => i.product_id !== productId)
+    }))
+  }
+
+  const updateBundleItemQty = (productId, qty) => {
+    setForm((prev) => ({
+      ...prev,
+      bundle_items: prev.bundle_items.map(i => i.product_id === productId ? { ...i, qty: Number(qty) || 1 } : i)
+    }))
+  }
 
   const addImages = useCallback(
     (files) => {
@@ -138,7 +177,9 @@ export const useEditProduct = () => {
       barcode: form.barcode.trim(),
       deskripsi: form.deskripsi.trim(),
       aktif: form.aktif ? 1 : 0,
-      images: JSON.stringify(finalPaths)
+      images: JSON.stringify(finalPaths),
+      is_bundle: form.is_bundle ? 1 : 0,
+      bundle_items: form.is_bundle ? form.bundle_items : []
     })
 
     // Save modifier group links
@@ -226,6 +267,11 @@ export const useEditProduct = () => {
     createUnitQuick,
     loading,
     saving,
-    errors
+    errors,
+    allProducts,
+    handleToggleBundle,
+    addBundleItem,
+    removeBundleItem,
+    updateBundleItemQty
   }
 }

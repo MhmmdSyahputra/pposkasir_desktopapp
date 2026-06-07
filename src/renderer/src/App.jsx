@@ -8,6 +8,7 @@ import { NotificationProvider } from './components/core/notificationProvider'
 import { useAuth } from './context/authContext'
 import { LoginPage } from './pages/loginPage'
 import { MirrorPage } from './pages'
+import { PromotionPopup } from './components/core/promotionPopup'
 
 const query = new URLSearchParams(window.location.search)
 const initialRoute = query.get('route')
@@ -48,6 +49,7 @@ const SidebarLayout = ({ children }) => {
           {children}
         </Box>
       </Box>
+      <PromotionPopup />
     </Box>
   )
 }

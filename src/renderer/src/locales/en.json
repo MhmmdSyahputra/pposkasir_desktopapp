@@ -192,7 +192,13 @@
     "status_active_label": "Product Active",
     "status_inactive_label": "Product Inactive",
     "status_active_desc": "Product visible at checkout",
-    "status_inactive_desc": "Product hidden"
+    "status_inactive_desc": "Product hidden",
+    "bundle_settings": "Bundle Package Settings",
+    "is_bundle": "Set as Bundle Package",
+    "bundle_desc": "This product consists of several other individual products. Stock will be calculated from the smallest component.",
+    "bundle_search_placeholder": "Search and Add Products to Package",
+    "bundle_type_name": "Type product name...",
+    "bundle_empty": "No component products added yet."
   },
   "category": {
     "page_title": "Product Categories",

@@ -39,6 +39,7 @@ import {
 import { useAuth } from '../../context/authContext'
 import { useNotifier } from './notificationProvider'
 import { CONFIG } from '../../utils/config'
+import { PromotionSidebarBanner } from './promotionSidebarBanner'
 
 // ── sub-menu popover shown when sidebar is collapsed ─────────────────────
 const CollapsedSubMenu = ({ anchorEl, open, item, onClose, onOpen, navItemSx, theme }) => {
@@ -273,8 +274,8 @@ export const Sidebar = ({ routes = [] }) => {
   return (
     <Box
       sx={{
-        width: collapsed ? 84 : 220,
-        minWidth: collapsed ? 84 : 220,
+        width: collapsed ? 84 : 260,
+        minWidth: collapsed ? 84 : 260,
         height: '100vh',
         bgcolor: 'background.paper',
         borderRight: `1px solid ${theme.palette.divider}`,
@@ -601,6 +602,8 @@ export const Sidebar = ({ routes = [] }) => {
           pb: 1
         }}
       >
+        <PromotionSidebarBanner collapsed={collapsed} />
+
         <Tooltip
           title={collapsed ? 'Hubungi Developer' : ''}
           placement="right"

@@ -192,7 +192,13 @@
     "status_active_label": "Produk Aktif",
     "status_inactive_label": "Produk Nonaktif",
     "status_active_desc": "Produk tampil di kasir",
-    "status_inactive_desc": "Produk disembunyikan"
+    "status_inactive_desc": "Produk disembunyikan",
+    "bundle_settings": "Pengaturan Paket Bundle",
+    "is_bundle": "Jadikan Paket Bundle",
+    "bundle_desc": "Produk ini terdiri dari beberapa produk satuan lain. Stok akan dihitung dari komponen terkecil.",
+    "bundle_search_placeholder": "Cari dan Tambah Produk ke Paket",
+    "bundle_type_name": "Ketik nama produk...",
+    "bundle_empty": "Belum ada produk komponen yang ditambahkan."
   },
   "category": {
     "page_title": "Kategori Produk",

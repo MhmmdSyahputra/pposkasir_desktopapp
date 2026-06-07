@@ -806,17 +806,26 @@ export const ListProductPage = () => {
                           <Inventory2Outlined sx={{ fontSize: 16, color: 'text.disabled' }} />
                         )}
                       </Box>
-                      <Typography
-                        noWrap
-                        sx={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: 'inherit',
-                          fontFamily: 'inherit'
-                        }}
-                      >
-                        {row.nama}
-                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography
+                          noWrap
+                          sx={{
+                            fontSize: 13,
+                            fontWeight: 600,
+                            color: 'inherit',
+                            fontFamily: 'inherit'
+                          }}
+                        >
+                          {row.nama}
+                        </Typography>
+                        {Boolean(row.is_bundle) && (
+                          <Chip 
+                            label="Paket" 
+                            size="small" 
+                            sx={{ height: 16, fontSize: 9, alignSelf: 'flex-start', mt: 0.5, bgcolor: 'primary.main', color: '#fff', fontWeight: 600 }} 
+                          />
+                        )}
+                      </Box>
                     </Box>
                   </TableCell>
                   <TableCell sx={cellSx}>{row.kategori}</TableCell>

@@ -44,6 +44,7 @@ import { modifierService } from '../../services/modifierService'
 import { transactionService } from '../../services/transactionService'
 import { useAuth } from '../../context/authContext'
 import { receiptSettingsService } from '../../services/receiptSettingsService'
+import { promotionService } from '../../services/promotionService'
 import { ReceiptPreview } from '../../components/core/receiptPreview'
 
 // ─── FORMAT RUPIAH ─────────────────────────────────────────────────────────────
@@ -2046,6 +2047,19 @@ export const HomePage = () => {
   const [modifierMap, setModifierMap] = useState({})
   const [loading, setLoading] = useState(true)
   const [ratingOpen, setRatingOpen] = useState(false)
+  const [promoBanners, setPromoBanners] = useState([])
+  const [activePromoIndex, setActivePromoIndex] = useState(0)
+  const [isPromoCollapsed, setIsPromoCollapsed] = useState(false)
+
+  // Auto-slide effect for banners
+  useEffect(() => {
+    if (promoBanners.length > 1) {
+      const interval = setInterval(() => {
+        setActivePromoIndex((prev) => (prev + 1) % promoBanners.length)
+      }, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [promoBanners.length])
 
   const handleTransactionSuccess = () => {
     const isPrompted = localStorage.getItem('ppos.rating.prompted') === 'true'
@@ -2084,10 +2098,16 @@ export const HomePage = () => {
     const load = async () => {
       setLoading(true)
       try {
-        const [prodRes, modRes] = await Promise.all([
+        const [prodRes, modRes, banners] = await Promise.all([
           productService.getAll({ aktif: 1 }),
-          modifierService.getAllProductGroups()
+          modifierService.getAllProductGroups(),
+          promotionService.getBanners()
         ])
+        
+        if (banners && banners.length > 0) {
+          setPromoBanners(banners)
+        }
+
         if (prodRes.ok) {
           setProducts(
             prodRes.data.map((p) => ({
@@ -2230,6 +2250,176 @@ export const HomePage = () => {
             }
           }}
         >
+          {promoBanners.length > 0 && (() => {
+            const currentPromo = promoBanners[activePromoIndex]
+            
+            if (isPromoCollapsed) {
+              return (
+                <Box
+                  sx={{
+                    mb: 2.5,
+                    borderRadius: 2,
+                    p: 1.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    bgcolor: alpha(theme.palette.primary.main, 0.05),
+                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                    cursor: currentPromo.link_banner ? 'pointer' : 'default',
+                    transition: 'all 0.2s',
+                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) }
+                  }}
+                  onClick={() => {
+                    if (currentPromo.link_banner) {
+                      window.open(currentPromo.link_banner, '_blank')
+                    }
+                  }}
+                >
+                  <Box>
+                    <Typography sx={{ fontWeight: 700, fontSize: 13, color: 'primary.main', fontFamily: 'Poppins, sans-serif' }}>
+                      🌟 {currentPromo.title_banner}
+                    </Typography>
+                  </Box>
+                  <Button
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setIsPromoCollapsed(false)
+                    }}
+                    sx={{ textTransform: 'none', fontSize: 11, minWidth: 'auto', p: 0.5, px: 1.5, borderRadius: 1.5 }}
+                  >
+                    Lihat Banner
+                  </Button>
+                </Box>
+              )
+            }
+
+            return (
+              <Box
+                sx={{
+                  mb: 2.5,
+                  borderRadius: 2.5,
+                  overflow: 'hidden',
+                  position: 'relative',
+                  bgcolor: theme.palette.custom.inputBg,
+                  border: `1px solid ${theme.palette.divider}`,
+                  cursor: currentPromo.link_banner ? 'pointer' : 'default',
+                  '&:hover .promo-overlay': { opacity: 1 },
+                  '&:hover .promo-close-btn': { opacity: 1 }
+                }}
+                onClick={() => {
+                  if (currentPromo.link_banner) {
+                    window.open(currentPromo.link_banner, '_blank')
+                  }
+                }}
+              >
+                {/* Collapse Button */}
+                <IconButton
+                  size="small"
+                  className="promo-close-btn"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsPromoCollapsed(true)
+                  }}
+                  sx={{
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    zIndex: 10,
+                    bgcolor: 'rgba(0,0,0,0.4)',
+                    color: '#fff',
+                    opacity: 0,
+                    transition: 'opacity 0.2s ease, background-color 0.2s',
+                    '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                    width: 28,
+                    height: 28
+                  }}
+                >
+                  <CloseIcon sx={{ fontSize: 16 }} />
+                </IconButton>
+
+                {currentPromo.image ? (
+                  <Box
+                    component="img"
+                    key={currentPromo.id}
+                    src={currentPromo.image}
+                    sx={{
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: '3 / 1',
+                      objectFit: 'cover',
+                      display: 'block',
+                      animation: 'fadeIn 0.5s ease-in-out',
+                      '@keyframes fadeIn': {
+                        '0%': { opacity: 0.5 },
+                        '100%': { opacity: 1 }
+                      }
+                    }}
+                  />
+                ) : (
+                  <Box sx={{ p: 2.5, height: 'auto', aspectRatio: '3 / 1', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5, fontFamily: 'Poppins, sans-serif' }}>
+                      {currentPromo.title_banner}
+                    </Typography>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontFamily: 'Poppins, sans-serif' }}>
+                      {currentPromo.description_banner}
+                    </Typography>
+                  </Box>
+                )}
+                {currentPromo.link_banner && (
+                  <Box
+                    className="promo-overlay"
+                    sx={{
+                      position: 'absolute',
+                      inset: 0,
+                      bgcolor: 'rgba(0,0,0,0.1)',
+                      opacity: 0,
+                      transition: 'opacity 0.2s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  />
+                )}
+
+                {/* Pagination Dots */}
+                {promoBanners.length > 1 && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      bottom: 8,
+                      left: 0,
+                      right: 0,
+                      display: 'flex',
+                      justifyContent: 'center',
+                      gap: 0.8,
+                      zIndex: 2
+                    }}
+                  >
+                    {promoBanners.map((_, idx) => (
+                      <Box
+                        key={idx}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setActivePromoIndex(idx)
+                        }}
+                        sx={{
+                          width: activePromoIndex === idx ? 16 : 6,
+                          height: 6,
+                          borderRadius: 3,
+                          bgcolor: activePromoIndex === idx ? theme.palette.primary.main : alpha('#fff', 0.6),
+                          transition: 'all 0.3s ease',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                        }}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Box>
+            )
+          })()}
+
           <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
             <TextField
               size="small"

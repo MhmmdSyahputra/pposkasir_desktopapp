@@ -9,9 +9,12 @@ import {
   Slide,
   ThemeProvider,
   createTheme,
-  CssBaseline
+  CssBaseline,
+  IconButton
 } from '@mui/material'
+import { Minimize, Fullscreen, Close } from '@mui/icons-material'
 import pposLogo from '../../../../../resources/icon.png'
+import { promotionService } from '../../services/promotionService'
 
 
 // We force a dark theme for the mirror display for a premium aesthetic
@@ -42,6 +45,34 @@ export const MirrorPage = () => {
     finalTotal: 0
   })
 
+  const [banners, setBanners] = useState([])
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
+
+  useEffect(() => {
+    // Fetch banners
+    const fetchBanners = async () => {
+      try {
+        const data = await promotionService.getBanners();
+        if (data && data.length > 0) {
+          setBanners(data);
+        }
+      } catch (err) {
+        console.error('Failed to fetch banners for mirror', err);
+      }
+    };
+    fetchBanners();
+  }, [])
+
+  useEffect(() => {
+    if (banners.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
+    }, 5000); // Rotate every 5 seconds
+    
+    return () => clearInterval(interval);
+  }, [banners]);
+
   useEffect(() => {
     // Listen for updates from the main window
     const removeListener = window.api.windowManagement.onMirrorCartUpdated((data) => {
@@ -63,7 +94,20 @@ export const MirrorPage = () => {
   return (
     <ThemeProvider theme={mirrorTheme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', position: 'relative' }}>
+        
+        {/* INVISIBLE DRAG BAR (Top Edge) */}
+        <Box 
+          sx={{ 
+            position: 'absolute', 
+            top: 0, left: 0, right: 0, 
+            height: 40, 
+            WebkitAppRegion: 'drag', 
+            zIndex: 9999,
+            backgroundColor: 'transparent'
+          }} 
+        />
+
         {/* Left Side: Brand / Idle Screen */}
         <Box
           sx={{
@@ -71,37 +115,65 @@ export const MirrorPage = () => {
             position: 'relative',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',
-            alignItems: 'center',
             background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-            borderRight: '1px solid rgba(255, 255, 255, 0.1)',
-            p: 4
+            borderRight: '1px solid rgba(255, 255, 255, 0.1)'
           }}
         >
+          {/* Top Banner, Full Width but with Card Styling */}
+          {banners.length > 0 && banners[currentBannerIndex]?.image && (
+            <Box sx={{ width: '100%', p: 4, pb: 0, zIndex: 10 }}>
+              <Fade in={true} timeout={800} key={`banner-${currentBannerIndex}`}>
+                <Box
+                  component="img"
+                  src={banners[currentBannerIndex].image}
+                  alt="Promo"
+                  onClick={() => {
+                    if (banners[currentBannerIndex].link_banner) {
+                      window.open(banners[currentBannerIndex].link_banner, '_blank');
+                    }
+                  }}
+                  sx={{
+                    width: '100%',
+                    height: 'auto',
+                    borderRadius: 4,
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    boxShadow: '0 15px 40px rgba(0,0,0,0.5)',
+                    cursor: banners[currentBannerIndex].link_banner ? 'pointer' : 'default',
+                    transition: 'transform 0.2s',
+                    '&:hover': banners[currentBannerIndex].link_banner ? {
+                      transform: 'scale(1.01)'
+                    } : {}
+                  }}
+                />
+              </Fade>
+            </Box>
+          )}
+
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: 4 }}>
           {items.length === 0 ? (
             <Fade in={true} timeout={1000}>
               <Box sx={{ textAlign: 'center' }}>
                 <Box
                   sx={{
-                    width: 130,
-                    height: 130,
+                    width: 110,
+                    height: 110,
                     borderRadius: '50%',
                     background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    mb: 4,
+                    mb: 3,
                     mx: 'auto',
                     boxShadow: '0 0 40px rgba(79, 172, 254, 0.4)'
                   }}
                 >
-                  <img src={pposLogo} alt="P-POS Logo" style={{ width: 80, height: 80, objectFit: 'contain' }} />
+                  <img src={pposLogo} alt="P-POS Logo" style={{ width: 60, height: 60, objectFit: 'contain' }} />
                 </Box>
-                <Typography variant="h3" sx={{ fontWeight: 800, mb: 2, letterSpacing: '-0.5px' }}>
+                <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.5px' }}>
                   Selamat Datang
                 </Typography>
-                <Typography variant="h6" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+                <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 400 }}>
                   Silakan sampaikan pesanan Anda pada kasir.
                 </Typography>
               </Box>
@@ -122,11 +194,12 @@ export const MirrorPage = () => {
               </Box>
             </Fade>
           )}
+          </Box>
 
           <Box 
             sx={{ 
-              position: 'absolute', 
-              bottom: 30, 
+              mt: 'auto',
+              pb: 4,
               display: 'flex', 
               flexDirection: 'column',
               alignItems: 'center', 
@@ -155,13 +228,37 @@ export const MirrorPage = () => {
         <Box
           sx={{
             width: { xs: '45%', md: '400px', lg: '450px' },
+            height: '100%',
             bgcolor: 'background.paper',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '-10px 0 30px rgba(0,0,0,0.5)'
+            boxShadow: '-10px 0 30px rgba(0,0,0,0.5)',
+            position: 'relative'
           }}
         >
-          <Box sx={{ p: 3, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          {/* FLOATING WINDOW CONTROLS */}
+          <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', zIndex: 10000, WebkitAppRegion: 'no-drag' }}>
+            <IconButton 
+              onClick={() => window.electron?.ipcRenderer.send('window-minimize')} 
+              sx={{ borderRadius: 0, width: 46, height: 40, color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}
+            >
+              <Minimize sx={{ fontSize: 18, mb: 1.5 }} />
+            </IconButton>
+            <IconButton 
+              onClick={() => window.electron?.ipcRenderer.send('window-fullscreen')} 
+              sx={{ borderRadius: 0, width: 46, height: 40, color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}
+            >
+              <Fullscreen sx={{ fontSize: 22 }} />
+            </IconButton>
+            <IconButton 
+              onClick={() => window.electron?.ipcRenderer.send('window-close')} 
+              sx={{ borderRadius: 0, width: 46, height: 40, color: 'text.secondary', '&:hover': { bgcolor: '#e81123', color: '#fff' } }}
+            >
+              <Close sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Box>
+
+          <Box sx={{ p: 3, pt: 5, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Detail Pesanan
             </Typography>

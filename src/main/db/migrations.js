@@ -235,5 +235,25 @@ export const migrations = [
     up: (db) => {
       db.exec(`ALTER TABLE transactions ADD COLUMN nama_pelanggan TEXT DEFAULT ''`)
     }
+  },
+  {
+    version: 9,
+    description: 'Add product bundles feature',
+    up: (db) => {
+      db.exec(`
+        ALTER TABLE products ADD COLUMN is_bundle INTEGER NOT NULL DEFAULT 0;
+
+        CREATE TABLE IF NOT EXISTS product_bundle_items (
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          bundle_id  INTEGER NOT NULL,
+          product_id INTEGER NOT NULL,
+          qty        REAL    NOT NULL DEFAULT 1,
+          FOREIGN KEY(bundle_id) REFERENCES products(id) ON DELETE CASCADE,
+          FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_bundle_items_bundle_id ON product_bundle_items(bundle_id);
+      `)
+    }
   }
 ]

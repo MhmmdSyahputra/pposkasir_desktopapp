@@ -17,7 +17,9 @@ const defaultForm = {
   min_stok: '',
   barcode: '',
   deskripsi: '',
-  aktif: true
+  aktif: true,
+  is_bundle: false,
+  bundle_items: []
 }
 
 export const useCreateProduct = () => {
@@ -32,6 +34,7 @@ export const useCreateProduct = () => {
   const [errors, setErrors] = useState({})
 
   const [lastProducts, setLastProducts] = useState([])
+  const [allProducts, setAllProducts] = useState([])
 
   useEffect(() => {
     categoryService.getAll({ search: '' }).then((r) => {
@@ -45,6 +48,9 @@ export const useCreateProduct = () => {
     })
     productService.getAll({ search: '' }).then((r) => {
       if (r.ok) {
+        // filter out bundles to avoid nested bundles
+        const singles = r.data.filter(p => !p.is_bundle)
+        setAllProducts(singles)
         const sorted = r.data.sort((a, b) => b.id - a.id).slice(0, 5)
         setLastProducts(sorted)
       }
@@ -63,6 +69,34 @@ export const useCreateProduct = () => {
 
   const handleToggleAktif = () => {
     setForm((prev) => ({ ...prev, aktif: !prev.aktif }))
+  }
+
+  const handleToggleBundle = () => {
+    setForm((prev) => ({ ...prev, is_bundle: !prev.is_bundle }))
+  }
+
+  const addBundleItem = (product) => {
+    setForm((prev) => {
+      if (prev.bundle_items.find(i => i.product_id === product.id)) return prev
+      return {
+        ...prev,
+        bundle_items: [...prev.bundle_items, { product_id: product.id, product_nama: product.nama, qty: 1 }]
+      }
+    })
+  }
+
+  const removeBundleItem = (productId) => {
+    setForm((prev) => ({
+      ...prev,
+      bundle_items: prev.bundle_items.filter(i => i.product_id !== productId)
+    }))
+  }
+
+  const updateBundleItemQty = (productId, qty) => {
+    setForm((prev) => ({
+      ...prev,
+      bundle_items: prev.bundle_items.map(i => i.product_id === productId ? { ...i, qty: Number(qty) || 1 } : i)
+    }))
   }
 
   const addImages = useCallback(
@@ -111,7 +145,9 @@ export const useCreateProduct = () => {
       min_stok: Number(form.min_stok) || 0,
       barcode: form.barcode.trim(),
       deskripsi: form.deskripsi.trim(),
-      aktif: form.aktif ? 1 : 0
+      aktif: form.aktif ? 1 : 0,
+      is_bundle: form.is_bundle ? 1 : 0,
+      bundle_items: form.is_bundle ? form.bundle_items : []
     })
 
     if (!res.ok) {
@@ -207,6 +243,11 @@ export const useCreateProduct = () => {
     createUnitQuick,
     saving,
     errors,
-    lastProducts
+    lastProducts,
+    allProducts,
+    handleToggleBundle,
+    addBundleItem,
+    removeBundleItem,
+    updateBundleItemQty
   }
 }

@@ -21,7 +21,9 @@ import {
   Tooltip,
   Typography,
   alpha,
-  useTheme
+  useTheme,
+  IconButton,
+  Autocomplete
 } from '@mui/material'
 import Chip from '@mui/material/Chip'
 import {
@@ -103,7 +105,12 @@ export const EditProductPage = () => {
     selectedModifierIds,
     toggleModifier,
     createCategoryQuick,
-    createUnitQuick
+    createUnitQuick,
+    allProducts,
+    handleToggleBundle,
+    addBundleItem,
+    removeBundleItem,
+    updateBundleItemQty
   } = useEditProduct()
 
   const fileInputRef = useRef(null)
@@ -467,35 +474,37 @@ export const EditProductPage = () => {
             </Stack>
 
             {/* Stok + Minimal Stok */}
-            <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-              <TextField
-                label={t('product.current_stock')}
-                size="medium"
-                type="text"
-                fullWidth
-                value={form.stok}
-                onChange={handleChange('stok')}
-                sx={inputSx}
-              />
-              <TextField
-                label={t('product.min_stock')}
-                size="medium"
-                type="text"
-                fullWidth
-                value={form.min_stok}
-                onChange={handleChange('min_stok')}
-                sx={inputSx}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <Tooltip title={t('product.min_stock_hint')} placement="top">
-                        <InfoOutlined sx={{ color: 'text.disabled', fontSize: 16 }} />
-                      </Tooltip>
-                    </InputAdornment>
-                  )
-                }}
-              />
-            </Stack>
+            {!form.is_bundle && (
+              <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+                <TextField
+                  label={t('product.current_stock')}
+                  size="medium"
+                  type="text"
+                  fullWidth
+                  value={form.stok}
+                  onChange={handleChange('stok')}
+                  sx={inputSx}
+                />
+                <TextField
+                  label={t('product.min_stock')}
+                  size="medium"
+                  type="text"
+                  fullWidth
+                  value={form.min_stok}
+                  onChange={handleChange('min_stok')}
+                  sx={inputSx}
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <Tooltip title={t('product.min_stock_hint')} placement="top">
+                          <InfoOutlined sx={{ color: 'text.disabled', fontSize: 16 }} />
+                        </Tooltip>
+                      </InputAdornment>
+                    )
+                  }}
+                />
+              </Stack>
+            )}
 
             <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
               <TextField
@@ -533,6 +542,70 @@ export const EditProductPage = () => {
               >
                 {errors.general}
               </Typography>
+            )}
+          </SectionCard>
+
+          {/* ── Paket Bundle ────────────────────────── */}
+          <SectionCard title={t('product.bundle_settings')}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: form.is_bundle ? 2 : 0 }}>
+              <Box>
+                <Typography sx={{ fontSize: 14, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
+                  {t('product.is_bundle')}
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: 'text.disabled', fontFamily: 'Poppins, sans-serif' }}>
+                  {t('product.bundle_desc')}
+                </Typography>
+              </Box>
+              <Switch checked={form.is_bundle} onChange={handleToggleBundle} color="primary" />
+            </Box>
+
+            {form.is_bundle && (
+              <Box sx={{ mt: 2, pt: 2, borderTop: `1px solid ${theme.palette.divider}` }}>
+                <Autocomplete
+                  options={allProducts}
+                  getOptionLabel={(option) => `${option.kode} - ${option.nama}`}
+                  onChange={(_, val) => {
+                    if (val) addBundleItem(val)
+                  }}
+                  renderInput={(params) => (
+                    <TextField 
+                      {...params} 
+                      label={t('product.bundle_search_placeholder')} 
+                      placeholder={t('product.bundle_type_name')}
+                      sx={inputSx}
+                    />
+                  )}
+                  sx={{ mb: 2 }}
+                />
+
+                {form.bundle_items.length === 0 ? (
+                  <Typography sx={{ fontSize: 12, color: 'text.disabled', textAlign: 'center', py: 2 }}>
+                    {t('product.bundle_empty')}
+                  </Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {form.bundle_items.map((item) => (
+                      <Box key={item.product_id} sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5, bgcolor: theme.palette.custom.inputBg }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ fontSize: 13, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>{item.product_nama}</Typography>
+                        </Box>
+                        <TextField
+                          type="number"
+                          size="small"
+                          label="Qty"
+                          value={item.qty}
+                          onChange={(e) => updateBundleItemQty(item.product_id, e.target.value)}
+                          sx={{ width: 80, ...inputSx }}
+                          inputProps={{ min: 1 }}
+                        />
+                        <IconButton size="small" color="error" onClick={() => removeBundleItem(item.product_id)}>
+                          <DeleteRounded fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
             )}
           </SectionCard>
 

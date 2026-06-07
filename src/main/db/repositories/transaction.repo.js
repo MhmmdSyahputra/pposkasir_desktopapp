@@ -95,13 +95,14 @@ export function transactionCreate({
      VALUES
        (@transaction_id, @product_id, @nama_produk, @harga_satuan, @harga_dasar, @qty, @subtotal, @catatan, @modifier_summary)`
   )
-  const productStockStmt = db.prepare(`SELECT id, nama, stok FROM products WHERE id = ?`)
+  const productStockStmt = db.prepare(`SELECT id, nama, stok, is_bundle FROM products WHERE id = ?`)
   const decrementStockStmt = db.prepare(
     `UPDATE products
      SET stok = stok - @quantity,
          updated_at = datetime('now', 'localtime')
      WHERE id = @productId`
   )
+  const bundleItemsStmt = db.prepare(`SELECT product_id, qty FROM product_bundle_items WHERE bundle_id = ?`)
 
   const txId = db.transaction(() => {
     for (const item of normalizedItems) {
@@ -112,10 +113,25 @@ export function transactionCreate({
         throw new Error(`Produk dengan ID ${item.productId} tidak ditemukan`)
       }
 
-      if (Number(product.stok) < item.quantity) {
-        throw new Error(
-          `Stok ${product.nama} tidak cukup. Tersedia ${product.stok}, diminta ${item.quantity}`
-        )
+      if (product.is_bundle) {
+        const bundleItems = bundleItemsStmt.all(product.id)
+        for (const bItem of bundleItems) {
+          const compProduct = productStockStmt.get(bItem.product_id)
+          if (!compProduct) throw new Error(`Komponen produk ID ${bItem.product_id} tidak ditemukan untuk paket ${product.nama}`)
+          
+          const requiredQty = bItem.qty * item.quantity
+          if (Number(compProduct.stok) < requiredQty) {
+            throw new Error(
+              `Stok ${compProduct.nama} tidak cukup untuk paket ${product.nama}. Tersedia ${compProduct.stok}, diminta ${requiredQty}`
+            )
+          }
+        }
+      } else {
+        if (Number(product.stok) < item.quantity) {
+          throw new Error(
+            `Stok ${product.nama} tidak cukup. Tersedia ${product.stok}, diminta ${item.quantity}`
+          )
+        }
       }
     }
 
@@ -150,10 +166,21 @@ export function transactionCreate({
 
       if (!item.productId) continue
 
-      decrementStockStmt.run({
-        productId: item.productId,
-        quantity: item.quantity
-      })
+      const product = productStockStmt.get(item.productId)
+      if (product && product.is_bundle) {
+        const bundleItems = bundleItemsStmt.all(product.id)
+        for (const bItem of bundleItems) {
+          decrementStockStmt.run({
+            productId: bItem.product_id,
+            quantity: bItem.qty * item.quantity
+          })
+        }
+      } else {
+        decrementStockStmt.run({
+          productId: item.productId,
+          quantity: item.quantity
+        })
+      }
     }
 
     return newTxId
