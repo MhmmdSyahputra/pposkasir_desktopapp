@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import {
   Alert,
   Box,
@@ -18,7 +18,13 @@ import {
   TextField,
   Typography,
   alpha,
-  useTheme
+  useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  CircularProgress,
+  IconButton
 } from '@mui/material'
 import {
   Chart as ChartJS,
@@ -40,7 +46,9 @@ import {
   PictureAsPdfRounded,
   RestartAltRounded,
   SearchRounded,
-  TableChartRounded
+  TableChartRounded,
+  AutoAwesomeRounded,
+  CloseRounded
 } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { jsPDF } from 'jspdf'
@@ -49,6 +57,9 @@ import * as XLSX from 'xlsx'
 import { PageLayout } from '../../productPage/components/PageLayout'
 import { useReport } from './hook/useReport'
 import { DatePicker } from '../../../components/ui/DatePicker'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import { apiService } from '../../../services/apiService'
 
 ChartJS.register(
   CategoryScale,
@@ -165,6 +176,42 @@ export const ListReportPage = () => {
     }),
     [t]
   )
+
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiInsight, setAiInsight] = useState(null)
+  const [aiDialogOpen, setAiDialogOpen] = useState(false)
+
+  const generateAiInsight = async () => {
+    setAiLoading(true)
+    setAiDialogOpen(true)
+    setAiInsight(null)
+
+    try {
+      const data = await getAllRowsForExport()
+
+      const promptData = {
+        periode: `${filters.startDate || 'Awal'} sampai ${filters.endDate || 'Akhir'}`,
+        summary: data.summary,
+        topProducts: data.topProducts.slice(0, 10),
+        byMethod: data.byMethod
+      }
+
+      const promptContent = `Berikut adalah data laporan penjualan dari sistem POS (Point of Sales):
+${JSON.stringify(promptData, null, 2)}
+
+Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penjualan, dan saran langkah strategis selanjutnya untuk bisnis ini. Gunakan format yang rapi dengan poin-poin (bullet points). Gunakan Bahasa Indonesia.`
+
+      const insight = await apiService.generateBusinessInsight(promptContent)
+      setAiInsight(insight)
+    } catch (e) {
+      console.error(e)
+      setAiInsight(
+        'Terjadi kesalahan saat menghubungi AI. Pastikan konfigurasi API Token Anda sudah benar.'
+      )
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const exportExcel = async () => {
     const data = await getAllRowsForExport()
@@ -341,6 +388,23 @@ export const ListReportPage = () => {
             }}
           >
             {t('report.export_pdf')}
+          </Button>
+          <Button
+            size="small"
+            startIcon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />}
+            onClick={generateAiInsight}
+            sx={{
+              fontSize: 13,
+              fontWeight: 600,
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 1.5,
+              bgcolor: isDark ? 'rgba(156,39,176,0.24)' : 'rgba(156,39,176,0.12)',
+              color: 'secondary.main',
+              '&:hover': { bgcolor: isDark ? 'rgba(156,39,176,0.34)' : 'rgba(156,39,176,0.2)' }
+            }}
+          >
+            Magic Insight
           </Button>
         </>
       }
@@ -956,6 +1020,85 @@ export const ListReportPage = () => {
           </Button>
         </Box>
       </Box>
+
+      {/* AI Insight Dialog */}
+      <Dialog
+        open={aiDialogOpen}
+        onClose={() => !aiLoading && setAiDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            bgcolor: theme.palette.background.paper,
+            backgroundImage: 'none'
+          }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+          <AutoAwesomeRounded sx={{ color: 'secondary.main' }} />
+          <Typography sx={{ fontWeight: 700, fontFamily: 'Poppins, sans-serif', fontSize: 18 }}>
+            AI Business Insight
+          </Typography>
+          <IconButton
+            size="small"
+            onClick={() => setAiDialogOpen(false)}
+            disabled={aiLoading}
+            sx={{ ml: 'auto' }}
+          >
+            <CloseRounded />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent dividers sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}>
+          {aiLoading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flex: 1,
+                gap: 2,
+                py: 4
+              }}
+            >
+              <CircularProgress color="secondary" />
+              <Typography
+                sx={{ color: 'text.secondary', fontSize: 14, fontFamily: 'Poppins, sans-serif' }}
+              >
+                AI sedang menganalisis data penjualan Anda...
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ py: 1 }}>
+              <Typography
+                component="div"
+                sx={{
+                  color: 'text.primary',
+                  fontSize: 14,
+                  fontFamily: 'Poppins, sans-serif',
+                  lineHeight: 1.8,
+                  whiteSpace: 'pre-line',
+                  '& strong': { color: 'text.primary', fontWeight: 700 }
+                }}
+                dangerouslySetInnerHTML={{
+                  // Simple markdown parsing for bold text
+                  __html: (aiInsight || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            onClick={() => setAiDialogOpen(false)}
+            disabled={aiLoading}
+            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+          >
+            Tutup
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageLayout>
   )
 }

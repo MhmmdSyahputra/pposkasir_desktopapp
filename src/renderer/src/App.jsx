@@ -9,6 +9,7 @@ import { useAuth } from './context/authContext'
 import { LoginPage } from './pages/loginPage'
 import { MirrorPage } from './pages'
 import { PromotionPopup } from './components/core/promotionPopup'
+import { AiAssistantFab } from './components/core/AiAssistantFab'
 
 const query = new URLSearchParams(window.location.search)
 const initialRoute = query.get('route')
@@ -50,6 +51,7 @@ const SidebarLayout = ({ children }) => {
         </Box>
       </Box>
       <PromotionPopup />
+      <AiAssistantFab />
     </Box>
   )
 }
