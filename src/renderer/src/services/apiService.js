@@ -65,6 +65,22 @@ class ApiService {
       throw error
     }
   }
+
+  /**
+   * Send a report for inappropriate AI content.
+   * @param {Object} payload - The report data { message, reason, timestamp }
+   */
+  async reportAiResponse(payload) {
+    try {
+      const response = await axios.post('https://api.muhammadsyahputra.my.id/api/v1/ldesktop/report', payload, {
+        headers: { 'Content-Type': 'application/json' }
+      })
+      return response.data
+    } catch (error) {
+      console.error('reportAiResponse error:', error)
+      throw error
+    }
+  }
 }
 
 export const apiService = new ApiService()

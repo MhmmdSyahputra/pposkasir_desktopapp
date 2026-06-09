@@ -10,7 +10,14 @@ import {
   Slide,
   useTheme,
   Button,
-  alpha
+  alpha,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  RadioGroup,
+  FormControlLabel,
+  Radio
 } from '@mui/material'
 import { AutoAwesomeRounded, CloseRounded, SendRounded, SmartToyRounded } from '@mui/icons-material'
 import ReactMarkdown from 'react-markdown'
@@ -54,6 +61,12 @@ export const AiAssistantFab = () => {
   ])
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Reporting states
+  const [reportDialogOpen, setReportDialogOpen] = useState(false)
+  const [reportedMessage, setReportedMessage] = useState(null)
+  const [reportReason, setReportReason] = useState('')
+  const [isReporting, setIsReporting] = useState(false)
 
   const messagesEndRef = useRef(null)
 
@@ -154,6 +167,25 @@ Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cer
       ])
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleReportSubmit = async () => {
+    if (!reportReason) return
+    setIsReporting(true)
+    try {
+      await apiService.reportAiResponse({
+        message: reportedMessage,
+        reason: reportReason,
+        timestamp: new Date().toISOString()
+      })
+    } catch (e) {
+      console.error('Failed to report AI response', e)
+    } finally {
+      setIsReporting(false)
+      setReportDialogOpen(false)
+      setReportedMessage(null)
+      setReportReason('')
     }
   }
 
@@ -280,6 +312,30 @@ Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cer
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                         </Box>
                       )}
+                      
+                      {/* Report Actions for AI Responses */}
+                      {!isUser && i > 0 && (
+                        <Box sx={{ display: 'flex', gap: 1, mt: 1, justifyContent: 'flex-start', borderTop: '1px solid rgba(128,128,128,0.2)', pt: 1 }}>
+                          <Button
+                            size="small"
+                            sx={{ fontSize: 11, minWidth: 0, p: '2px 8px', textTransform: 'none', color: 'text.secondary' }}
+                            onClick={() => { /* helpful action */ }}
+                          >
+                            👍 Helpful
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            sx={{ fontSize: 11, minWidth: 0, p: '2px 8px', textTransform: 'none', opacity: 0.8 }}
+                            onClick={() => {
+                              setReportedMessage(msg.content)
+                              setReportDialogOpen(true)
+                            }}
+                          >
+                            👎 Report Response
+                          </Button>
+                        </Box>
+                      )}
                     </Box>
                   </Box>
                 )
@@ -376,6 +432,34 @@ Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cer
           </Box>
         </Paper>
       </Slide>
+
+      {/* Report Dialog */}
+      <Dialog open={reportDialogOpen} onClose={() => !isReporting && setReportDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontFamily: 'Poppins, sans-serif', fontSize: 16, fontWeight: 600 }}>Report AI Response</DialogTitle>
+        <DialogContent dividers>
+          <Typography variant="body2" sx={{ mb: 2, fontFamily: 'Poppins, sans-serif' }}>
+            Please select a reason for reporting this response:
+          </Typography>
+          <RadioGroup value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
+            <FormControlLabel value="Offensive Content" control={<Radio size="small" />} label={<Typography variant="body2">Offensive Content</Typography>} />
+            <FormControlLabel value="Harmful Information" control={<Radio size="small" />} label={<Typography variant="body2">Harmful Information</Typography>} />
+            <FormControlLabel value="Incorrect Information" control={<Radio size="small" />} label={<Typography variant="body2">Incorrect Information</Typography>} />
+            <FormControlLabel value="Other" control={<Radio size="small" />} label={<Typography variant="body2">Other</Typography>} />
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setReportDialogOpen(false)} disabled={isReporting} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button
+            onClick={handleReportSubmit}
+            variant="contained"
+            color="secondary"
+            disabled={!reportReason || isReporting}
+            sx={{ textTransform: 'none' }}
+          >
+            {isReporting ? 'Submitting...' : 'Submit Report'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }

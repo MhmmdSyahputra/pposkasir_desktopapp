@@ -171,9 +171,10 @@ export function setupAutoUpdater() {
     console.error('Auto updater error:', err)
 
     if (mainWindow && !mainWindow.isDestroyed()) {
+      const errMsg = err == null ? 'Unknown error' : (err.stack || err.message || err).toString()
       mainWindow.webContents.send(
         'update:notification',
-        'Terjadi kesalahan saat memeriksa pembaruan',
+        `Terjadi kesalahan saat memeriksa pembaruan: ${errMsg}`,
         'error'
       )
     }
