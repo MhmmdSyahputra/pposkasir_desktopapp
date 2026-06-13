@@ -5,21 +5,17 @@
     <title>Print Receipt</title>
     <style>
       @page {
-        size: 74mm auto;
         margin: 0;
       }
 
       body {
-        width: 74mm;
+        width: 100%;
         font-family: 'Courier New', Courier, monospace;
         font-size: 12px;
         margin: 0;
-        /* padding: 8px 10px; */
+        padding: 0 4mm;
+        box-sizing: border-box;
         color: #111;
-      }
-
-      .center {
-        text-align: center;
       }
 
       .line {
@@ -30,7 +26,6 @@
       .store-name {
         font-weight: 800;
         font-size: 14px;
-        /* margin-bottom: 4px; */
       }
 
       .sub {
@@ -104,9 +99,11 @@
     </style>
   </head>
   <body>
-    <div id="header1" class="store-name">STORE NAME</div>
-    <div id="header2" class="sub" style="margin-bottom: 10px">Kitchen Order Ticket</div>
-    <div id="header3" class="sub">No: -</div>
+    <div id="header-block">
+      <div id="header1" class="store-name">STORE NAME</div>
+      <div id="header2" class="sub" style="margin-bottom: 10px">Kitchen Order Ticket</div>
+      <div id="header3" class="sub">No: -</div>
+    </div>
 
     <div class="line"></div>
 
@@ -122,10 +119,12 @@
 
     <div class="line"></div>
 
-    <center>
-      <div id="footer1" class="center">--</div>
-      <div id="footer2" class="center">--</div>
-      <div id="footer3" class="center">--</div>
-    </center>
+    <div id="footer-block">
+      <div id="footer1">--</div>
+      <div id="footer2">--</div>
+      <div id="footer3">--</div>
+      <div class="line" style="margin: 6px 0 2px 0;"></div>
+      <div style="font-size: 9px; font-weight: bold; color: #555; margin-bottom: 4px; text-align: center;">Powered by P-POS Kasir</div>
+    </div>
   </body>
 </html>

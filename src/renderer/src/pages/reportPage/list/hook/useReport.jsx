@@ -54,6 +54,14 @@ export const useReport = () => {
       setTopProducts(data.topProducts || [])
       setRows(data.rows || [])
       setTotalRows(data.totalRows || 0)
+
+      window.__currentReportContext = {
+        filters,
+        summary: data.summary,
+        byMethod: data.byMethod,
+        topProducts: data.topProducts,
+        totalRows: data.totalRows
+      }
     } catch (e) {
       setError(e.message || 'Failed to load report data')
     } finally {
@@ -73,6 +81,12 @@ export const useReport = () => {
   useEffect(() => {
     loadData()
   }, [page]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    return () => {
+      delete window.__currentReportContext
+    }
+  }, [])
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(totalRows / LIMIT)), [totalRows])
 

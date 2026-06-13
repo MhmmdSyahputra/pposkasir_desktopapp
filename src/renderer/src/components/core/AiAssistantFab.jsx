@@ -125,6 +125,62 @@ export const AiAssistantFab = () => {
         return str
       }).join('\n')
 
+      let reportContextStr = ''
+      if (window.__currentReportContext) {
+        const rc = window.__currentReportContext
+        reportContextStr = `
+[DATA LAPORAN YANG SEDANG DILIHAT USER SAAT INI]
+- Periode Filter Laporan: ${rc.filters?.startDate || '-'} s/d ${rc.filters?.endDate || '-'}
+- Filter Status: ${rc.filters?.status || 'all'}, Metode Bayar: ${rc.filters?.metode || 'all'}
+- Ringkasan Laporan Periode Ini:
+  * Total Transaksi: ${rc.summary?.total_transaksi || 0} (Selesai: ${rc.summary?.transaksi_selesai || 0}, Batal: ${rc.summary?.transaksi_batal || 0})
+  * Omzet Bersih: Rp ${Number(rc.summary?.omzet_bersih || 0).toLocaleString('id-ID')}
+  * Total HPP: Rp ${Number(rc.summary?.total_hpp || 0).toLocaleString('id-ID')}
+  * Laba Kotor: Rp ${Number(rc.summary?.laba_kotor || 0).toLocaleString('id-ID')}
+  * Rata-rata Nilai Transaksi: Rp ${Number(rc.summary?.rata_rata_transaksi || 0).toLocaleString('id-ID')}
+- Breakdown Metode Pembayaran Periode Ini:
+  ${(rc.byMethod || []).map(m => `* ${m.metode_bayar}: ${m.jumlah} transaksi, Total Rp ${Number(m.total).toLocaleString('id-ID')}`).join('\n  ')}
+- Produk Terlaris Periode Ini:
+  ${(rc.topProducts || []).map(p => `* ${p.nama_produk}: ${p.qty} pcs terjual, Total Penjualan Rp ${Number(p.total).toLocaleString('id-ID')}`).join('\n  ')}
+`
+      }
+
+      let cartContextStr = ''
+      if (window.__currentCartContext && window.__currentCartContext.length > 0) {
+        const cart = window.__currentCartContext
+        const totalCartPrice = cart.reduce((sum, item) => sum + item.price * item.qty, 0)
+        cartContextStr = `
+[KERANJANG BELANJA YANG SEDANG AKTIF SAAT INI (KASIR)]
+User sedang melayani pelanggan di kasir dengan isi keranjang belanja saat ini:
+${cart.map((item, index) => `${index + 1}. ${item.name} - Qty: ${item.qty} x Rp ${Number(item.price).toLocaleString('id-ID')} (Subtotal: Rp ${Number(item.price * item.qty).toLocaleString('id-ID')})${item.summaryLabel ? ` | Varian: ${item.summaryLabel}` : ''}${item.note ? ` | Catatan: ${item.note}` : ''}`).join('\n')}
+- Total Nilai Keranjang Belanja: Rp ${totalCartPrice.toLocaleString('id-ID')}
+`
+      }
+
+      let txDetailContextStr = ''
+      if (window.__currentTransactionDetailContext) {
+        const tx = window.__currentTransactionDetailContext
+        txDetailContextStr = `
+[DETAIL TRANSAKSI YANG SEDANG DILIHAT USER SAAT INI]
+User sedang membuka detail transaksi dengan rincian berikut:
+- No. Transaksi: ${tx.no_transaksi}
+- Status Transaksi: ${tx.status}
+- Waktu Transaksi: ${tx.created_at}
+- Kasir yang melayani: ${tx.kasir || '-'}
+- Pelanggan: ${tx.nama_pelanggan || '-'}
+- Cara Pembayaran: ${tx.metode_bayar}
+- Ringkasan Pembayaran:
+  * Subtotal: Rp ${Number(tx.subtotal || 0).toLocaleString('id-ID')}
+  * Diskon: Rp ${Number(tx.diskon || 0).toLocaleString('id-ID')}
+  * Pajak: Rp ${Number(tx.pajak || 0).toLocaleString('id-ID')}
+  * Total Belanja: Rp ${Number(tx.total || 0).toLocaleString('id-ID')}
+  * Uang Dibayar: Rp ${Number(tx.bayar || 0).toLocaleString('id-ID')}
+  * Kembalian: Rp ${Number(tx.kembalian || 0).toLocaleString('id-ID')}
+- Item yang Dibeli di Transaksi Ini:
+  ${(tx.items || []).map((item, index) => `${index + 1}. ${item.nama_produk} - Qty: ${item.qty} x Rp ${Number(item.harga_satuan).toLocaleString('id-ID')} (HPP: Rp ${Number(item.harga_dasar).toLocaleString('id-ID')}, Subtotal: Rp ${Number(item.subtotal).toLocaleString('id-ID')})${item.modifier_summary ? ` | Varian: ${item.modifier_summary}` : ''}${item.catatan ? ` | Catatan: ${item.catatan}` : ''}`).join('\n  ')}
+`
+      }
+
       const dynamicContext = `
 ---
 [PETA NAVIGASI APLIKASI KASIR]
@@ -144,7 +200,10 @@ ${routesMap}
 - Produk Habis Stok: ${outOfStock.length} produk. ${outOfStock.length > 0 ? `(Habis: ${outOfStock.slice(0, 10).map(p => p.nama).join(', ')})` : ''}
 - Penjualan Hari Ini (${todayStr}): ${todaySummary.total_transaksi} transaksi, Omzet Bersih: Rp ${Number(todaySummary.omzet_bersih).toLocaleString('id-ID')}
 - 5 Produk Terlaris Hari Ini: ${topProducts.slice(0, 5).map(p => `${p.nama} (${p.qty} terjual)`).join(', ') || 'Belum ada data'}
-Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cerdas jika pengguna bertanya status toko, stok barang, printer, shift, promosi hari ini atau navigasi aplikasi.
+${reportContextStr}
+${cartContextStr}
+${txDetailContextStr}
+Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cerdas jika pengguna bertanya status toko, stok barang, printer, shift, laporan penjualan yang sedang dilihat, keranjang belanja kasir saat ini, detail riwayat transaksi yang sedang dibuka, promosi hari ini atau navigasi aplikasi.
 ---`
 
       // Replace the first message (system prompt) with the dynamically injected context
@@ -332,7 +391,7 @@ Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cer
                               setReportDialogOpen(true)
                             }}
                           >
-                            👎 Report Response
+                            ⚠️ Report Inappropriate Content
                           </Button>
                         </Box>
                       )}
@@ -435,10 +494,10 @@ Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cer
 
       {/* Report Dialog */}
       <Dialog open={reportDialogOpen} onClose={() => !isReporting && setReportDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Poppins, sans-serif', fontSize: 16, fontWeight: 600 }}>Report AI Response</DialogTitle>
+        <DialogTitle sx={{ fontFamily: 'Poppins, sans-serif', fontSize: 16, fontWeight: 600 }}>Report Inappropriate AI Content</DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" sx={{ mb: 2, fontFamily: 'Poppins, sans-serif' }}>
-            Please select a reason for reporting this response:
+            Please select a reason for reporting this AI response:
           </Typography>
           <RadioGroup value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
             <FormControlLabel value="Offensive Content" control={<Radio size="small" />} label={<Typography variant="body2">Offensive Content</Typography>} />

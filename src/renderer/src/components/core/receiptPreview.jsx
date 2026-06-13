@@ -23,6 +23,15 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
     { key: 'change', label: order.labels.change, value: order.change }
   ].filter((row) => row.value && row.value !== 'Rp0')
 
+  const paperWidth = settings?.paperSize === '58mm' ? '280px' : '100%'
+  const baseFontSize = settings?.paperSize === '58mm' ? 11 : 12
+  const padLeft = typeof settings?.paddingLeft === 'number' ? settings.paddingLeft : 0
+  const padRight = typeof settings?.paddingRight === 'number' ? settings.paddingRight : 0
+  const basePadLeft = settings?.paperSize === '58mm' ? 2 : 4
+  const basePadRight = settings?.paperSize === '58mm' ? 3 : 4
+  const actualPadLeft = basePadLeft + padLeft
+  const actualPadRight = basePadRight + padRight
+
   return (
     <Box
       sx={{
@@ -30,7 +39,14 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
         border: `1px dashed ${theme.palette.divider}`,
         bgcolor: '#fff',
         color: '#000',
-        p: compact ? 1.75 : 2,
+        pt: compact ? 1.75 : 2,
+        pb: compact ? 1.75 : 2,
+        pr: `${actualPadRight}mm`,
+        pl: `${actualPadLeft}mm`,
+        width: paperWidth,
+        maxWidth: '100%',
+        mx: 'auto',
+        transition: 'width 0.3s ease, font-size 0.3s ease, padding-left 0.3s ease',
         fontFamily: 'monospace',
         '& .MuiTypography-root': {
           color: '#000 !important'
@@ -43,29 +59,29 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
         }
       }}
     >
-      <Box sx={{ textAlign: 'center', pb: 1.5 }}>
+      <Box sx={{ textAlign: settings?.headerAlign || 'center', pb: 1.5 }}>
         {visibility.headerLine1 && settings.headerLine1 ? (
-          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>{settings.headerLine1}</Typography>
+          <Typography sx={{ fontSize: baseFontSize + 2, fontWeight: 700 }}>{settings.headerLine1}</Typography>
         ) : null}
         {visibility.headerLine2 && settings.headerLine2 ? (
-          <Typography sx={{ fontSize: 12 }}>{settings.headerLine2}</Typography>
+          <Typography sx={{ fontSize: baseFontSize }}>{settings.headerLine2}</Typography>
         ) : null}
         {visibility.headerLine3 && settings.headerLine3 ? (
-          <Typography sx={{ fontSize: 12 }}>{settings.headerLine3}</Typography>
+          <Typography sx={{ fontSize: baseFontSize }}>{settings.headerLine3}</Typography>
         ) : null}
       </Box>
 
       <Divider sx={{ my: 1.5 }} />
 
       {infoRows
-        .filter((row) => (row.key === 'customerName' ? true : visibility[row.key]) && row.value)
+         .filter((row) => (row.key === 'customerName' ? true : visibility[row.key]) && row.value)
         .map((row) => (
           <Box
             key={row.key}
             sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.6, gap: 1 }}
           >
-            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{row.label}</Typography>
-            <Typography sx={{ fontSize: 12 }}>{row.value}</Typography>
+            <Typography sx={{ fontSize: baseFontSize, color: 'text.secondary' }}>{row.label}</Typography>
+            <Typography sx={{ fontSize: baseFontSize }}>{row.value}</Typography>
           </Box>
         ))}
 
@@ -84,17 +100,17 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
             }}
           >
             <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{item.name}</Typography>
-              <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.25 }}>
+              <Typography sx={{ fontSize: baseFontSize + 1, fontWeight: 700 }}>{item.name}</Typography>
+              <Typography sx={{ fontSize: baseFontSize - 1, color: 'text.secondary', mt: 0.25 }}>
                 {item.qtyText}
               </Typography>
               {item.note ? (
-                <Typography sx={{ fontSize: 11, color: 'text.disabled', mt: 0.25, pl: 1 }}>
+                <Typography sx={{ fontSize: baseFontSize - 1, color: 'text.disabled', mt: 0.25, pl: 1 }}>
                   - {item.note}
                 </Typography>
               ) : null}
             </Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 700 }}>{item.subtotal}</Typography>
+            <Typography sx={{ fontSize: baseFontSize, fontWeight: 700 }}>{item.subtotal}</Typography>
           </Box>
         ))}
       </Box>
@@ -118,7 +134,7 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
             >
               <Typography
                 sx={{
-                  fontSize: isGrandTotal ? 12.5 : 12,
+                  fontSize: isGrandTotal ? baseFontSize + 1 : baseFontSize,
                   fontWeight: isGrandTotal ? 700 : 500,
                   color: isGrandTotal ? 'text.primary' : 'text.secondary'
                 }}
@@ -127,7 +143,7 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
               </Typography>
               <Typography
                 sx={{
-                  fontSize: isGrandTotal ? 12.5 : 12,
+                  fontSize: isGrandTotal ? baseFontSize + 1 : baseFontSize,
                   fontWeight: isGrandTotal ? 700 : 500,
                   color: isGrandTotal ? 'text.primary' : 'inherit'
                 }}
@@ -138,23 +154,27 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
           )
         })}
 
-      <Box sx={{ textAlign: 'center', mt: 1.5, whiteSpace: 'pre-wrap' }}>
+      <Box sx={{ textAlign: settings?.footerAlign || 'center', mt: 1.5, whiteSpace: 'pre-wrap' }}>
         <ReceiptLongOutlined sx={{ color: 'text.disabled', fontSize: 18, mb: 0.5 }} />
         {visibility.footerLine1 && settings.footerLine1 ? (
-          <Typography sx={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
+          <Typography sx={{ fontSize: baseFontSize, whiteSpace: 'pre-wrap' }}>
             {settings.footerLine1}
           </Typography>
         ) : null}
         {visibility.footerLine2 && settings.footerLine2 ? (
-          <Typography sx={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
+          <Typography sx={{ fontSize: baseFontSize, whiteSpace: 'pre-wrap' }}>
             {settings.footerLine2}
           </Typography>
         ) : null}
         {visibility.footerLine3 && settings.footerLine3 ? (
-          <Typography sx={{ fontSize: 12, whiteSpace: 'pre-wrap' }}>
+          <Typography sx={{ fontSize: baseFontSize, whiteSpace: 'pre-wrap' }}>
             {settings.footerLine3}
           </Typography>
         ) : null}
+        <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
+        <Typography sx={{ fontSize: baseFontSize - 2, fontWeight: 'bold', color: 'text.secondary', mt: 0.5 }}>
+          Powered by P-POS Kasir
+        </Typography>
       </Box>
     </Box>
   )

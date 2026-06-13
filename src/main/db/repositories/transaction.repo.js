@@ -95,7 +95,7 @@ export function transactionCreate({
      VALUES
        (@transaction_id, @product_id, @nama_produk, @harga_satuan, @harga_dasar, @qty, @subtotal, @catatan, @modifier_summary)`
   )
-  const productStockStmt = db.prepare(`SELECT id, nama, stok, is_bundle FROM products WHERE id = ?`)
+  const productStockStmt = db.prepare(`SELECT id, nama, stok, harga_beli, is_bundle FROM products WHERE id = ?`)
   const decrementStockStmt = db.prepare(
     `UPDATE products
      SET stok = stok - @quantity,
@@ -152,12 +152,34 @@ export function transactionCreate({
     const newTxId = result.lastInsertRowid
 
     for (const item of normalizedItems) {
+      let actualHargaBeli = item.basePrice
+      let product = null
+
+      if (item.productId) {
+        product = productStockStmt.get(item.productId)
+        if (product) {
+          if (product.is_bundle) {
+            let bundleHpp = 0
+            const bundleItems = bundleItemsStmt.all(product.id)
+            for (const bItem of bundleItems) {
+              const compProduct = productStockStmt.get(bItem.product_id)
+              if (compProduct) {
+                bundleHpp += compProduct.harga_beli * bItem.qty
+              }
+            }
+            actualHargaBeli = bundleHpp
+          } else {
+            actualHargaBeli = product.harga_beli
+          }
+        }
+      }
+
       itemStmt.run({
         transaction_id: newTxId,
         product_id: item.productId,
         nama_produk: item.productName,
         harga_satuan: item.unitPrice,
-        harga_dasar: item.basePrice,
+        harga_dasar: actualHargaBeli,
         qty: item.quantity,
         subtotal: item.lineSubtotal,
         catatan: item.note,
@@ -166,7 +188,6 @@ export function transactionCreate({
 
       if (!item.productId) continue
 
-      const product = productStockStmt.get(item.productId)
       if (product && product.is_bundle) {
         const bundleItems = bundleItemsStmt.all(product.id)
         for (const bItem of bundleItems) {
@@ -405,6 +426,12 @@ export function transactionGetReport({
     )
     .all(params)
 
+  const topProductsWhere = conditions.slice()
+  if (status === 'all') {
+    topProductsWhere.push(`t.status = 'selesai'`)
+  }
+  const topProductsWhereStr = topProductsWhere.length ? `WHERE ${topProductsWhere.join(' AND ')}` : ''
+
   const topProducts = db
     .prepare(
       `SELECT
@@ -413,7 +440,7 @@ export function transactionGetReport({
          COALESCE(SUM(ti.subtotal), 0) AS total
        FROM transaction_items ti
        JOIN transactions t ON t.id = ti.transaction_id
-       ${where}
+       ${topProductsWhereStr}
        GROUP BY ti.nama_produk
        ORDER BY qty DESC, total DESC
        LIMIT 10`

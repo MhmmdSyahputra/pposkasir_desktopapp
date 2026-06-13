@@ -159,6 +159,14 @@ const DetailDialog = ({ detail, onClose, onVoid }) => {
   const theme = useTheme()
   const { t } = useTranslation()
   const { show } = useNotifier()
+
+  useEffect(() => {
+    window.__currentTransactionDetailContext = detail
+    return () => {
+      delete window.__currentTransactionDetailContext
+    }
+  }, [detail])
+
   if (!detail) return null
 
   const handleReprint = async () => {
@@ -249,7 +257,12 @@ const DetailDialog = ({ detail, onClose, onVoid }) => {
       contentHTML,
       footer1: visibility.footerLine1 ? receiptSettings.footerLine1 : '',
       footer2: visibility.footerLine2 ? receiptSettings.footerLine2 : '',
-      footer3: visibility.footerLine3 ? receiptSettings.footerLine3 : ''
+      footer3: visibility.footerLine3 ? receiptSettings.footerLine3 : '',
+      paperSize: receiptSettings.paperSize || '80mm',
+      paddingLeft: receiptSettings.paddingLeft || 0,
+      paddingRight: receiptSettings.paddingRight || 0,
+      headerAlign: receiptSettings.headerAlign || 'center',
+      footerAlign: receiptSettings.footerAlign || 'center'
     }
 
     try {

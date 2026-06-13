@@ -10,6 +10,11 @@ export const defaultReceiptSettings = {
   printerType: 'thermal', // 'system' or 'thermal'
   printerIp: '',
   printerPort: '9100',
+  paperSize: '80mm', // '58mm' or '80mm'
+  paddingLeft: 0, // in mm
+  paddingRight: 0, // in mm
+  headerAlign: 'center', // 'left', 'center', 'right'
+  footerAlign: 'center', // 'left', 'center', 'right'
   visibility: {
     headerLine1: true,
     headerLine2: true,

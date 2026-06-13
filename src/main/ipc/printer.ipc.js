@@ -36,6 +36,19 @@ export function registerPrinterIpc() {
           document.getElementById('footer1').innerText = data.footer1 || ''
           document.getElementById('footer2').innerText = data.footer2 || ''
           document.getElementById('footer3').innerText = data.footer3 || ''
+          document.getElementById('header-block').style.textAlign = data.headerAlign || 'center'
+          document.getElementById('footer-block').style.textAlign = data.footerAlign || 'center'
+          if (data.paperSize) {
+            const style = document.createElement('style')
+            const padLeft = typeof data.paddingLeft === 'number' ? data.paddingLeft : 0
+            const padRight = typeof data.paddingRight === 'number' ? data.paddingRight : 0
+            if (data.paperSize === '58mm') {
+              style.innerHTML = '@page { size: 58mm auto; margin: 0; } body { width: 58mm; font-size: 11px; padding: 0 \' + (3 + padRight) + \'mm 0 \' + (2 + padLeft) + \'mm; }'
+            } else if (data.paperSize === '80mm') {
+              style.innerHTML = '@page { size: 80mm auto; margin: 0; } body { width: 80mm; font-size: 12px; padding: 0 \' + (4 + padRight) + \'mm 0 \' + (4 + padLeft) + \'mm; }'
+            }
+            document.head.appendChild(style)
+          }
         } catch (e) { console.error(e) }
       })()`)
 

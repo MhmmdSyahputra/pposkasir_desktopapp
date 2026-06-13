@@ -246,7 +246,12 @@ export const ReceiptSettingsPage = () => {
         contentHTML,
         footer1: visibility.footerLine1 ? form.footerLine1 : '',
         footer2: visibility.footerLine2 ? form.footerLine2 : '',
-        footer3: visibility.footerLine3 ? form.footerLine3 : ''
+        footer3: visibility.footerLine3 ? form.footerLine3 : '',
+        paperSize: form.paperSize || '80mm',
+        paddingLeft: form.paddingLeft || 0,
+        paddingRight: form.paddingRight || 0,
+        headerAlign: form.headerAlign || 'center',
+        footerAlign: form.footerAlign || 'center'
       }
 
       await window.api.printOrderReceipt(payload)
@@ -341,6 +346,63 @@ export const ReceiptSettingsPage = () => {
                       </RadioGroup>
                     </FormControl>
 
+                    <FormControl component="fieldset" sx={{ mt: 1 }}>
+                      <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
+                        Ukuran Kertas (Lebar Printer)
+                      </FormLabel>
+                      <RadioGroup
+                        row
+                        value={form.paperSize || '80mm'}
+                        onChange={(e) => setForm((prev) => ({ ...prev, paperSize: e.target.value }))}
+                      >
+                        <FormControlLabel
+                          value="80mm"
+                          control={<Radio size="small" />}
+                          label="80mm"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                        <FormControlLabel
+                          value="58mm"
+                          control={<Radio size="small" />}
+                          label="58mm"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                      </RadioGroup>
+                    </FormControl>
+
+                    <Stack direction="row" spacing={2} sx={{ mt: 1.5 }}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="Jarak Kiri Tambahan (Left) - mm"
+                        value={form.paddingLeft ?? 0}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10)
+                          setForm((prev) => ({ ...prev, paddingLeft: isNaN(val) ? 0 : val }))
+                        }}
+                        slotProps={{
+                          htmlInput: { min: 0, max: 50 }
+                        }}
+                        helperText="Geser isi struk ke kanan"
+                      />
+                      <TextField
+                        fullWidth
+                        size="small"
+                        type="number"
+                        label="Jarak Kanan Tambahan (Right) - mm"
+                        value={form.paddingRight ?? 0}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10)
+                          setForm((prev) => ({ ...prev, paddingRight: isNaN(val) ? 0 : val }))
+                        }}
+                        slotProps={{
+                          htmlInput: { min: 0, max: 50 }
+                        }}
+                        helperText="Geser isi struk ke kiri"
+                      />
+                    </Stack>
+
                     <Stack spacing={1.5} sx={{ mt: 2 }}>
                       <Stack direction="row" spacing={1.5}>
                         <Button
@@ -371,6 +433,36 @@ export const ReceiptSettingsPage = () => {
                   subtitle={t('receipt_settings.header_subtitle')}
                 >
               <Stack spacing={1.25}>
+                <FormControl component="fieldset" sx={{ mb: 1 }}>
+                  <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
+                    Perataan Header (Alignment)
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={form.headerAlign || 'center'}
+                    onChange={(e) => setForm((prev) => ({ ...prev, headerAlign: e.target.value }))}
+                  >
+                    <FormControlLabel
+                      value="left"
+                      control={<Radio size="small" />}
+                      label="Rata Kiri"
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                    <FormControlLabel
+                      value="center"
+                      control={<Radio size="small" />}
+                      label="Rata Tengah"
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                    <FormControlLabel
+                      value="right"
+                      control={<Radio size="small" />}
+                      label="Rata Kanan"
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                  </RadioGroup>
+                </FormControl>
+
                 <TextField
                   size="small"
                   label={t('receipt_settings.header_line_1')}
@@ -454,6 +546,36 @@ export const ReceiptSettingsPage = () => {
               subtitle={t('receipt_settings.footer_subtitle')}
             >
               <Stack spacing={1.25}>
+                <FormControl component="fieldset" sx={{ mb: 1 }}>
+                  <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
+                    Perataan Footer (Alignment)
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={form.footerAlign || 'center'}
+                    onChange={(e) => setForm((prev) => ({ ...prev, footerAlign: e.target.value }))}
+                  >
+                    <FormControlLabel
+                      value="left"
+                      control={<Radio size="small" />}
+                      label="Rata Kiri"
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                    <FormControlLabel
+                      value="center"
+                      control={<Radio size="small" />}
+                      label="Rata Tengah"
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                    <FormControlLabel
+                      value="right"
+                      control={<Radio size="small" />}
+                      label="Rata Kanan"
+                      slotProps={{ typography: { fontSize: 13 } }}
+                    />
+                  </RadioGroup>
+                </FormControl>
+
                 <TextField
                   size="small"
                   multiline
