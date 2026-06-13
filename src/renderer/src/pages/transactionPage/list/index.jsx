@@ -44,6 +44,7 @@ import { receiptSettingsService } from '../../../services/receiptSettingsService
 import { useNotifier } from '../../../components/core/notificationProvider'
 import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
 import { DatePicker } from '../../../components/ui/DatePicker'
+import { useEffect } from 'react'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
 

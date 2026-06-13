@@ -1,6 +1,6 @@
 {
   "name": "pposkasir",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "PPOS Kasir Desktop App",
   "main": "./out/main/index.js",
   "author": "putra",
