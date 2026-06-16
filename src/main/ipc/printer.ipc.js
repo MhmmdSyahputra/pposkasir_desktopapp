@@ -53,15 +53,27 @@ export function registerPrinterIpc() {
       })()`)
 
       setTimeout(() => {
-        rWin.webContents.print({
+        const printOptions = {
           silent: true,
-          margins: { marginType: 'printableArea' },
-          printBackground: false,
+          margins: { marginType: 'none' },
+          printBackground: true,
           pagesPerSheet: 1,
           landscape: false,
-          header: 'Header of the Page',
-          footer: 'Footer of the Page',
           collate: false
+        }
+
+        // Set explicit size in microns to prevent Chromium from defaulting to A4/Letter scaling
+        if (data.paperSize === '58mm') {
+          printOptions.pageSize = { width: 58000, height: 297000 } // 58mm x 297mm
+        } else if (data.paperSize === '80mm') {
+          printOptions.pageSize = { width: 80000, height: 297000 } // 80mm x 297mm
+        }
+
+        rWin.webContents.print(printOptions, (success, errorType) => {
+          if (!success) {
+            console.error('Print failed:', errorType)
+          }
+          rWin.destroy()
         })
       }, 200)
     })

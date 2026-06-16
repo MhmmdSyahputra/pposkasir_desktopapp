@@ -17,12 +17,15 @@ import {
   SettingsPage,
   ReceiptSettingsPage,
   TemplatePage,
-  CashierPage
+  CashierPage,
+  BusinessInfoPage,
+  SupportPage
 } from '../pages'
 
 export const appRoutes = [
   // =============== PUBLIC ROUTES ===============
   { path: '/', element: <HomePage />, active: true, protected: false },
+  { path: '/profil-toko', element: <BusinessInfoPage />, active: true, protected: false },
   // product
   { path: '/produk/list', element: <ListProductPage />, active: true, protected: false },
   { path: '/produk/create', element: <CreateProductPage />, active: true, protected: false },
@@ -53,6 +56,7 @@ export const appRoutes = [
     active: true,
     protected: false
   },
-  { path: '/template', element: <TemplatePage />, active: true, protected: false }
+  { path: '/template', element: <TemplatePage />, active: true, protected: false },
+  { path: '/apresiasi', element: <SupportPage />, active: true, protected: false }
   // { path: '*', element: <NotFoundPage />, active: true, protected: false }
 ]

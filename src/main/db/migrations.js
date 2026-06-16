@@ -255,5 +255,21 @@ export const migrations = [
         CREATE INDEX IF NOT EXISTS idx_bundle_items_bundle_id ON product_bundle_items(bundle_id);
       `)
     }
+  },
+  {
+    version: 10,
+    description: 'Add store_profile table for business information',
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS store_profile (
+          id           INTEGER PRIMARY KEY CHECK(id = 1),
+          nama_toko    TEXT    NOT NULL DEFAULT '',
+          lini_bisnis  TEXT    NOT NULL DEFAULT '',
+          telepon      TEXT    NOT NULL DEFAULT '',
+          alamat       TEXT    NOT NULL DEFAULT '',
+          updated_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
+        );
+      `)
+    }
   }
 ]

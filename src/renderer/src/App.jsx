@@ -8,8 +8,8 @@ import { NotificationProvider } from './components/core/notificationProvider'
 import { useAuth } from './context/authContext'
 import { LoginPage } from './pages/loginPage'
 import { MirrorPage } from './pages'
-import { PromotionPopup } from './components/core/promotionPopup'
 import { AiAssistantFab } from './components/core/AiAssistantFab'
+import { BusinessInfoModal } from './components/core/businessInfoModal'
 
 const query = new URLSearchParams(window.location.search)
 const initialRoute = query.get('route')
@@ -50,23 +50,14 @@ const SidebarLayout = ({ children }) => {
           {children}
         </Box>
       </Box>
-      <PromotionPopup />
       <AiAssistantFab />
+      <BusinessInfoModal />
     </Box>
   )
 }
 
 const renderRoute = (route, key) => {
   const { element, path } = route
-
-  // if (!isProtected && (path === '/login' || path === '/xyz/info')) {
-  //   return <Route key={key} path={path} element={<LoginOnlyLayout>{element}</LoginOnlyLayout>} />
-  // }
-
-  // if (!isProtected) {
-  //   return <Route key={key} path={path} element={<SidebarLogLayout>{element}</SidebarLogLayout>} />
-  // }
-
   return <Route key={key} path={path} element={<SidebarLayout>{element}</SidebarLayout>} />
 }
 

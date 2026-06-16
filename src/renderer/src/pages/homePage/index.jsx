@@ -2737,9 +2737,44 @@ export const HomePage = () => {
         }}
         onConfirm={(item) => {
           setCart((prev) => {
+            const areSelectionsEqual = (s1, s2) => {
+              const keys1 = Object.keys(s1 || {}).filter((k) => (s1[k] || []).length > 0)
+              const keys2 = Object.keys(s2 || {}).filter((k) => (s2[k] || []).length > 0)
+              if (keys1.length !== keys2.length) return false
+              for (const key of keys1) {
+                const arr1 = s1[key] || []
+                const arr2 = s2[key] || []
+                if (arr1.length !== arr2.length) return false
+                const sorted1 = [...arr1].sort()
+                const sorted2 = [...arr2].sort()
+                for (let i = 0; i < sorted1.length; i++) {
+                  if (sorted1[i] !== sorted2[i]) return false
+                }
+              }
+              return true
+            }
+
             if (editCartItem) {
               return prev.map((c) => (c.cartId === item.cartId ? item : c))
             }
+
+            // Check if there is an existing item with the same product id, same selections, and same note
+            const existingIndex = prev.findIndex(
+              (c) =>
+                c.id === item.id &&
+                areSelectionsEqual(c.selections, item.selections) &&
+                (c.note || '').trim() === (item.note || '').trim()
+            )
+
+            if (existingIndex > -1) {
+              const updated = [...prev]
+              updated[existingIndex] = {
+                ...updated[existingIndex],
+                qty: updated[existingIndex].qty + item.qty
+              }
+              return updated
+            }
+
             return [...prev, item]
           })
           setDialogProduct(null)

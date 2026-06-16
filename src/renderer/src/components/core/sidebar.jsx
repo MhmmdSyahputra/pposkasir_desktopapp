@@ -23,7 +23,8 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
+  alpha
 } from '@mui/material'
 import {
   HomeRounded,
@@ -34,7 +35,8 @@ import {
   ChevronLeftRounded,
   ExpandMoreRounded,
   FiberManualRecord,
-  WhatsApp
+  WhatsApp,
+  CoffeeRounded
 } from '@mui/icons-material'
 import { useAuth } from '../../context/authContext'
 import { useNotifier } from './notificationProvider'
@@ -305,7 +307,32 @@ export const Sidebar = ({ routes = [] }) => {
         </IconButton>
       </Tooltip>
 
-      <List sx={{ width: '100%', px: 0 }}>
+      {/* Scrollable Container */}
+      <Box
+        className="sidebar-scrollable-content"
+        sx={{
+          flex: 1,
+          width: '100%',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          '&::-webkit-scrollbar': {
+            width: '4px'
+          },
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: 'rgba(0,0,0,0.1)',
+            borderRadius: '4px'
+          },
+          ...(theme.palette.mode === 'dark' && {
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              borderRadius: '4px'
+            }
+          })
+        }}
+      >
+        <List sx={{ width: '100%', px: 0 }}>
         {menuItems.map((item) => {
           const Icon = item.icon ?? HomeRounded
 
@@ -605,6 +632,43 @@ export const Sidebar = ({ routes = [] }) => {
         <PromotionSidebarBanner collapsed={collapsed} />
 
         <Tooltip
+          title={collapsed ? 'Dukung Pengembang' : ''}
+          placement="right"
+          disableHoverListener={!collapsed}
+        >
+          <ListItemButton
+            onClick={() => navigate('/apresiasi')}
+            selected={location.pathname === '/apresiasi'}
+            sx={{
+              ...navItemSx,
+              width: '100%',
+              mb: 0.5,
+              '&:hover': {
+                bgcolor: 'warning.main',
+                color: 'white',
+                '& .MuiListItemIcon-root': { color: 'white' }
+              },
+              '&.Mui-selected': {
+                color: 'warning.main',
+                bgcolor: alpha(theme.palette.warning.main, 0.12)
+              }
+            }}
+          >
+            <ListItemIcon sx={{ color: 'warning.main', transition: 'color 0.2s' }}>
+              <CoffeeRounded fontSize="medium" />
+            </ListItemIcon>
+            {!collapsed && (
+              <ListItemText
+                primary="Dukung Pengembang"
+                secondary="Donasi & Apresiasi"
+                primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
+                secondaryTypographyProps={{ fontSize: 9, opacity: 0.8 }}
+              />
+            )}
+          </ListItemButton>
+        </Tooltip>
+
+        <Tooltip
           title={collapsed ? 'Hubungi Developer' : ''}
           placement="right"
           disableHoverListener={!collapsed}
@@ -646,6 +710,7 @@ export const Sidebar = ({ routes = [] }) => {
           disableHoverListener={!collapsed}
         >
           <Box
+            onClick={() => navigate('/profil-toko')}
             sx={{
               width: '100%',
               px: collapsed ? 0 : 1,
@@ -653,7 +718,10 @@ export const Sidebar = ({ routes = [] }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: collapsed ? 'center' : 'flex-start',
-              gap: 1
+              gap: 1,
+              cursor: 'pointer',
+              borderRadius: 2,
+              '&:hover': { bgcolor: 'action.hover' }
             }}
           >
             <Avatar
@@ -682,6 +750,7 @@ export const Sidebar = ({ routes = [] }) => {
             )}
           </Box>
         </Tooltip>
+      </Box>
       </Box>
 
       <Dialog

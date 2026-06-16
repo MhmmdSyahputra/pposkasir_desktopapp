@@ -8,6 +8,11 @@
         margin: 0;
       }
 
+      html, body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+      }
+
       body {
         width: 100%;
         font-family: 'Courier New', Courier, monospace;
@@ -15,7 +20,13 @@
         margin: 0;
         padding: 0 4mm;
         box-sizing: border-box;
-        color: #111;
+      }
+
+      @media print {
+        html, body {
+          background-color: #ffffff !important;
+          color: #000000 !important;
+        }
       }
 
       .line {
@@ -124,7 +135,7 @@
       <div id="footer2">--</div>
       <div id="footer3">--</div>
       <div class="line" style="margin: 6px 0 2px 0;"></div>
-      <div style="font-size: 9px; font-weight: bold; color: #555; margin-bottom: 4px; text-align: center;">Powered by P-POS Kasir</div>
+      <div style="font-size: 11px; font-weight: bold; color: #555; margin-bottom: 4px; text-align: center;">Powered by P-POS Kasir</div>
     </div>
   </body>
 </html>

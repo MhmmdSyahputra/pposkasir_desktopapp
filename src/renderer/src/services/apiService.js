@@ -81,6 +81,61 @@ class ApiService {
       throw error
     }
   }
+
+  /**
+   * Fetch application configuration from remote API.
+   * @param {string} appName - The name of the application (default: 'P-Pos Kasir')
+   */
+  async getConfig(appName = 'P-Pos Kasir') {
+    try {
+      const response = await axios.get(`https://api.muhammadsyahputra.my.id/api/v1/config/get/${encodeURIComponent(appName)}`)
+      return response.data
+    } catch (error) {
+      console.error('getConfig error:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Send business information to the API.
+   * @param {Object} data - Business data { storeName, phoneNumber, address }
+   */
+  async sendBusinessInfo(data) {
+    try {
+      // Collect device metadata
+      let metaString = '{}'
+      try {
+        const [deviceId, brand, deviceInfo] = await Promise.all([
+          window.api.device.deviceUuid(),
+          window.api.device.deviceBrand(),
+          window.api.device.deviceInfo()
+        ])
+        
+        const deviceMeta = {
+          id: deviceId,
+          brand: `${brand?.manufacturer || ''} ${brand?.model || ''}`.trim(),
+          ...deviceInfo
+        }
+        metaString = JSON.stringify(deviceMeta)
+      } catch (err) {
+        console.warn('Failed to collect device metadata for business info', err)
+      }
+
+      const payloadWithMeta = {
+        ...data,
+        meta: metaString
+      }
+
+      // NOTE: Replace this endpoint with the actual endpoint for business info if it's different.
+      const response = await axios.post('https://api.muhammadsyahputra.my.id/api/v1/myapp/business-info', payloadWithMeta, {
+        headers: { 'Content-Type': 'application/json' }
+      })
+      return response.data
+    } catch (error) {
+      console.error('sendBusinessInfo error:', error)
+      throw error
+    }
+  }
 }
 
 export const apiService = new ApiService()

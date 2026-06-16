@@ -146,6 +146,11 @@ const api = {
     getStats: (params) => ipcRenderer.invoke('transaction:getStats', params),
     getReport: (params) => ipcRenderer.invoke('transaction:getReport', params),
     void: (id) => ipcRenderer.invoke('transaction:void', id)
+  },
+
+  profile: {
+    get: () => ipcRenderer.invoke('profile:get'),
+    upsert: (payload) => ipcRenderer.invoke('profile:upsert', payload)
   }
 }
 

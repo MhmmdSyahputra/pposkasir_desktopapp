@@ -18,9 +18,12 @@ import { ReceiptSettingsPage } from './receiptSettingsPage'
 import { TemplatePage } from './templatePage'
 import { CashierPage } from './cashierPage'
 import { MirrorPage } from './mirrorPage'
+import { SupportPage } from './supportPage'
+import { BusinessInfoPage } from './businessInfoPage'
 
 export {
   HomePage,
+  BusinessInfoPage,
   ListProductPage,
   CreateProductPage,
   EditProductPage,
@@ -39,5 +42,6 @@ export {
   ReceiptSettingsPage,
   TemplatePage,
   CashierPage,
-  MirrorPage
+  MirrorPage,
+  SupportPage
 }
