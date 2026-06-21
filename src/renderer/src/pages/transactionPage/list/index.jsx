@@ -263,7 +263,8 @@ const DetailDialog = ({ detail, onClose, onVoid }) => {
       paddingLeft: receiptSettings.paddingLeft || 0,
       paddingRight: receiptSettings.paddingRight || 0,
       headerAlign: receiptSettings.headerAlign || 'center',
-      footerAlign: receiptSettings.footerAlign || 'center'
+      footerAlign: receiptSettings.footerAlign || 'center',
+      printerType: receiptSettings.printerType || 'thermal'
     }
 
     try {
@@ -274,7 +275,10 @@ const DetailDialog = ({ detail, onClose, onVoid }) => {
       })
     } catch (err) {
       show({
-        message: t('receipt_settings.print_receipt_failed', { error: err.message, defaultValue: 'Gagal mencetak struk' }),
+        message: t('receipt_settings.print_receipt_failed', {
+          error: err.message,
+          defaultValue: 'Gagal mencetak struk'
+        }),
         severity: 'error'
       })
     }
@@ -640,7 +644,7 @@ const DetailDialog = ({ detail, onClose, onVoid }) => {
               justifyContent: 'center',
               gap: 0.8,
               '&:hover': {
-                bgcolor: theme.palette.primary.dark,
+                bgcolor: theme.palette.primary.dark
               },
               '&:active': { transform: 'scale(0.98)' },
               transition: 'all 0.15s'

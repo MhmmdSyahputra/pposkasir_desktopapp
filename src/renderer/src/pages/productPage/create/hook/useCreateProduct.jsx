@@ -49,7 +49,7 @@ export const useCreateProduct = () => {
     productService.getAll({ search: '' }).then((r) => {
       if (r.ok) {
         // filter out bundles to avoid nested bundles
-        const singles = r.data.filter(p => !p.is_bundle)
+        const singles = r.data.filter((p) => !p.is_bundle)
         setAllProducts(singles)
         const sorted = r.data.sort((a, b) => b.id - a.id).slice(0, 5)
         setLastProducts(sorted)
@@ -77,10 +77,13 @@ export const useCreateProduct = () => {
 
   const addBundleItem = (product) => {
     setForm((prev) => {
-      if (prev.bundle_items.find(i => i.product_id === product.id)) return prev
+      if (prev.bundle_items.find((i) => i.product_id === product.id)) return prev
       return {
         ...prev,
-        bundle_items: [...prev.bundle_items, { product_id: product.id, product_nama: product.nama, qty: 1 }]
+        bundle_items: [
+          ...prev.bundle_items,
+          { product_id: product.id, product_nama: product.nama, qty: 1 }
+        ]
       }
     })
   }
@@ -88,14 +91,16 @@ export const useCreateProduct = () => {
   const removeBundleItem = (productId) => {
     setForm((prev) => ({
       ...prev,
-      bundle_items: prev.bundle_items.filter(i => i.product_id !== productId)
+      bundle_items: prev.bundle_items.filter((i) => i.product_id !== productId)
     }))
   }
 
   const updateBundleItemQty = (productId, qty) => {
     setForm((prev) => ({
       ...prev,
-      bundle_items: prev.bundle_items.map(i => i.product_id === productId ? { ...i, qty: Number(qty) || 1 } : i)
+      bundle_items: prev.bundle_items.map((i) =>
+        i.product_id === productId ? { ...i, qty: Number(qty) || 1 } : i
+      )
     }))
   }
 

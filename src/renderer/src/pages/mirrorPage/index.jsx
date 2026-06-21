@@ -16,7 +16,6 @@ import { Minimize, Fullscreen, Close } from '@mui/icons-material'
 import pposLogo from '../../../../../resources/icon.png'
 import { promotionService } from '../../services/promotionService'
 
-
 // We force a dark theme for the mirror display for a premium aesthetic
 const mirrorTheme = createTheme({
   palette: {
@@ -52,26 +51,26 @@ export const MirrorPage = () => {
     // Fetch banners
     const fetchBanners = async () => {
       try {
-        const data = await promotionService.getBanners();
+        const data = await promotionService.getBanners()
         if (data && data.length > 0) {
-          setBanners(data);
+          setBanners(data)
         }
       } catch (err) {
-        console.error('Failed to fetch banners for mirror', err);
+        console.error('Failed to fetch banners for mirror', err)
       }
-    };
-    fetchBanners();
+    }
+    fetchBanners()
   }, [])
 
   useEffect(() => {
-    if (banners.length <= 1) return;
-    
+    if (banners.length <= 1) return
+
     const interval = setInterval(() => {
-      setCurrentBannerIndex((prev) => (prev + 1) % banners.length);
-    }, 5000); // Rotate every 5 seconds
-    
-    return () => clearInterval(interval);
-  }, [banners]);
+      setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
+    }, 5000) // Rotate every 5 seconds
+
+    return () => clearInterval(interval)
+  }, [banners])
 
   useEffect(() => {
     // Listen for updates from the main window
@@ -94,18 +93,27 @@ export const MirrorPage = () => {
   return (
     <ThemeProvider theme={mirrorTheme}>
       <CssBaseline />
-      <Box sx={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', position: 'relative' }}>
-        
+      <Box
+        sx={{
+          display: 'flex',
+          height: '100vh',
+          width: '100vw',
+          overflow: 'hidden',
+          position: 'relative'
+        }}
+      >
         {/* INVISIBLE DRAG BAR (Top Edge) */}
-        <Box 
-          sx={{ 
-            position: 'absolute', 
-            top: 0, left: 0, right: 0, 
-            height: 40, 
-            WebkitAppRegion: 'drag', 
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 40,
+            WebkitAppRegion: 'drag',
             zIndex: 9999,
             backgroundColor: 'transparent'
-          }} 
+          }}
         />
 
         {/* Left Side: Brand / Idle Screen */}
@@ -129,7 +137,7 @@ export const MirrorPage = () => {
                   alt="Promo"
                   onClick={() => {
                     if (banners[currentBannerIndex].link_banner) {
-                      window.open(banners[currentBannerIndex].link_banner, '_blank');
+                      window.open(banners[currentBannerIndex].link_banner, '_blank')
                     }
                   }}
                   sx={{
@@ -140,82 +148,110 @@ export const MirrorPage = () => {
                     boxShadow: '0 15px 40px rgba(0,0,0,0.5)',
                     cursor: banners[currentBannerIndex].link_banner ? 'pointer' : 'default',
                     transition: 'transform 0.2s',
-                    '&:hover': banners[currentBannerIndex].link_banner ? {
-                      transform: 'scale(1.01)'
-                    } : {}
+                    '&:hover': banners[currentBannerIndex].link_banner
+                      ? {
+                          transform: 'scale(1.01)'
+                        }
+                      : {}
                   }}
                 />
               </Fade>
             </Box>
           )}
 
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', p: 4 }}>
-          {items.length === 0 ? (
-            <Fade in={true} timeout={1000}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Box
-                  sx={{
-                    width: 110,
-                    height: 110,
-                    borderRadius: '50%',
-                    background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    mb: 3,
-                    mx: 'auto',
-                    boxShadow: '0 0 40px rgba(79, 172, 254, 0.4)'
-                  }}
-                >
-                  <img src={pposLogo} alt="P-POS Logo" style={{ width: 60, height: 60, objectFit: 'contain' }} />
-                </Box>
-                <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.5px' }}>
-                  Selamat Datang
-                </Typography>
-                <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 400 }}>
-                  Silakan sampaikan pesanan Anda pada kasir.
-                </Typography>
-              </Box>
-            </Fade>
-          ) : (
-            <Fade in={true} timeout={800}>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
-                  Pesanan Anda
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{ color: 'text.secondary', maxWidth: 400, mx: 'auto' }}
-                >
-                  Mohon periksa kembali detail pesanan Anda di layar sebelah kanan sebelum melakukan
-                  pembayaran.
-                </Typography>
-              </Box>
-            </Fade>
-          )}
-          </Box>
-
-          <Box 
-            sx={{ 
-              mt: 'auto',
-              pb: 4,
-              display: 'flex', 
+          <Box
+            sx={{
+              flex: 1,
+              display: 'flex',
               flexDirection: 'column',
-              alignItems: 'center', 
-              opacity: 0.9 
+              justifyContent: 'center',
+              alignItems: 'center',
+              p: 4
             }}
           >
-            <Typography variant="caption" sx={{ color: 'text.secondary', letterSpacing: 3, textTransform: 'uppercase', mb: 0.2, fontSize: 10, fontWeight: 600 }}>
+            {items.length === 0 ? (
+              <Fade in={true} timeout={1000}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Box
+                    sx={{
+                      width: 110,
+                      height: 110,
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      mb: 3,
+                      mx: 'auto',
+                      boxShadow: '0 0 40px rgba(79, 172, 254, 0.4)'
+                    }}
+                  >
+                    <img
+                      src={pposLogo}
+                      alt="P-POS Logo"
+                      style={{ width: 60, height: 60, objectFit: 'contain' }}
+                    />
+                  </Box>
+                  <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, letterSpacing: '-0.5px' }}>
+                    Selamat Datang
+                  </Typography>
+                  <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 400 }}>
+                    Silakan sampaikan pesanan Anda pada kasir.
+                  </Typography>
+                </Box>
+              </Fade>
+            ) : (
+              <Fade in={true} timeout={800}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 700, mb: 2 }}>
+                    Pesanan Anda
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ color: 'text.secondary', maxWidth: 400, mx: 'auto' }}
+                  >
+                    Mohon periksa kembali detail pesanan Anda di layar sebelah kanan sebelum
+                    melakukan pembayaran.
+                  </Typography>
+                </Box>
+              </Fade>
+            )}
+          </Box>
+
+          <Box
+            sx={{
+              mt: 'auto',
+              pb: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              opacity: 0.9
+            }}
+          >
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'text.secondary',
+                letterSpacing: 3,
+                textTransform: 'uppercase',
+                mb: 0.2,
+                fontSize: 10,
+                fontWeight: 600
+              }}
+            >
               Powered By
             </Typography>
-            <Typography variant="h5" sx={{ 
-              fontWeight: 900, 
-              background: 'linear-gradient(90deg, #4facfe, #00f2fe)', 
-              WebkitBackgroundClip: 'text', 
-              WebkitTextFillColor: 'transparent', 
-              letterSpacing: 1 
-            }}>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 900,
+                background: 'linear-gradient(90deg, #4facfe, #00f2fe)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                letterSpacing: 1
+              }}
+            >
               P-POS KASIR
             </Typography>
             <Typography variant="caption" sx={{ color: 'text.secondary', mt: 0.2, fontSize: 11 }}>
@@ -237,22 +273,49 @@ export const MirrorPage = () => {
           }}
         >
           {/* FLOATING WINDOW CONTROLS */}
-          <Box sx={{ position: 'absolute', top: 0, right: 0, display: 'flex', zIndex: 10000, WebkitAppRegion: 'no-drag' }}>
-            <IconButton 
-              onClick={() => window.electron?.ipcRenderer.send('window-minimize')} 
-              sx={{ borderRadius: 0, width: 46, height: 40, color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              display: 'flex',
+              zIndex: 10000,
+              WebkitAppRegion: 'no-drag'
+            }}
+          >
+            <IconButton
+              onClick={() => window.electron?.ipcRenderer.send('window-minimize')}
+              sx={{
+                borderRadius: 0,
+                width: 46,
+                height: 40,
+                color: 'text.secondary',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' }
+              }}
             >
               <Minimize sx={{ fontSize: 18, mb: 1.5 }} />
             </IconButton>
-            <IconButton 
-              onClick={() => window.electron?.ipcRenderer.send('window-fullscreen')} 
-              sx={{ borderRadius: 0, width: 46, height: 40, color: 'text.secondary', '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' } }}
+            <IconButton
+              onClick={() => window.electron?.ipcRenderer.send('window-fullscreen')}
+              sx={{
+                borderRadius: 0,
+                width: 46,
+                height: 40,
+                color: 'text.secondary',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.05)' }
+              }}
             >
               <Fullscreen sx={{ fontSize: 22 }} />
             </IconButton>
-            <IconButton 
-              onClick={() => window.electron?.ipcRenderer.send('window-close')} 
-              sx={{ borderRadius: 0, width: 46, height: 40, color: 'text.secondary', '&:hover': { bgcolor: '#e81123', color: '#fff' } }}
+            <IconButton
+              onClick={() => window.electron?.ipcRenderer.send('window-close')}
+              sx={{
+                borderRadius: 0,
+                width: 46,
+                height: 40,
+                color: 'text.secondary',
+                '&:hover': { bgcolor: '#e81123', color: '#fff' }
+              }}
             >
               <Close sx={{ fontSize: 18 }} />
             </IconButton>

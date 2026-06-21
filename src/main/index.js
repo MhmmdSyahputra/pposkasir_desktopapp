@@ -6,6 +6,7 @@ import { registerAppIpc } from './ipc/app.ipc.js'
 import { registerDeviceIpc } from './ipc/device.ipc.js'
 import { registerWindowIpc } from './ipc/window.ipc.js'
 import { registerPrinterIpc } from './ipc/printer.ipc.js'
+import { registerDatabaseBackupIpc } from './ipc/database.ipc.js'
 import {
   startNetworkMonitoring,
   stopNetworkMonitoring,
@@ -27,6 +28,7 @@ getDb()
 registerAppIpc()
 registerDeviceIpc()
 registerWindowIpc()
+registerDatabaseBackupIpc()
 registerNetworkIpc()
 registerDataIpc()
 registerPrinterIpc()

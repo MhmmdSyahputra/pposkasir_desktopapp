@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -11,94 +11,94 @@ import {
   CircularProgress,
   useTheme,
   alpha
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import { useAuth } from '../../context/authContext';
-import { apiService } from '../../services/apiService';
-import { profileService } from '../../services/profileService';
+} from '@mui/material'
+import CloseIcon from '@mui/icons-material/Close'
+import StorefrontIcon from '@mui/icons-material/Storefront'
+import { useAuth } from '../../context/authContext'
+import { apiService } from '../../services/apiService'
+import { profileService } from '../../services/profileService'
 
 export const BusinessInfoModal = () => {
-  const theme = useTheme();
-  const { user } = useAuth();
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const theme = useTheme()
+  const { user } = useAuth()
+  const [open, setOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     storeName: '',
     businessType: '',
     phoneNumber: '',
     address: ''
-  });
+  })
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) return
 
     const fetchProfile = async () => {
       try {
-        const profile = await profileService.get();
+        const profile = await profileService.get()
         if (profile) {
           setFormData({
             storeName: profile.nama_toko || '',
             businessType: profile.lini_bisnis || '',
             phoneNumber: profile.telepon || '',
             address: profile.alamat || ''
-          });
+          })
         }
       } catch (error) {
-        console.error('Failed to fetch profile:', error);
+        console.error('Failed to fetch profile:', error)
       }
-    };
-
-    fetchProfile();
-
-    const isFilled = localStorage.getItem('businessInfoFilled');
-    if (!isFilled) {
-      setOpen(true);
     }
-  }, [user]);
+
+    fetchProfile()
+
+    const isFilled = localStorage.getItem('businessInfoFilled')
+    if (!isFilled) {
+      setOpen(true)
+    }
+  }, [user])
 
   const handleClose = () => {
-    setOpen(false);
-  };
+    setOpen(false)
+  }
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target
+    setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
+    setLoading(true)
 
     try {
       const payload = {
         ...formData,
         username: user?.username || 'unknown',
         meta: {
-          app_source: "P-POS Kasir",
-          platform: "Desktop Windows",
+          app_source: 'P-POS Kasir',
+          platform: 'Desktop Windows',
           submitted_at: new Date().toISOString()
         }
-      };
+      }
 
       // 1. Send to cloud API
-      await apiService.sendBusinessInfo(payload);
-      
+      await apiService.sendBusinessInfo(payload)
+
       // 2. Save to local SQLite
-      await profileService.upsert(payload);
+      await profileService.upsert(payload)
 
       // Save locally so it doesn't show again
-      localStorage.setItem('businessInfoFilled', 'true');
-      setOpen(false);
+      localStorage.setItem('businessInfoFilled', 'true')
+      setOpen(false)
     } catch (error) {
-      console.error('Failed to submit business info:', error);
+      console.error('Failed to submit business info:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const businessTypes = [
     'Retail / Minimarket',
@@ -109,7 +109,7 @@ export const BusinessInfoModal = () => {
     'Kesehatan / Apotek',
     'Elektronik / Gadget',
     'Lainnya'
-  ];
+  ]
 
   return (
     <Dialog
@@ -129,7 +129,15 @@ export const BusinessInfoModal = () => {
       }}
     >
       <DialogTitle sx={{ m: 0, p: 3, pb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box sx={{ p: 1, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', display: 'flex' }}>
+        <Box
+          sx={{
+            p: 1,
+            borderRadius: 2,
+            bgcolor: alpha(theme.palette.primary.main, 0.1),
+            color: 'primary.main',
+            display: 'flex'
+          }}
+        >
           <StorefrontIcon />
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 700, fontFamily: 'Poppins, sans-serif' }}>
@@ -148,7 +156,7 @@ export const BusinessInfoModal = () => {
           <CloseIcon />
         </IconButton>
       </DialogTitle>
-      
+
       <DialogContent sx={{ px: 3, pb: 4 }}>
         <Typography
           variant="body2"
@@ -159,7 +167,8 @@ export const BusinessInfoModal = () => {
             mb: 3
           }}
         >
-          Halo! Bantu kami melengkapi informasi profil toko Anda. Data ini bisa Anda lengkapi kapan saja melalui menu Profil.
+          Halo! Bantu kami melengkapi informasi profil toko Anda. Data ini bisa Anda lengkapi kapan
+          saja melalui menu Profil.
         </Typography>
 
         <form onSubmit={handleSubmit}>
@@ -258,5 +267,5 @@ export const BusinessInfoModal = () => {
         </form>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}

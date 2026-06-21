@@ -26,7 +26,7 @@ export const useHome = () => {
               }
             })()
           }))
-          
+
           const sorted = mapped.sort((a, b) => {
             const aStok = Number(a.stok || 0)
             const bStok = Number(b.stok || 0)

@@ -19,8 +19,18 @@ import {
 
 const DAYS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December'
 ]
 
 const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate()
@@ -38,7 +48,7 @@ export const DatePicker = ({
   const isDark = theme.palette.mode === 'dark'
 
   const [anchorEl, setAnchorEl] = useState(null)
-  
+
   // Parse value (YYYY-MM-DD) or use current date
   const parsedDate = useMemo(() => {
     if (!value) return null
@@ -47,8 +57,12 @@ export const DatePicker = ({
     return new Date(y, m - 1, d)
   }, [value])
 
-  const [currentMonth, setCurrentMonth] = useState(parsedDate ? parsedDate.getMonth() : new Date().getMonth())
-  const [currentYear, setCurrentYear] = useState(parsedDate ? parsedDate.getFullYear() : new Date().getFullYear())
+  const [currentMonth, setCurrentMonth] = useState(
+    parsedDate ? parsedDate.getMonth() : new Date().getMonth()
+  )
+  const [currentYear, setCurrentYear] = useState(
+    parsedDate ? parsedDate.getFullYear() : new Date().getFullYear()
+  )
 
   // Reset calendar view when opened
   useEffect(() => {
@@ -72,18 +86,18 @@ export const DatePicker = ({
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
       setCurrentMonth(11)
-      setCurrentYear(y => y - 1)
+      setCurrentYear((y) => y - 1)
     } else {
-      setCurrentMonth(m => m - 1)
+      setCurrentMonth((m) => m - 1)
     }
   }
 
   const handleNextMonth = () => {
     if (currentMonth === 11) {
       setCurrentMonth(0)
-      setCurrentYear(y => y + 1)
+      setCurrentYear((y) => y + 1)
     } else {
-      setCurrentMonth(m => m + 1)
+      setCurrentMonth((m) => m + 1)
     }
   }
 
@@ -137,7 +151,12 @@ export const DatePicker = ({
                   <ClearRounded sx={{ fontSize: 16 }} />
                 </IconButton>
               )}
-              <IconButton size="small" onClick={handleOpen} edge="end" sx={{ pointerEvents: 'none' }}>
+              <IconButton
+                size="small"
+                onClick={handleOpen}
+                edge="end"
+                sx={{ pointerEvents: 'none' }}
+              >
                 <CalendarTodayRounded sx={{ fontSize: 16, color: 'text.disabled' }} />
               </IconButton>
             </InputAdornment>
@@ -147,8 +166,12 @@ export const DatePicker = ({
             bgcolor: theme.palette.custom?.inputBg || (isDark ? '#1a1f2c' : '#ffffff'),
             borderRadius: 2,
             '& input': { cursor: 'pointer', fontFamily: 'Poppins, sans-serif', fontSize: 13 },
-            '& fieldset': { borderColor: theme.palette.custom?.inputBorder || theme.palette.divider },
-            '&:hover fieldset': { borderColor: theme.palette.custom?.inputBorderHover || theme.palette.primary?.main },
+            '& fieldset': {
+              borderColor: theme.palette.custom?.inputBorder || theme.palette.divider
+            },
+            '&:hover fieldset': {
+              borderColor: theme.palette.custom?.inputBorderHover || theme.palette.primary?.main
+            },
             ...sx
           }
         }}
@@ -181,10 +204,18 @@ export const DatePicker = ({
             {MONTHS[currentMonth]} {currentYear}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" onClick={handlePrevMonth} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5 }}>
+            <IconButton
+              size="small"
+              onClick={handlePrevMonth}
+              sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5 }}
+            >
               <ChevronLeftRounded sx={{ fontSize: 18 }} />
             </IconButton>
-            <IconButton size="small" onClick={handleNextMonth} sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5 }}>
+            <IconButton
+              size="small"
+              onClick={handleNextMonth}
+              sx={{ border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5 }}
+            >
               <ChevronRightRounded sx={{ fontSize: 18 }} />
             </IconButton>
           </Box>
@@ -192,7 +223,11 @@ export const DatePicker = ({
 
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 0.5, mb: 1 }}>
           {DAYS.map((d) => (
-            <Typography key={d} align="center" sx={{ fontSize: 11, fontWeight: 600, color: 'text.disabled', fontFamily: 'inherit' }}>
+            <Typography
+              key={d}
+              align="center"
+              sx={{ fontSize: 11, fontWeight: 600, color: 'text.disabled', fontFamily: 'inherit' }}
+            >
               {d}
             </Typography>
           ))}
@@ -203,8 +238,15 @@ export const DatePicker = ({
             <Box key={`blank-${b}`} />
           ))}
           {days.map((d) => {
-            const isSelected = parsedDate && parsedDate.getDate() === d && parsedDate.getMonth() === currentMonth && parsedDate.getFullYear() === currentYear
-            const isToday = new Date().getDate() === d && new Date().getMonth() === currentMonth && new Date().getFullYear() === currentYear
+            const isSelected =
+              parsedDate &&
+              parsedDate.getDate() === d &&
+              parsedDate.getMonth() === currentMonth &&
+              parsedDate.getFullYear() === currentYear
+            const isToday =
+              new Date().getDate() === d &&
+              new Date().getMonth() === currentMonth &&
+              new Date().getFullYear() === currentYear
 
             return (
               <Box
@@ -221,8 +263,11 @@ export const DatePicker = ({
                   fontFamily: 'inherit',
                   fontWeight: isSelected ? 600 : 400,
                   bgcolor: isSelected ? 'primary.main' : 'transparent',
-                  color: isSelected ? '#fff' : (isToday ? 'primary.main' : 'text.primary'),
-                  border: isToday && !isSelected ? `1px solid ${theme.palette.primary.main}` : '1px solid transparent',
+                  color: isSelected ? '#fff' : isToday ? 'primary.main' : 'text.primary',
+                  border:
+                    isToday && !isSelected
+                      ? `1px solid ${theme.palette.primary.main}`
+                      : '1px solid transparent',
                   transition: 'all 0.15s',
                   '&:hover': {
                     bgcolor: isSelected ? 'primary.dark' : alpha(theme.palette.primary.main, 0.1)
@@ -235,8 +280,21 @@ export const DatePicker = ({
           })}
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mt: 2, pt: 1.5, borderTop: `1px solid ${theme.palette.divider}` }}>
-          <Button size="small" onClick={handleClear} sx={{ textTransform: 'none', color: 'text.secondary', fontSize: 12 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            mt: 2,
+            pt: 1.5,
+            borderTop: `1px solid ${theme.palette.divider}`
+          }}
+        >
+          <Button
+            size="small"
+            onClick={handleClear}
+            sx={{ textTransform: 'none', color: 'text.secondary', fontSize: 12 }}
+          >
             Clear
           </Button>
           <Button size="small" onClick={handleToday} sx={{ textTransform: 'none', fontSize: 12 }}>

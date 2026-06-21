@@ -1,45 +1,45 @@
-import React, { useEffect, useState } from 'react';
-import { Box, Typography, Tooltip, IconButton, useTheme, alpha } from '@mui/material';
-import CardGiftcardIcon from '@mui/icons-material/CardGiftcard';
-import { promotionService } from '../../services/promotionService';
+import React, { useEffect, useState } from 'react'
+import { Box, Typography, Tooltip, IconButton, useTheme, alpha } from '@mui/material'
+import CardGiftcardIcon from '@mui/icons-material/CardGiftcard'
+import { promotionService } from '../../services/promotionService'
 
 export const PromotionSidebarBanner = ({ collapsed }) => {
-  const theme = useTheme();
-  const [banners, setBanners] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const theme = useTheme()
+  const [banners, setBanners] = useState([])
+  const [currentIndex, setCurrentIndex] = useState(0)
 
   useEffect(() => {
     const fetchBanner = async () => {
       try {
-        const data = await promotionService.getBanners();
+        const data = await promotionService.getBanners()
         if (data && data.length > 0) {
-          setBanners(data);
+          setBanners(data)
         }
       } catch (error) {
-        console.error('Failed to load banner for sidebar:', error);
+        console.error('Failed to load banner for sidebar:', error)
       }
-    };
-    fetchBanner();
-  }, []);
+    }
+    fetchBanner()
+  }, [])
 
   useEffect(() => {
-    if (banners.length <= 1) return;
-    
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % banners.length);
-    }, 6000); // Rotate every 6 seconds
-    
-    return () => clearInterval(interval);
-  }, [banners]);
+    if (banners.length <= 1) return
 
-  if (banners.length === 0) return null;
-  const banner = banners[currentIndex];
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % banners.length)
+    }, 6000) // Rotate every 6 seconds
+
+    return () => clearInterval(interval)
+  }, [banners])
+
+  if (banners.length === 0) return null
+  const banner = banners[currentIndex]
 
   const handleClick = () => {
     if (banner.link_banner) {
-      window.open(banner.link_banner, '_blank');
+      window.open(banner.link_banner, '_blank')
     }
-  };
+  }
 
   if (collapsed) {
     return (
@@ -58,7 +58,7 @@ export const PromotionSidebarBanner = ({ collapsed }) => {
           <CardGiftcardIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-    );
+    )
   }
 
   return (
@@ -125,5 +125,5 @@ export const PromotionSidebarBanner = ({ collapsed }) => {
         </Typography>
       </Box>
     </Box>
-  );
-};
+  )
+}

@@ -18,7 +18,8 @@ import {
   useTheme,
   Radio,
   RadioGroup,
-  FormControlLabel
+  FormControlLabel,
+  CircularProgress
 } from '@mui/material'
 import {
   LanguageRounded,
@@ -30,7 +31,9 @@ import {
   SystemUpdateAltRounded,
   UpdateRounded,
   LockResetRounded,
-  ReportProblemRounded
+  ReportProblemRounded,
+  CloudUploadRounded,
+  CloudDownloadRounded
 } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../productPage/components/PageLayout'
@@ -108,6 +111,65 @@ export const SettingsPage = () => {
   const [pwdConfirm, setPwdConfirm] = useState('')
   const [pwdLoading, setPwdLoading] = useState(false)
   const [pwdError, setPwdError] = useState('')
+
+  // Database Backup / Restore states
+  const [dbLoading, setDbLoading] = useState(false)
+
+  const handleExportDatabase = async () => {
+    try {
+      setDbLoading(true)
+      const res = await window.api.database.backupExport()
+      if (res.success) {
+        show({
+          message: 'Backup Berhasil',
+          description: `Database berhasil diekspor ke: ${res.filePath}`,
+          severity: 'success'
+        })
+      } else if (res.message) {
+        show({ message: res.message, severity: 'info' })
+      } else {
+        throw new Error(res.error || 'Gagal mengekspor database')
+      }
+    } catch (err) {
+      show({
+        message: 'Ekspor Gagal',
+        description: err.message || 'Terjadi kesalahan saat mengekspor database',
+        severity: 'error'
+      })
+    } finally {
+      setDbLoading(false)
+    }
+  }
+
+  const handleImportDatabase = async () => {
+    try {
+      setDbLoading(true)
+      const res = await window.api.database.backupImport()
+      if (res.success) {
+        show({
+          message: 'Restore Berhasil',
+          description:
+            'Database berhasil dipulihkan. Aplikasi akan dimuat ulang untuk memperbarui data.',
+          severity: 'success'
+        })
+        setTimeout(() => {
+          window.location.reload()
+        }, 1500)
+      } else if (res.message) {
+        show({ message: res.message, severity: 'info' })
+      } else {
+        throw new Error(res.error || 'Gagal memulihkan database')
+      }
+    } catch (err) {
+      show({
+        message: 'Restore Gagal',
+        description: err.message || 'Terjadi kesalahan saat memulihkan database',
+        severity: 'error'
+      })
+    } finally {
+      setDbLoading(false)
+    }
+  }
 
   useEffect(() => {
     const loadVersion = async () => {
@@ -398,6 +460,46 @@ export const SettingsPage = () => {
           </InfoCard>
 
           <InfoCard
+            title="Backup & Restore Database"
+            subtitle="Ekspor cadangan database lokal atau impor data dari file cadangan sebelumnya."
+            icon={CloudUploadRounded}
+          >
+            <Stack direction="row" spacing={1.5}>
+              <Button
+                variant="outlined"
+                startIcon={
+                  dbLoading ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <CloudDownloadRounded />
+                  )
+                }
+                onClick={handleExportDatabase}
+                disabled={dbLoading}
+                sx={{ textTransform: 'none' }}
+              >
+                Ekspor Database (Backup)
+              </Button>
+              <Button
+                variant="outlined"
+                color="warning"
+                startIcon={
+                  dbLoading ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <CloudUploadRounded />
+                  )
+                }
+                onClick={handleImportDatabase}
+                disabled={dbLoading}
+                sx={{ textTransform: 'none' }}
+              >
+                Impor Database (Restore)
+              </Button>
+            </Stack>
+          </InfoCard>
+
+          <InfoCard
             title={t('settings.session_title')}
             subtitle={t('settings.session_subtitle')}
             icon={LogoutRounded}
@@ -608,21 +710,50 @@ export const SettingsPage = () => {
       </Dialog>
 
       {/* AI Report Dialog */}
-      <Dialog open={reportDialogOpen} onClose={() => !isReporting && setReportDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Poppins, sans-serif', fontSize: 16, fontWeight: 600 }}>Report Inappropriate AI Content</DialogTitle>
+      <Dialog
+        open={reportDialogOpen}
+        onClose={() => !isReporting && setReportDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontFamily: 'Poppins, sans-serif', fontSize: 16, fontWeight: 600 }}>
+          Report Inappropriate AI Content
+        </DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" sx={{ mb: 2, fontFamily: 'Poppins, sans-serif' }}>
             Please select a reason for reporting AI behavior or content:
           </Typography>
           <RadioGroup value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
-            <FormControlLabel value="Offensive Content" control={<Radio size="small" />} label={<Typography variant="body2">Offensive Content</Typography>} />
-            <FormControlLabel value="Harmful Information" control={<Radio size="small" />} label={<Typography variant="body2">Harmful Information</Typography>} />
-            <FormControlLabel value="Incorrect Information" control={<Radio size="small" />} label={<Typography variant="body2">Incorrect Information</Typography>} />
-            <FormControlLabel value="Other" control={<Radio size="small" />} label={<Typography variant="body2">Other</Typography>} />
+            <FormControlLabel
+              value="Offensive Content"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Offensive Content</Typography>}
+            />
+            <FormControlLabel
+              value="Harmful Information"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Harmful Information</Typography>}
+            />
+            <FormControlLabel
+              value="Incorrect Information"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Incorrect Information</Typography>}
+            />
+            <FormControlLabel
+              value="Other"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Other</Typography>}
+            />
           </RadioGroup>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setReportDialogOpen(false)} disabled={isReporting} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button
+            onClick={() => setReportDialogOpen(false)}
+            disabled={isReporting}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleReportAi}
             variant="contained"

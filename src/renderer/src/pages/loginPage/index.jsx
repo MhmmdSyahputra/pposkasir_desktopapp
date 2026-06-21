@@ -84,7 +84,6 @@ export const LoginPage = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', bgcolor: 'background.default' }}>
-      
       {/* Sisi Kiri - Visual / Branding */}
       <Box
         sx={{
@@ -107,12 +106,20 @@ export const LoginPage = () => {
           p: 6
         }}
       >
-        <Box sx={{ position: 'relative', zIndex: 1, color: '#fff', textAlign: 'center', maxWidth: 540 }}>
-          <Typography 
-            variant="h3" 
-            sx={{ 
-              fontWeight: 800, 
-              mb: 2, 
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            color: '#fff',
+            textAlign: 'center',
+            maxWidth: 540
+          }}
+        >
+          <Typography
+            variant="h3"
+            sx={{
+              fontWeight: 800,
+              mb: 2,
               fontFamily: 'Poppins, sans-serif',
               textShadow: '0 4px 12px rgba(0,0,0,0.3)',
               lineHeight: 1.2
@@ -120,16 +127,18 @@ export const LoginPage = () => {
           >
             P-POS Kasir Desktop
           </Typography>
-          <Typography 
-            sx={{ 
-              fontSize: 16, 
-              opacity: 0.9, 
+          <Typography
+            sx={{
+              fontSize: 16,
+              opacity: 0.9,
               fontFamily: 'Poppins, sans-serif',
               textShadow: '0 2px 8px rgba(0,0,0,0.3)',
               lineHeight: 1.6
             }}
           >
-            Solusi kasir cerdas dan modern. Dirancang untuk mengelola bisnis Anda lebih cepat dan akurat, serta dapat beroperasi penuh secara <strong>offline</strong> tanpa bergantung pada koneksi internet.
+            Solusi kasir cerdas dan modern. Dirancang untuk mengelola bisnis Anda lebih cepat dan
+            akurat, serta dapat beroperasi penuh secara <strong>offline</strong> tanpa bergantung
+            pada koneksi internet.
           </Typography>
         </Box>
       </Box>
@@ -148,12 +157,21 @@ export const LoginPage = () => {
         }}
       >
         <Box sx={{ maxWidth: 400, mx: 'auto', width: '100%' }}>
-          
           <Box sx={{ mb: 4 }}>
-            <Typography sx={{ fontSize: 28, fontWeight: 800, fontFamily: 'Poppins, sans-serif', color: 'text.primary', mb: 1 }}>
+            <Typography
+              sx={{
+                fontSize: 28,
+                fontWeight: 800,
+                fontFamily: 'Poppins, sans-serif',
+                color: 'text.primary',
+                mb: 1
+              }}
+            >
               {t('auth.title')}
             </Typography>
-            <Typography sx={{ fontSize: 14, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}>
+            <Typography
+              sx={{ fontSize: 14, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}
+            >
               {t('auth.subtitle')}
             </Typography>
           </Box>
@@ -167,13 +185,13 @@ export const LoginPage = () => {
                 setError('')
               }}
               variant="fullWidth"
-              sx={{ 
-                mb: 4, 
+              sx={{
+                mb: 4,
                 borderBottom: `1px solid ${theme.palette.divider}`,
-                '& .MuiTab-root': { 
-                  textTransform: 'none', 
-                  fontWeight: 600, 
-                  fontFamily: 'Poppins, sans-serif', 
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontFamily: 'Poppins, sans-serif',
                   fontSize: 14,
                   py: 1.5
                 }
@@ -300,19 +318,19 @@ export const LoginPage = () => {
                 size="large"
                 disabled={loading}
                 startIcon={<LockOpenRounded />}
-                sx={{ 
-                  textTransform: 'none', 
-                  fontWeight: 600, 
-                  py: 1.5, 
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  py: 1.5,
                   borderRadius: 2,
                   fontFamily: 'Poppins, sans-serif',
                   fontSize: 15,
                   mt: 1,
-                  boxShadow: isDark 
+                  boxShadow: isDark
                     ? `0 4px 14px 0 ${theme.palette.primary.main}4d`
                     : `0 4px 14px 0 ${theme.palette.primary.main}66`,
                   '&:hover': {
-                    boxShadow: isDark 
+                    boxShadow: isDark
                       ? `0 6px 20px ${theme.palette.primary.main}66`
                       : `0 6px 20px ${theme.palette.primary.main}80`
                   }
@@ -322,7 +340,15 @@ export const LoginPage = () => {
               </Button>
 
               {role === 'super' && (
-                <Typography sx={{ fontSize: 12, color: 'text.secondary', textAlign: 'center', mt: 3, fontFamily: 'Poppins, sans-serif' }}>
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: 'text.secondary',
+                    textAlign: 'center',
+                    mt: 3,
+                    fontFamily: 'Poppins, sans-serif'
+                  }}
+                >
                   {t('auth.default_super_hint')}
                 </Typography>
               )}
@@ -333,4 +359,3 @@ export const LoginPage = () => {
     </Box>
   )
 }
-

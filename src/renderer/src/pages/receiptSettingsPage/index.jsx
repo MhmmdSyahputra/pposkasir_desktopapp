@@ -22,7 +22,13 @@ import {
   Tabs,
   Tab
 } from '@mui/material'
-import { RestartAltRounded, SaveRounded, PrintRounded, CheckCircleRounded, ComputerRounded } from '@mui/icons-material'
+import {
+  RestartAltRounded,
+  SaveRounded,
+  PrintRounded,
+  CheckCircleRounded,
+  ComputerRounded
+} from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../productPage/components/PageLayout'
 import { useNotifier } from '../../components/core/notificationProvider'
@@ -90,7 +96,10 @@ export const ReceiptSettingsPage = () => {
     try {
       const result = await window.api.systemPrinter.setSystemDefaultPrinter(printerName)
       if (result.success) {
-        show({ message: `Printer ${printerName} berhasil di set sebagai default`, severity: 'success' })
+        show({
+          message: `Printer ${printerName} berhasil di set sebagai default`,
+          severity: 'success'
+        })
         fetchPrinters()
       } else {
         show({ message: result.error || 'Gagal mengubah default printer', severity: 'error' })
@@ -251,7 +260,8 @@ export const ReceiptSettingsPage = () => {
         paddingLeft: form.paddingLeft || 0,
         paddingRight: form.paddingRight || 0,
         headerAlign: form.headerAlign || 'center',
-        footerAlign: form.footerAlign || 'center'
+        footerAlign: form.footerAlign || 'center',
+        printerType: form.printerType || 'thermal'
       }
 
       await window.api.printOrderReceipt(payload)
@@ -310,8 +320,14 @@ export const ReceiptSettingsPage = () => {
           <Box sx={{ minWidth: 0 }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
               <Tabs value={activeTab} onChange={handleTabChange} sx={{ minHeight: 40 }}>
-                <Tab label="Pengaturan Struk" sx={{ textTransform: 'none', minHeight: 40, fontWeight: 600 }} />
-                <Tab label="Daftar Printer Windows" sx={{ textTransform: 'none', minHeight: 40, fontWeight: 600 }} />
+                <Tab
+                  label="Pengaturan Struk"
+                  sx={{ textTransform: 'none', minHeight: 40, fontWeight: 600 }}
+                />
+                <Tab
+                  label="Daftar Printer Windows"
+                  sx={{ textTransform: 'none', minHeight: 40, fontWeight: 600 }}
+                />
               </Tabs>
             </Box>
 
@@ -353,7 +369,9 @@ export const ReceiptSettingsPage = () => {
                       <RadioGroup
                         row
                         value={form.paperSize || '80mm'}
-                        onChange={(e) => setForm((prev) => ({ ...prev, paperSize: e.target.value }))}
+                        onChange={(e) =>
+                          setForm((prev) => ({ ...prev, paperSize: e.target.value }))
+                        }
                       >
                         <FormControlLabel
                           value="80mm"
@@ -432,206 +450,213 @@ export const ReceiptSettingsPage = () => {
                   title={t('receipt_settings.header_title')}
                   subtitle={t('receipt_settings.header_subtitle')}
                 >
-              <Stack spacing={1.25}>
-                <FormControl component="fieldset" sx={{ mb: 1 }}>
-                  <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
-                    Perataan Header (Alignment)
-                  </FormLabel>
-                  <RadioGroup
-                    row
-                    value={form.headerAlign || 'center'}
-                    onChange={(e) => setForm((prev) => ({ ...prev, headerAlign: e.target.value }))}
-                  >
-                    <FormControlLabel
-                      value="left"
-                      control={<Radio size="small" />}
-                      label="Rata Kiri"
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                    <FormControlLabel
-                      value="center"
-                      control={<Radio size="small" />}
-                      label="Rata Tengah"
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                    <FormControlLabel
-                      value="right"
-                      control={<Radio size="small" />}
-                      label="Rata Kanan"
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                  </RadioGroup>
-                </FormControl>
+                  <Stack spacing={1.25}>
+                    <FormControl component="fieldset" sx={{ mb: 1 }}>
+                      <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
+                        Perataan Header (Alignment)
+                      </FormLabel>
+                      <RadioGroup
+                        row
+                        value={form.headerAlign || 'center'}
+                        onChange={(e) =>
+                          setForm((prev) => ({ ...prev, headerAlign: e.target.value }))
+                        }
+                      >
+                        <FormControlLabel
+                          value="left"
+                          control={<Radio size="small" />}
+                          label="Rata Kiri"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                        <FormControlLabel
+                          value="center"
+                          control={<Radio size="small" />}
+                          label="Rata Tengah"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                        <FormControlLabel
+                          value="right"
+                          control={<Radio size="small" />}
+                          label="Rata Kanan"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                      </RadioGroup>
+                    </FormControl>
 
-                <TextField
-                  size="small"
-                  label={t('receipt_settings.header_line_1')}
-                  value={form.headerLine1}
-                  onChange={handleLineChange('headerLine1')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={form.visibility.headerLine1}
-                      onChange={handleToggle('headerLine1')}
+                    <TextField
+                      size="small"
+                      label={t('receipt_settings.header_line_1')}
+                      value={form.headerLine1}
+                      onChange={handleLineChange('headerLine1')}
                     />
-                  }
-                  label={t('receipt_settings.show_this_line')}
-                />
-                <TextField
-                  size="small"
-                  label={t('receipt_settings.header_line_2')}
-                  value={form.headerLine2}
-                  onChange={handleLineChange('headerLine2')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={form.visibility.headerLine2}
-                      onChange={handleToggle('headerLine2')}
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={form.visibility.headerLine1}
+                          onChange={handleToggle('headerLine1')}
+                        />
+                      }
+                      label={t('receipt_settings.show_this_line')}
                     />
-                  }
-                  label={t('receipt_settings.show_this_line')}
-                />
-                <TextField
-                  size="small"
-                  label={t('receipt_settings.header_line_3')}
-                  value={form.headerLine3}
-                  onChange={handleLineChange('headerLine3')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={form.visibility.headerLine3}
-                      onChange={handleToggle('headerLine3')}
+                    <TextField
+                      size="small"
+                      label={t('receipt_settings.header_line_2')}
+                      value={form.headerLine2}
+                      onChange={handleLineChange('headerLine2')}
                     />
-                  }
-                  label={t('receipt_settings.show_this_line')}
-                />
-              </Stack>
-            </SectionCard>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={form.visibility.headerLine2}
+                          onChange={handleToggle('headerLine2')}
+                        />
+                      }
+                      label={t('receipt_settings.show_this_line')}
+                    />
+                    <TextField
+                      size="small"
+                      label={t('receipt_settings.header_line_3')}
+                      value={form.headerLine3}
+                      onChange={handleLineChange('headerLine3')}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={form.visibility.headerLine3}
+                          onChange={handleToggle('headerLine3')}
+                        />
+                      }
+                      label={t('receipt_settings.show_this_line')}
+                    />
+                  </Stack>
+                </SectionCard>
 
-            <SectionCard
-              title={t('receipt_settings.visibility_title')}
-              subtitle={t('receipt_settings.visibility_subtitle')}
-            >
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
-                  gap: 1.25
-                }}
-              >
-                {[...infoRows, ...totalRows].map((row) => (
-                  <Paper
-                    key={row.key}
-                    variant="outlined"
+                <SectionCard
+                  title={t('receipt_settings.visibility_title')}
+                  subtitle={t('receipt_settings.visibility_subtitle')}
+                >
+                  <Box
                     sx={{
-                      px: 1.25,
-                      py: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
+                      display: 'grid',
+                      gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                      gap: 1.25
                     }}
                   >
-                    <Typography sx={{ fontSize: 13 }}>{row.label}</Typography>
-                    <Switch checked={form.visibility[row.key]} onChange={handleToggle(row.key)} />
-                  </Paper>
-                ))}
-              </Box>
-            </SectionCard>
+                    {[...infoRows, ...totalRows].map((row) => (
+                      <Paper
+                        key={row.key}
+                        variant="outlined"
+                        sx={{
+                          px: 1.25,
+                          py: 1,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }}
+                      >
+                        <Typography sx={{ fontSize: 13 }}>{row.label}</Typography>
+                        <Switch
+                          checked={form.visibility[row.key]}
+                          onChange={handleToggle(row.key)}
+                        />
+                      </Paper>
+                    ))}
+                  </Box>
+                </SectionCard>
 
-            <SectionCard
-              title={t('receipt_settings.footer_title')}
-              subtitle={t('receipt_settings.footer_subtitle')}
-            >
-              <Stack spacing={1.25}>
-                <FormControl component="fieldset" sx={{ mb: 1 }}>
-                  <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
-                    Perataan Footer (Alignment)
-                  </FormLabel>
-                  <RadioGroup
-                    row
-                    value={form.footerAlign || 'center'}
-                    onChange={(e) => setForm((prev) => ({ ...prev, footerAlign: e.target.value }))}
-                  >
-                    <FormControlLabel
-                      value="left"
-                      control={<Radio size="small" />}
-                      label="Rata Kiri"
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                    <FormControlLabel
-                      value="center"
-                      control={<Radio size="small" />}
-                      label="Rata Tengah"
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                    <FormControlLabel
-                      value="right"
-                      control={<Radio size="small" />}
-                      label="Rata Kanan"
-                      slotProps={{ typography: { fontSize: 13 } }}
-                    />
-                  </RadioGroup>
-                </FormControl>
+                <SectionCard
+                  title={t('receipt_settings.footer_title')}
+                  subtitle={t('receipt_settings.footer_subtitle')}
+                >
+                  <Stack spacing={1.25}>
+                    <FormControl component="fieldset" sx={{ mb: 1 }}>
+                      <FormLabel component="legend" sx={{ fontSize: 13, mb: 1, fontWeight: 500 }}>
+                        Perataan Footer (Alignment)
+                      </FormLabel>
+                      <RadioGroup
+                        row
+                        value={form.footerAlign || 'center'}
+                        onChange={(e) =>
+                          setForm((prev) => ({ ...prev, footerAlign: e.target.value }))
+                        }
+                      >
+                        <FormControlLabel
+                          value="left"
+                          control={<Radio size="small" />}
+                          label="Rata Kiri"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                        <FormControlLabel
+                          value="center"
+                          control={<Radio size="small" />}
+                          label="Rata Tengah"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                        <FormControlLabel
+                          value="right"
+                          control={<Radio size="small" />}
+                          label="Rata Kanan"
+                          slotProps={{ typography: { fontSize: 13 } }}
+                        />
+                      </RadioGroup>
+                    </FormControl>
 
-                <TextField
-                  size="small"
-                  multiline
-                  minRows={2}
-                  maxRows={4}
-                  label={t('receipt_settings.footer_line_1')}
-                  value={form.footerLine1}
-                  onChange={handleLineChange('footerLine1')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={form.visibility.footerLine1}
-                      onChange={handleToggle('footerLine1')}
+                    <TextField
+                      size="small"
+                      multiline
+                      minRows={2}
+                      maxRows={4}
+                      label={t('receipt_settings.footer_line_1')}
+                      value={form.footerLine1}
+                      onChange={handleLineChange('footerLine1')}
                     />
-                  }
-                  label={t('receipt_settings.show_this_line')}
-                />
-                <TextField
-                  size="small"
-                  multiline
-                  minRows={2}
-                  maxRows={4}
-                  label={t('receipt_settings.footer_line_2')}
-                  value={form.footerLine2}
-                  onChange={handleLineChange('footerLine2')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={form.visibility.footerLine2}
-                      onChange={handleToggle('footerLine2')}
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={form.visibility.footerLine1}
+                          onChange={handleToggle('footerLine1')}
+                        />
+                      }
+                      label={t('receipt_settings.show_this_line')}
                     />
-                  }
-                  label={t('receipt_settings.show_this_line')}
-                />
-                <TextField
-                  size="small"
-                  multiline
-                  minRows={2}
-                  maxRows={4}
-                  label={t('receipt_settings.footer_line_3')}
-                  value={form.footerLine3}
-                  onChange={handleLineChange('footerLine3')}
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={form.visibility.footerLine3}
-                      onChange={handleToggle('footerLine3')}
+                    <TextField
+                      size="small"
+                      multiline
+                      minRows={2}
+                      maxRows={4}
+                      label={t('receipt_settings.footer_line_2')}
+                      value={form.footerLine2}
+                      onChange={handleLineChange('footerLine2')}
                     />
-                  }
-                  label={t('receipt_settings.show_this_line')}
-                />
-              </Stack>
-            </SectionCard>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={form.visibility.footerLine2}
+                          onChange={handleToggle('footerLine2')}
+                        />
+                      }
+                      label={t('receipt_settings.show_this_line')}
+                    />
+                    <TextField
+                      size="small"
+                      multiline
+                      minRows={2}
+                      maxRows={4}
+                      label={t('receipt_settings.footer_line_3')}
+                      value={form.footerLine3}
+                      onChange={handleLineChange('footerLine3')}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={form.visibility.footerLine3}
+                          onChange={handleToggle('footerLine3')}
+                        />
+                      }
+                      label={t('receipt_settings.show_this_line')}
+                    />
+                  </Stack>
+                </SectionCard>
               </Stack>
             )}
 
@@ -641,39 +666,87 @@ export const ReceiptSettingsPage = () => {
                   title="Daftar Printer Windows"
                   subtitle="Pilih printer yang akan digunakan sebagai default Windows untuk cetak struk"
                 >
-                  <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
-                    <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover', borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box
+                    sx={{ border: 1, borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}
+                  >
+                    <Box
+                      sx={{
+                        px: 2,
+                        py: 1.5,
+                        bgcolor: 'action.hover',
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
                       <Box>
-                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Daftar System Printer</Typography>
+                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>
+                          Daftar System Printer
+                        </Typography>
                       </Box>
-                      <Button size="small" variant="outlined" onClick={fetchPrinters} disabled={loadingPrinters} sx={{ textTransform: 'none', fontSize: 12 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={fetchPrinters}
+                        disabled={loadingPrinters}
+                        sx={{ textTransform: 'none', fontSize: 12 }}
+                      >
                         {loadingPrinters ? 'Memuat...' : 'Refresh'}
                       </Button>
                     </Box>
                     <List sx={{ p: 0, overflow: 'auto' }}>
                       {printers.map((printer, idx) => {
-                        const isDefault = printer.isDefault;
+                        const isDefault = printer.isDefault
                         return (
                           <ListItem
                             key={idx}
                             divider={idx !== printers.length - 1}
-                            sx={{ 
-                              py: 1.5, px: 2, 
-                              display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1,
-                              bgcolor: isDefault ? 'success.main' + '0A' : 'transparent',
+                            sx={{
+                              py: 1.5,
+                              px: 2,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                              gap: 1,
+                              bgcolor: isDefault ? 'success.main' + '0A' : 'transparent'
                             }}
                           >
-                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                width: '100%'
+                              }}
+                            >
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                <ComputerRounded sx={{ color: isDefault ? 'success.main' : 'text.secondary', fontSize: 28 }} />
+                                <ComputerRounded
+                                  sx={{
+                                    color: isDefault ? 'success.main' : 'text.secondary',
+                                    fontSize: 28
+                                  }}
+                                />
                                 <ListItemText
                                   primary={
                                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                                      <Typography sx={{ fontSize: 14, fontWeight: isDefault ? 700 : 500, color: isDefault ? 'success.main' : 'text.primary' }}>
+                                      <Typography
+                                        sx={{
+                                          fontSize: 14,
+                                          fontWeight: isDefault ? 700 : 500,
+                                          color: isDefault ? 'success.main' : 'text.primary'
+                                        }}
+                                      >
                                         {printer.name}
                                       </Typography>
                                       {isDefault && (
-                                        <Chip size="small" label="Default" color="success" sx={{ height: 20, fontSize: 10, fontWeight: 600 }} />
+                                        <Chip
+                                          size="small"
+                                          label="Default"
+                                          color="success"
+                                          sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
+                                        />
                                       )}
                                     </Box>
                                   }
@@ -687,7 +760,12 @@ export const ReceiptSettingsPage = () => {
                                     size="small"
                                     variant="contained"
                                     onClick={() => handleSetDefaultPrinter(printer.name)}
-                                    sx={{ textTransform: 'none', fontSize: 11, py: 0.5, boxShadow: 'none' }}
+                                    sx={{
+                                      textTransform: 'none',
+                                      fontSize: 11,
+                                      py: 0.5,
+                                      boxShadow: 'none'
+                                    }}
                                   >
                                     Set as Default
                                   </Button>
@@ -709,7 +787,9 @@ export const ReceiptSettingsPage = () => {
                       })}
                       {printers.length === 0 && !loadingPrinters && (
                         <ListItem sx={{ py: 3, justifyContent: 'center' }}>
-                          <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>Tidak ada printer terdeteksi.</Typography>
+                          <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
+                            Tidak ada printer terdeteksi.
+                          </Typography>
                         </ListItem>
                       )}
                     </List>

@@ -25,15 +25,19 @@ export function productGetAll({ search = '', kategori = '', aktif = null } = {})
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
   const products = db.prepare(`SELECT * FROM products ${where} ORDER BY nama ASC`).all(params)
-  
-  const bundleIds = products.filter(p => p.is_bundle).map(p => p.id)
+
+  const bundleIds = products.filter((p) => p.is_bundle).map((p) => p.id)
   if (bundleIds.length > 0) {
-    const items = db.prepare(`
+    const items = db
+      .prepare(
+        `
       SELECT b.*, p.nama as product_nama, p.kode as product_kode, p.stok as product_stok
       FROM product_bundle_items b 
       LEFT JOIN products p ON b.product_id = p.id
       WHERE b.bundle_id IN (${bundleIds.join(',')})
-    `).all()
+    `
+      )
+      .all()
     const map = {}
     for (const item of items) {
       if (!map[item.bundle_id]) map[item.bundle_id] = []
@@ -44,7 +48,9 @@ export function productGetAll({ search = '', kategori = '', aktif = null } = {})
         p.bundle_items = map[p.id] || []
         // Calculate virtual stock for bundle
         if (p.bundle_items.length > 0) {
-          p.stok = Math.min(...p.bundle_items.map(item => Math.floor((item.product_stok || 0) / (item.qty || 1))))
+          p.stok = Math.min(
+            ...p.bundle_items.map((item) => Math.floor((item.product_stok || 0) / (item.qty || 1)))
+          )
         } else {
           p.stok = 0
         }
@@ -57,14 +63,22 @@ export function productGetAll({ search = '', kategori = '', aktif = null } = {})
 export function productGetById(id) {
   const product = getDb().prepare(`SELECT * FROM products WHERE id = ?`).get(id)
   if (product && product.is_bundle) {
-    product.bundle_items = getDb().prepare(`
+    product.bundle_items = getDb()
+      .prepare(
+        `
       SELECT b.*, p.nama as product_nama, p.kode as product_kode, p.stok as product_stok
       FROM product_bundle_items b 
       LEFT JOIN products p ON b.product_id = p.id
       WHERE b.bundle_id = ?
-    `).all(id)
+    `
+      )
+      .all(id)
     if (product.bundle_items.length > 0) {
-      product.stok = Math.min(...product.bundle_items.map(item => Math.floor((item.product_stok || 0) / (item.qty || 1))))
+      product.stok = Math.min(
+        ...product.bundle_items.map((item) =>
+          Math.floor((item.product_stok || 0) / (item.qty || 1))
+        )
+      )
     } else {
       product.stok = 0
     }
@@ -75,12 +89,16 @@ export function productGetById(id) {
 export function productGetByKode(kode) {
   const product = getDb().prepare(`SELECT * FROM products WHERE kode = ?`).get(kode)
   if (product && product.is_bundle) {
-    product.bundle_items = getDb().prepare(`
+    product.bundle_items = getDb()
+      .prepare(
+        `
       SELECT b.*, p.nama as product_nama, p.kode as product_kode
       FROM product_bundle_items b 
       LEFT JOIN products p ON b.product_id = p.id
       WHERE b.bundle_id = ?
-    `).all(product.id)
+    `
+      )
+      .all(product.id)
   }
   return product
 }
@@ -106,7 +124,7 @@ export function productCreate({
   // Auto-generate kode if not provided
   const finalKode = kode || _generateKode(db)
 
-  let newId;
+  let newId
   db.transaction(() => {
     const result = db
       .prepare(
@@ -130,7 +148,7 @@ export function productCreate({
         images,
         is_bundle: is_bundle ? 1 : 0
       })
-      
+
     newId = result.lastInsertRowid
 
     if (is_bundle && Array.isArray(bundle_items) && bundle_items.length > 0) {
@@ -240,7 +258,7 @@ export function productBulkCreate(productsArray) {
     for (const p of products) {
       // Auto-generate kode if not provided
       const finalKode = p.kode || _generateKode(db)
-      
+
       insert.run({
         kode: finalKode,
         nama: p.nama,

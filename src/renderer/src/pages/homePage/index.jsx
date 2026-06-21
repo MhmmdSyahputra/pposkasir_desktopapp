@@ -25,6 +25,7 @@ import {
 import SearchIcon from '@mui/icons-material/Search'
 import GridViewIcon from '@mui/icons-material/GridView'
 import ViewListIcon from '@mui/icons-material/ViewList'
+import QrCodeScannerRounded from '@mui/icons-material/QrCodeScannerRounded'
 // import MoreVertIcon from '@mui/icons-material/MoreVert'
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline'
 // import PrintOutlinedIcon from '@mui/icons-material/PrintOutlined'
@@ -46,6 +47,7 @@ import { useAuth } from '../../context/authContext'
 import { receiptSettingsService } from '../../services/receiptSettingsService'
 import { promotionService } from '../../services/promotionService'
 import { ReceiptPreview } from '../../components/core/receiptPreview'
+import { BarcodeScanner } from '../../components/core/BarcodeScanner'
 
 // ─── FORMAT RUPIAH ─────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -711,12 +713,29 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
       const res = await transactionService.create(payload)
       if (res.ok) {
         setDone(res.data)
+
+        // Play notification sound
+        try {
+          if (window.api && window.api.getNotificationSoundPath) {
+            window.api
+              .getNotificationSoundPath()
+              .then((soundDir) => {
+                const audioPath = `${soundDir}/sounds/notif.mp3`
+                const audio = new Audio(`file://${audioPath}`)
+                audio.play().catch((err) => console.error('Failed to play success sound:', err))
+              })
+              .catch((soundErr) => console.error(soundErr))
+          }
+        } catch (execErr) {
+          console.error(execErr)
+        }
+
         let appVersion = ''
         try {
           if (window.api && window.api.getAppVersion) {
             appVersion = await window.api.getAppVersion()
           }
-        } catch (err) {
+        } catch (verErr) {
           appVersion = 'unknown'
         }
 
@@ -845,7 +864,8 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
       paddingLeft: receiptSettings.paddingLeft || 0,
       paddingRight: receiptSettings.paddingRight || 0,
       headerAlign: receiptSettings.headerAlign || 'center',
-      footerAlign: receiptSettings.footerAlign || 'center'
+      footerAlign: receiptSettings.footerAlign || 'center',
+      printerType: receiptSettings.printerType || 'thermal'
     }
 
     try {
@@ -2055,6 +2075,7 @@ export const HomePage = () => {
   const [promoBanners, setPromoBanners] = useState([])
   const [activePromoIndex, setActivePromoIndex] = useState(0)
   const [isPromoCollapsed, setIsPromoCollapsed] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   // Auto-slide effect for banners
   useEffect(() => {
@@ -2116,7 +2137,7 @@ export const HomePage = () => {
           modifierService.getAllProductGroups(),
           promotionService.getBanners()
         ])
-        
+
         if (banners && banners.length > 0) {
           setPromoBanners(banners)
         }
@@ -2230,6 +2251,35 @@ export const HomePage = () => {
     }
   }
 
+  // Auto-focus search input field when clicking anywhere on the screen
+  // or scanning a barcode using a physical barcode scanner hardware
+  useEffect(() => {
+    const handleBodyClick = (e) => {
+      // Don't auto-focus if target is inside an input, dialog, button, select or barcode scanner modal
+      const isInput =
+        e.target.tagName === 'INPUT' ||
+        e.target.tagName === 'TEXTAREA' ||
+        e.target.tagName === 'SELECT'
+      const isClickable =
+        e.target.closest('button') ||
+        e.target.closest('a') ||
+        e.target.closest('[role="button"]') ||
+        e.target.closest('.MuiDialog-root')
+
+      if (!isInput && !isClickable && !scannerOpen) {
+        const searchInput = document.getElementById('barcode-search-input')
+        if (searchInput) {
+          searchInput.focus()
+        }
+      }
+    }
+
+    document.addEventListener('click', handleBodyClick)
+    return () => {
+      document.removeEventListener('click', handleBodyClick)
+    }
+  }, [scannerOpen])
+
   return (
     <Box
       sx={{
@@ -2263,24 +2313,77 @@ export const HomePage = () => {
             }
           }}
         >
-          {promoBanners.length > 0 && (() => {
-            const currentPromo = promoBanners[activePromoIndex]
-            
-            if (isPromoCollapsed) {
+          {promoBanners.length > 0 &&
+            (() => {
+              const currentPromo = promoBanners[activePromoIndex]
+
+              if (isPromoCollapsed) {
+                return (
+                  <Box
+                    sx={{
+                      mb: 2.5,
+                      borderRadius: 2,
+                      p: 1.5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      bgcolor: alpha(theme.palette.primary.main, 0.05),
+                      border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                      cursor: currentPromo.link_banner ? 'pointer' : 'default',
+                      transition: 'all 0.2s',
+                      '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) }
+                    }}
+                    onClick={() => {
+                      if (currentPromo.link_banner) {
+                        window.open(currentPromo.link_banner, '_blank')
+                      }
+                    }}
+                  >
+                    <Box>
+                      <Typography
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: 13,
+                          color: 'primary.main',
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                      >
+                        🌟 {currentPromo.title_banner}
+                      </Typography>
+                    </Box>
+                    <Button
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setIsPromoCollapsed(false)
+                      }}
+                      sx={{
+                        textTransform: 'none',
+                        fontSize: 11,
+                        minWidth: 'auto',
+                        p: 0.5,
+                        px: 1.5,
+                        borderRadius: 1.5
+                      }}
+                    >
+                      Lihat Banner
+                    </Button>
+                  </Box>
+                )
+              }
+
               return (
                 <Box
                   sx={{
                     mb: 2.5,
-                    borderRadius: 2,
-                    p: 1.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    bgcolor: alpha(theme.palette.primary.main, 0.05),
-                    border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                    borderRadius: 2.5,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    bgcolor: theme.palette.custom.inputBg,
+                    border: `1px solid ${theme.palette.divider}`,
                     cursor: currentPromo.link_banner ? 'pointer' : 'default',
-                    transition: 'all 0.2s',
-                    '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.1) }
+                    '&:hover .promo-overlay': { opacity: 1 },
+                    '&:hover .promo-close-btn': { opacity: 1 }
                   }}
                   onClick={() => {
                     if (currentPromo.link_banner) {
@@ -2288,153 +2391,141 @@ export const HomePage = () => {
                     }
                   }}
                 >
-                  <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: 13, color: 'primary.main', fontFamily: 'Poppins, sans-serif' }}>
-                      🌟 {currentPromo.title_banner}
-                    </Typography>
-                  </Box>
-                  <Button
+                  {/* Collapse Button */}
+                  <IconButton
                     size="small"
+                    className="promo-close-btn"
                     onClick={(e) => {
                       e.stopPropagation()
-                      setIsPromoCollapsed(false)
+                      setIsPromoCollapsed(true)
                     }}
-                    sx={{ textTransform: 'none', fontSize: 11, minWidth: 'auto', p: 0.5, px: 1.5, borderRadius: 1.5 }}
+                    sx={{
+                      position: 'absolute',
+                      top: 8,
+                      right: 8,
+                      zIndex: 10,
+                      bgcolor: 'rgba(0,0,0,0.4)',
+                      color: '#fff',
+                      opacity: 0,
+                      transition: 'opacity 0.2s ease, background-color 0.2s',
+                      '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
+                      width: 28,
+                      height: 28
+                    }}
                   >
-                    Lihat Banner
-                  </Button>
+                    <CloseIcon sx={{ fontSize: 16 }} />
+                  </IconButton>
+
+                  {currentPromo.image ? (
+                    <Box
+                      component="img"
+                      key={currentPromo.id}
+                      src={currentPromo.image}
+                      sx={{
+                        width: '100%',
+                        height: 'auto',
+                        aspectRatio: '3 / 1',
+                        objectFit: 'cover',
+                        display: 'block',
+                        animation: 'fadeIn 0.5s ease-in-out',
+                        '@keyframes fadeIn': {
+                          '0%': { opacity: 0.5 },
+                          '100%': { opacity: 1 }
+                        }
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        p: 2.5,
+                        height: 'auto',
+                        aspectRatio: '3 / 1',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Typography
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: 16,
+                          mb: 0.5,
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                      >
+                        {currentPromo.title_banner}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: 12,
+                          fontFamily: 'Poppins, sans-serif'
+                        }}
+                      >
+                        {currentPromo.description_banner}
+                      </Typography>
+                    </Box>
+                  )}
+                  {currentPromo.link_banner && (
+                    <Box
+                      className="promo-overlay"
+                      sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        bgcolor: 'rgba(0,0,0,0.1)',
+                        opacity: 0,
+                        transition: 'opacity 0.2s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    />
+                  )}
+
+                  {/* Pagination Dots */}
+                  {promoBanners.length > 1 && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 8,
+                        left: 0,
+                        right: 0,
+                        display: 'flex',
+                        justifyContent: 'center',
+                        gap: 0.8,
+                        zIndex: 2
+                      }}
+                    >
+                      {promoBanners.map((_, idx) => (
+                        <Box
+                          key={idx}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setActivePromoIndex(idx)
+                          }}
+                          sx={{
+                            width: activePromoIndex === idx ? 16 : 6,
+                            height: 6,
+                            borderRadius: 3,
+                            bgcolor:
+                              activePromoIndex === idx
+                                ? theme.palette.primary.main
+                                : alpha('#fff', 0.6),
+                            transition: 'all 0.3s ease',
+                            cursor: 'pointer',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                          }}
+                        />
+                      ))}
+                    </Box>
+                  )}
                 </Box>
               )
-            }
-
-            return (
-              <Box
-                sx={{
-                  mb: 2.5,
-                  borderRadius: 2.5,
-                  overflow: 'hidden',
-                  position: 'relative',
-                  bgcolor: theme.palette.custom.inputBg,
-                  border: `1px solid ${theme.palette.divider}`,
-                  cursor: currentPromo.link_banner ? 'pointer' : 'default',
-                  '&:hover .promo-overlay': { opacity: 1 },
-                  '&:hover .promo-close-btn': { opacity: 1 }
-                }}
-                onClick={() => {
-                  if (currentPromo.link_banner) {
-                    window.open(currentPromo.link_banner, '_blank')
-                  }
-                }}
-              >
-                {/* Collapse Button */}
-                <IconButton
-                  size="small"
-                  className="promo-close-btn"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setIsPromoCollapsed(true)
-                  }}
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    right: 8,
-                    zIndex: 10,
-                    bgcolor: 'rgba(0,0,0,0.4)',
-                    color: '#fff',
-                    opacity: 0,
-                    transition: 'opacity 0.2s ease, background-color 0.2s',
-                    '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' },
-                    width: 28,
-                    height: 28
-                  }}
-                >
-                  <CloseIcon sx={{ fontSize: 16 }} />
-                </IconButton>
-
-                {currentPromo.image ? (
-                  <Box
-                    component="img"
-                    key={currentPromo.id}
-                    src={currentPromo.image}
-                    sx={{
-                      width: '100%',
-                      height: 'auto',
-                      aspectRatio: '3 / 1',
-                      objectFit: 'cover',
-                      display: 'block',
-                      animation: 'fadeIn 0.5s ease-in-out',
-                      '@keyframes fadeIn': {
-                        '0%': { opacity: 0.5 },
-                        '100%': { opacity: 1 }
-                      }
-                    }}
-                  />
-                ) : (
-                  <Box sx={{ p: 2.5, height: 'auto', aspectRatio: '3 / 1', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 0.5, fontFamily: 'Poppins, sans-serif' }}>
-                      {currentPromo.title_banner}
-                    </Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontFamily: 'Poppins, sans-serif' }}>
-                      {currentPromo.description_banner}
-                    </Typography>
-                  </Box>
-                )}
-                {currentPromo.link_banner && (
-                  <Box
-                    className="promo-overlay"
-                    sx={{
-                      position: 'absolute',
-                      inset: 0,
-                      bgcolor: 'rgba(0,0,0,0.1)',
-                      opacity: 0,
-                      transition: 'opacity 0.2s ease',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  />
-                )}
-
-                {/* Pagination Dots */}
-                {promoBanners.length > 1 && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: 0.8,
-                      zIndex: 2
-                    }}
-                  >
-                    {promoBanners.map((_, idx) => (
-                      <Box
-                        key={idx}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setActivePromoIndex(idx)
-                        }}
-                        sx={{
-                          width: activePromoIndex === idx ? 16 : 6,
-                          height: 6,
-                          borderRadius: 3,
-                          bgcolor: activePromoIndex === idx ? theme.palette.primary.main : alpha('#fff', 0.6),
-                          transition: 'all 0.3s ease',
-                          cursor: 'pointer',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
-                        }}
-                      />
-                    ))}
-                  </Box>
-                )}
-              </Box>
-            )
-          })()}
+            })()}
 
           <Box sx={{ display: 'flex', gap: 1.5, mb: 2, alignItems: 'center' }}>
             <TextField
+              id="barcode-search-input"
               size="small"
               placeholder={t('pos.search_product')}
               value={search}
@@ -2444,6 +2535,13 @@ export const HomePage = () => {
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchIcon sx={{ color: 'text.disabled', fontSize: 18 }} />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={() => setScannerOpen(true)} size="small" edge="end">
+                      <QrCodeScannerRounded sx={{ fontSize: 18 }} />
+                    </IconButton>
                   </InputAdornment>
                 )
               }}
@@ -2812,6 +2910,23 @@ export const HomePage = () => {
         }}
       />
       <RatingDialog open={ratingOpen} onClose={() => setRatingOpen(false)} />
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScanSuccess={(val) => {
+          setSearch(val)
+          // Look up if exact match exists and auto-add it
+          const term = val.trim().toLowerCase()
+          const exactMatch = products.find(
+            (p) =>
+              (p.barcode && p.barcode.toLowerCase() === term) ||
+              (p.kode && p.kode.toLowerCase() === term)
+          )
+          if (exactMatch) {
+            handleAutoAdd(exactMatch)
+          }
+        }}
+      />
     </Box>
   )
 }

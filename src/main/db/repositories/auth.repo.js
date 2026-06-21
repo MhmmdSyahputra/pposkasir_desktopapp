@@ -76,7 +76,10 @@ export function authChangeSuperPassword({ username = '', oldPassword = '', newPa
 
   const newHash = hashSecret(newPassword)
   const db = getDb()
-  db.prepare(`UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(newHash, user.id)
+  db.prepare(`UPDATE users SET password_hash = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(
+    newHash,
+    user.id
+  )
 
   return true
 }
@@ -184,12 +187,14 @@ export function authCashierDelete({ id }) {
   if (!user || user.role !== 'cashier') {
     throw new Error('Kasir tidak ditemukan')
   }
-  
+
   try {
     db.prepare(`DELETE FROM users WHERE id = ? AND role = 'cashier'`).run(Number(id))
   } catch (error) {
     if (String(error.message || '').includes('FOREIGN KEY')) {
-      throw new Error('Tidak dapat menghapus kasir karena memiliki riwayat transaksi. Silakan nonaktifkan akun sebagai gantinya.')
+      throw new Error(
+        'Tidak dapat menghapus kasir karena memiliki riwayat transaksi. Silakan nonaktifkan akun sebagai gantinya.'
+      )
     }
     throw error
   }
@@ -199,12 +204,14 @@ export function authCashierDelete({ id }) {
 export function authCashierResetPin({ id, pin = '' }) {
   const db = getDb()
   const normalizedPin = normalize(pin)
-  
+
   if (!/^\\d{6,12}$/.test(normalizedPin)) {
     throw new Error('PIN harus 6-12 digit angka')
   }
-  
-  db.prepare(`UPDATE users SET pin_hash = @pin_hash, updated_at = CURRENT_TIMESTAMP WHERE id = @id AND role = 'cashier'`).run({
+
+  db.prepare(
+    `UPDATE users SET pin_hash = @pin_hash, updated_at = CURRENT_TIMESTAMP WHERE id = @id AND role = 'cashier'`
+  ).run({
     id: Number(id),
     pin_hash: hashSecret(normalizedPin)
   })

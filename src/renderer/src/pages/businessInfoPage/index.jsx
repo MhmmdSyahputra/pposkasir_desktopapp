@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   Typography,
   Button,
@@ -9,90 +9,90 @@ import {
   IconButton,
   alpha,
   useTheme
-} from '@mui/material';
-import StorefrontIcon from '@mui/icons-material/Storefront';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useAuth } from '../../context/authContext';
-import { apiService } from '../../services/apiService';
-import { profileService } from '../../services/profileService';
-import { useNavigate } from 'react-router-dom';
+} from '@mui/material'
+import StorefrontIcon from '@mui/icons-material/Storefront'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import { useAuth } from '../../context/authContext'
+import { apiService } from '../../services/apiService'
+import { profileService } from '../../services/profileService'
+import { useNavigate } from 'react-router-dom'
 
 export const BusinessInfoPage = () => {
-  const theme = useTheme();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const theme = useTheme()
+  const { user } = useAuth()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     storeName: '',
     businessType: '',
     phoneNumber: '',
     address: ''
-  });
+  })
 
   // Check if it's forced (i.e. user has not filled it yet)
-  const isForced = !localStorage.getItem('businessInfoFilled');
+  const isForced = !localStorage.getItem('businessInfoFilled')
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) return
 
     const fetchProfile = async () => {
       try {
-        const profile = await profileService.get();
+        const profile = await profileService.get()
         if (profile) {
           setFormData({
             storeName: profile.nama_toko || '',
             businessType: profile.lini_bisnis || '',
             phoneNumber: profile.telepon || '',
             address: profile.alamat || ''
-          });
+          })
         }
       } catch (error) {
-        console.error('Failed to fetch profile:', error);
+        console.error('Failed to fetch profile:', error)
       }
-    };
+    }
 
-    fetchProfile();
-  }, [user]);
+    fetchProfile()
+  }, [user])
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
+    const { name, value } = e.target
+    setFormData((prev) => ({
       ...prev,
       [name]: value
-    }));
-  };
+    }))
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
+    setLoading(true)
 
     try {
       const payload = {
         ...formData,
         username: user?.username || 'unknown'
-      };
+      }
 
       // 1. Send to cloud API
-      await apiService.sendBusinessInfo(payload);
-      
+      await apiService.sendBusinessInfo(payload)
+
       // 2. Save to local SQLite
-      await profileService.upsert(payload);
+      await profileService.upsert(payload)
 
       // Save locally so app knows it's filled
-      localStorage.setItem('businessInfoFilled', 'true');
-      
+      localStorage.setItem('businessInfoFilled', 'true')
+
       // Redirect back to home
-      navigate('/');
+      navigate('/')
     } catch (error) {
-      console.error('Failed to submit business info:', error);
+      console.error('Failed to submit business info:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const handleBack = () => {
-    navigate(-1);
-  };
+    navigate(-1)
+  }
 
   const businessTypes = [
     'Retail / Minimarket',
@@ -103,7 +103,7 @@ export const BusinessInfoPage = () => {
     'Kesehatan / Apotek',
     'Elektronik / Gadget',
     'Lainnya'
-  ];
+  ]
 
   return (
     <Box
@@ -135,7 +135,15 @@ export const BusinessInfoPage = () => {
           <IconButton onClick={handleBack} sx={{ color: 'text.secondary', ml: -1.5 }}>
             <ArrowBackIcon />
           </IconButton>
-          <Box sx={{ p: 1, borderRadius: 2, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main', display: 'flex' }}>
+          <Box
+            sx={{
+              p: 1,
+              borderRadius: 2,
+              bgcolor: alpha(theme.palette.primary.main, 0.1),
+              color: 'primary.main',
+              display: 'flex'
+            }}
+          >
             <StorefrontIcon />
           </Box>
           <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: 'Poppins, sans-serif' }}>
@@ -255,5 +263,5 @@ export const BusinessInfoPage = () => {
         </Box>
       </Paper>
     </Box>
-  );
-};
+  )
+}

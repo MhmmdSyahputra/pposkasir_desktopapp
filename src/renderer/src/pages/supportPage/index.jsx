@@ -48,7 +48,6 @@ const BENEFITS = [
   }
 ]
 
-
 export const SupportPage = () => {
   const theme = useTheme()
   const { t } = useTranslation()
@@ -67,7 +66,7 @@ export const SupportPage = () => {
         const res = await apiService.getConfig('P-Pos Kasir')
         if (res && res.status === 200 && res.result?.payload?.payment) {
           const payment = res.result.payload.payment
-          setDeveloperInfo(prev => ({
+          setDeveloperInfo((prev) => ({
             ...prev,
             saweriaQr: payment.saweria_url || prev.saweriaQr,
             qrisUrl: payment.qris_url || prev.qrisUrl,
@@ -102,8 +101,16 @@ export const SupportPage = () => {
         }
       }}
     >
-      <Box sx={{ width: '100%', px: { xs: 2, md: 4 }, py: { xs: 3, md: 5 }, display: 'flex', flexDirection: 'column', gap: 3 }}>
-
+      <Box
+        sx={{
+          width: '100%',
+          px: { xs: 2, md: 4 },
+          py: { xs: 3, md: 5 },
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3
+        }}
+      >
         {/* ══════════════════════════════════
             HERO
         ══════════════════════════════════ */}
@@ -125,8 +132,30 @@ export const SupportPage = () => {
           }}
         >
           {/* Glows */}
-          <Box sx={{ position: 'absolute', top: -50, right: 80, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(251,191,36,0.1) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <Box sx={{ position: 'absolute', bottom: -40, left: -40, width: 140, height: 140, borderRadius: '50%', background: 'radial-gradient(circle, rgba(108,99,255,0.07) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <Box
+            sx={{
+              position: 'absolute',
+              top: -50,
+              right: 80,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(251,191,36,0.1) 0%, transparent 70%)',
+              pointerEvents: 'none'
+            }}
+          />
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: -40,
+              left: -40,
+              width: 140,
+              height: 140,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(108,99,255,0.07) 0%, transparent 70%)',
+              pointerEvents: 'none'
+            }}
+          />
 
           {/* Coffee Icon */}
           <Box
@@ -135,7 +164,8 @@ export const SupportPage = () => {
               height: 90,
               borderRadius: 3,
               flexShrink: 0,
-              background: 'linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.08) 100%)',
+              background:
+                'linear-gradient(135deg, rgba(251,191,36,0.18) 0%, rgba(245,158,11,0.08) 100%)',
               border: '1px solid rgba(251,191,36,0.22)',
               display: 'flex',
               alignItems: 'center',
@@ -164,15 +194,29 @@ export const SupportPage = () => {
             <Typography
               variant="h4"
               fontWeight={800}
-              sx={{ fontFamily: 'Poppins, sans-serif', lineHeight: 1.25, mb: 0.8, color: isDark ? '#f1f5f9' : '#1e293b' }}
+              sx={{
+                fontFamily: 'Poppins, sans-serif',
+                lineHeight: 1.25,
+                mb: 0.8,
+                color: isDark ? '#f1f5f9' : '#1e293b'
+              }}
             >
               Dukung Pengembangan{' '}
-              <Box component="span" sx={{ background: 'linear-gradient(90deg, #fbbf24, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <Box
+                component="span"
+                sx={{
+                  background: 'linear-gradient(90deg, #fbbf24, #f97316)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent'
+                }}
+              >
                 P-POS Kasir
               </Box>
             </Typography>
             <Typography variant="body2" sx={{ color: textSub, lineHeight: 1.65, maxWidth: 540 }}>
-              P-POS Kasir dikembangkan secara gratis untuk membantu UMKM berkembang lebih cepat dengan digitalisasi transaksi. Apresiasi Anda sangat berarti bagi keberlanjutan pemeliharaan server dan pengembangan fitur-fitur baru.
+              P-POS Kasir dikembangkan secara gratis untuk membantu UMKM berkembang lebih cepat
+              dengan digitalisasi transaksi. Apresiasi Anda sangat berarti bagi keberlanjutan
+              pemeliharaan server dan pengembangan fitur-fitur baru.
             </Typography>
           </Box>
         </Box>
@@ -180,8 +224,14 @@ export const SupportPage = () => {
         {/* ══════════════════════════════════
             MAIN 2-COLUMN
         ══════════════════════════════════ */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.3fr 1fr' }, gap: 2.5, alignItems: 'start' }}>
-
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1.3fr 1fr' },
+            gap: 2.5,
+            alignItems: 'start'
+          }}
+        >
           {/* ─── LEFT: QRIS CARD ─── */}
           <Box
             sx={{
@@ -207,11 +257,27 @@ export const SupportPage = () => {
               }}
             >
               <Box>
-                <Typography sx={{ color: '#fff', fontWeight: 900, fontSize: 18, letterSpacing: 2.5 }}>QRIS</Typography>
-                <Typography sx={{ color: 'rgba(255,255,255,0.65)', fontSize: 8.5, letterSpacing: 1, textTransform: 'uppercase', mt: '-2px' }}>Nasional</Typography>
+                <Typography
+                  sx={{ color: '#fff', fontWeight: 900, fontSize: 18, letterSpacing: 2.5 }}
+                >
+                  QRIS
+                </Typography>
+                <Typography
+                  sx={{
+                    color: 'rgba(255,255,255,0.65)',
+                    fontSize: 8.5,
+                    letterSpacing: 1,
+                    textTransform: 'uppercase',
+                    mt: '-2px'
+                  }}
+                >
+                  Nasional
+                </Typography>
               </Box>
               <Box sx={{ textAlign: 'right' }}>
-                <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>GoPay • OVO • DANA • ShopeePay • LinkAja • M-Banking</Typography>
+                <Typography sx={{ color: 'rgba(255,255,255,0.8)', fontSize: 9 }}>
+                  GoPay • OVO • DANA • ShopeePay • LinkAja • M-Banking
+                </Typography>
               </Box>
             </Box>
 
@@ -252,7 +318,9 @@ export const SupportPage = () => {
               {/* Merchant */}
               <Box sx={{ textAlign: 'center' }}>
                 <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6, mb: 0.3 }}>
-                  <Typography sx={{ fontWeight: 900, fontSize: 16, color: isDark ? '#f1f5f9' : '#111' }}>
+                  <Typography
+                    sx={{ fontWeight: 900, fontSize: 16, color: isDark ? '#f1f5f9' : '#111' }}
+                  >
                     {developerInfo.qrisAccountName}
                   </Typography>
                   <CheckCircleRounded sx={{ fontSize: 15, color: '#22c55e' }} />
@@ -267,7 +335,16 @@ export const SupportPage = () => {
 
               {/* Payment chips */}
               <Box sx={{ width: '100%', textAlign: 'center' }}>
-                <Typography sx={{ fontSize: 10, fontWeight: 600, color: textSub, mb: 1, letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                <Typography
+                  sx={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: textSub,
+                    mb: 1,
+                    letterSpacing: 0.8,
+                    textTransform: 'uppercase'
+                  }}
+                >
                   Metode Pembayaran
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.8, justifyContent: 'center' }}>
@@ -304,8 +381,16 @@ export const SupportPage = () => {
                   textAlign: 'center'
                 }}
               >
-                <Typography sx={{ fontSize: 12, color: isDark ? '#93c5fd' : '#1e40af', lineHeight: 1.65, fontStyle: 'italic' }}>
-                  "Setiap kontribusi Anda, seberapapun kecilnya, sangat berarti bagi keberlangsungan P-POS Kasir."
+                <Typography
+                  sx={{
+                    fontSize: 12,
+                    color: isDark ? '#93c5fd' : '#1e40af',
+                    lineHeight: 1.65,
+                    fontStyle: 'italic'
+                  }}
+                >
+                  "Setiap kontribusi Anda, seberapapun kecilnya, sangat berarti bagi keberlangsungan
+                  P-POS Kasir."
                 </Typography>
               </Box>
             </Box>
@@ -313,7 +398,6 @@ export const SupportPage = () => {
 
           {/* ─── RIGHT COLUMN ─── */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-
             {/* Benefits */}
             <Box
               sx={{
@@ -325,10 +409,23 @@ export const SupportPage = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.6 }}>
-                <Box sx={{ width: 26, height: 26, borderRadius: 1.5, bgcolor: 'rgba(251,191,36,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Box
+                  sx={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: 1.5,
+                    bgcolor: 'rgba(251,191,36,0.12)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
                   <VolunteerActivismRounded sx={{ fontSize: 15, color: '#fbbf24' }} />
                 </Box>
-                <Typography fontWeight={700} sx={{ color: isDark ? '#f1f5f9' : '#1e293b', fontSize: 15 }}>
+                <Typography
+                  fontWeight={700}
+                  sx={{ color: isDark ? '#f1f5f9' : '#1e293b', fontSize: 15 }}
+                >
                   Manfaat untuk Anda
                 </Typography>
               </Box>
@@ -354,10 +451,30 @@ export const SupportPage = () => {
                       }
                     }}
                   >
-                    <Box sx={{ width: 36, height: 36, borderRadius: 2, bgcolor: b.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 1.2, color: b.color }}>
+                    <Box
+                      sx={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 2,
+                        bgcolor: b.bg,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mb: 1.2,
+                        color: b.color
+                      }}
+                    >
                       {b.icon}
                     </Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: isDark ? '#f1f5f9' : '#1e293b', mb: 0.5, lineHeight: 1.3 }}>
+                    <Typography
+                      sx={{
+                        fontSize: 13,
+                        fontWeight: 700,
+                        color: isDark ? '#f1f5f9' : '#1e293b',
+                        mb: 0.5,
+                        lineHeight: 1.3
+                      }}
+                    >
                       {b.title}
                     </Typography>
                     <Typography sx={{ fontSize: 12, color: textSub, lineHeight: 1.5 }}>
@@ -383,17 +500,36 @@ export const SupportPage = () => {
               }}
             >
               {/* Glow */}
-              <Box sx={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', background: 'radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)', pointerEvents: 'none' }} />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: '50%',
+                  background: 'radial-gradient(circle, rgba(34,197,94,0.08) 0%, transparent 70%)',
+                  pointerEvents: 'none'
+                }}
+              />
 
               {/* Header row */}
-              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'space-between',
+                  mb: 1.5
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                   <Box
                     sx={{
                       width: 40,
                       height: 40,
                       borderRadius: 2,
-                      background: 'linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(16,185,129,0.1) 100%)',
+                      background:
+                        'linear-gradient(135deg, rgba(34,197,94,0.2) 0%, rgba(16,185,129,0.1) 100%)',
                       border: '1px solid rgba(34,197,94,0.2)',
                       display: 'flex',
                       alignItems: 'center',
@@ -404,7 +540,10 @@ export const SupportPage = () => {
                     <FavoriteRounded sx={{ color: '#22c55e', fontSize: 18 }} />
                   </Box>
                   <Box>
-                    <Typography fontWeight={700} sx={{ color: isDark ? '#f1f5f9' : '#1e293b', fontSize: 14, lineHeight: 1.1 }}>
+                    <Typography
+                      fontWeight={700}
+                      sx={{ color: isDark ? '#f1f5f9' : '#1e293b', fontSize: 14, lineHeight: 1.1 }}
+                    >
                       Dukung via Saweria
                     </Typography>
                     <Typography sx={{ fontSize: 11, color: textSub }}>
@@ -419,7 +558,8 @@ export const SupportPage = () => {
                 {/* Text + Button */}
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ fontSize: 13.5, color: textSub, lineHeight: 1.7, mb: 2.5 }}>
-                    Anda dapat donasi langsung melalui halaman Saweria jika lebih nyaman menggunakan browser atau perangkat lainnya.
+                    Anda dapat donasi langsung melalui halaman Saweria jika lebih nyaman menggunakan
+                    browser atau perangkat lainnya.
                   </Typography>
                 </Box>
 
@@ -459,7 +599,6 @@ export const SupportPage = () => {
           </Typography>
           <Box sx={{ flex: 1, height: '1px', bgcolor: border }} />
         </Box>
-
       </Box>
     </Box>
   )

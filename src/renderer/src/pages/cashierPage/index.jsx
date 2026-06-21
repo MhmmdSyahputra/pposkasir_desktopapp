@@ -36,14 +36,8 @@ import { useNotifier } from '../../components/core/notificationProvider'
 export const CashierPage = () => {
   const theme = useTheme()
   const { t } = useTranslation()
-  const {
-    isSuper,
-    createCashier,
-    listCashiers,
-    updateCashier,
-    deleteCashier,
-    resetPinCashier
-  } = useAuth()
+  const { isSuper, createCashier, listCashiers, updateCashier, deleteCashier, resetPinCashier } =
+    useAuth()
   const { show } = useNotifier()
 
   const [loadingCashier, setLoadingCashier] = useState(false)
@@ -105,7 +99,10 @@ export const CashierPage = () => {
       setCashierEmail('')
       setCashierUsername('')
       setCashierPin('')
-      show({ message: t('settings.cashier_create_success', 'Kasir berhasil dibuat'), severity: 'success' })
+      show({
+        message: t('settings.cashier_create_success', 'Kasir berhasil dibuat'),
+        severity: 'success'
+      })
       await loadCashiers()
     } catch (error) {
       setCashierError(error.message || t('settings.cashier_create_failed'))
@@ -276,9 +273,7 @@ export const CashierPage = () => {
 
           <Divider sx={{ my: 3 }} />
 
-          <Typography sx={{ fontWeight: 600, fontSize: 14, mb: 2 }}>
-            Daftar Akun Kasir
-          </Typography>
+          <Typography sx={{ fontWeight: 600, fontSize: 14, mb: 2 }}>Daftar Akun Kasir</Typography>
 
           {loadingCashier ? (
             <LinearProgress />
@@ -429,7 +424,8 @@ export const CashierPage = () => {
             Apakah Anda yakin ingin menghapus akun kasir <b>{selectedRow?.username}</b>?
           </Typography>
           <Typography sx={{ fontSize: 12, color: 'error.main', mt: 1 }}>
-            Jika kasir ini sudah pernah melakukan transaksi, kasir tidak dapat dihapus. Anda dapat menonaktifkannya melalui opsi Edit.
+            Jika kasir ini sudah pernah melakukan transaksi, kasir tidak dapat dihapus. Anda dapat
+            menonaktifkannya melalui opsi Edit.
           </Typography>
         </DialogContent>
         <DialogActions>
@@ -447,7 +443,6 @@ export const CashierPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
     </PageLayout>
   )
 }

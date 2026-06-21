@@ -110,32 +110,23 @@ export const AuthProvider = ({ children }) => {
     [user?.username]
   )
 
-  const updateCashier = useCallback(
-    async (payload) => {
-      const res = await authService.cashierUpdate(payload)
-      if (!res?.ok) throw new Error(res?.error || 'Gagal memperbarui akun kasir')
-      return res.data
-    },
-    []
-  )
+  const updateCashier = useCallback(async (payload) => {
+    const res = await authService.cashierUpdate(payload)
+    if (!res?.ok) throw new Error(res?.error || 'Gagal memperbarui akun kasir')
+    return res.data
+  }, [])
 
-  const deleteCashier = useCallback(
-    async (payload) => {
-      const res = await authService.cashierDelete(payload)
-      if (!res?.ok) throw new Error(res?.error || 'Gagal menghapus akun kasir')
-      return res.data
-    },
-    []
-  )
+  const deleteCashier = useCallback(async (payload) => {
+    const res = await authService.cashierDelete(payload)
+    if (!res?.ok) throw new Error(res?.error || 'Gagal menghapus akun kasir')
+    return res.data
+  }, [])
 
-  const resetPinCashier = useCallback(
-    async (payload) => {
-      const res = await authService.cashierResetPin(payload)
-      if (!res?.ok) throw new Error(res?.error || 'Gagal mereset PIN kasir')
-      return res.data
-    },
-    []
-  )
+  const resetPinCashier = useCallback(async (payload) => {
+    const res = await authService.cashierResetPin(payload)
+    if (!res?.ok) throw new Error(res?.error || 'Gagal mereset PIN kasir')
+    return res.data
+  }, [])
 
   const listCashiers = useCallback(async () => {
     const res = await authService.cashierGetAll()

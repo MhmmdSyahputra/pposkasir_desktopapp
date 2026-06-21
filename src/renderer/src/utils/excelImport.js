@@ -13,11 +13,11 @@ export const importExcel = (file) => {
       try {
         const data = e.target.result
         const workbook = XLSX.read(data, { type: 'binary' })
-        
+
         // Get the first sheet
         const firstSheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[firstSheetName]
-        
+
         // Convert to JSON
         const json = XLSX.utils.sheet_to_json(worksheet, { defval: '' })
         resolve(json)

@@ -42,10 +42,11 @@ export function registerPrinterIpc() {
             const style = document.createElement('style')
             const padLeft = typeof data.paddingLeft === 'number' ? data.paddingLeft : 0
             const padRight = typeof data.paddingRight === 'number' ? data.paddingRight : 0
+            const pageSizeCss = data.paperSize === '58mm' ? '58mm auto' : '80mm auto'
             if (data.paperSize === '58mm') {
-              style.innerHTML = '@page { size: 58mm auto; margin: 0; } body { width: 58mm; font-size: 11px; padding: 0 \' + (3 + padRight) + \'mm 0 \' + (2 + padLeft) + \'mm; }'
+              style.innerHTML = '@page { size: ' + pageSizeCss + '; margin: 0; } body { width: 58mm; font-size: 11px; margin-left: 0; margin-right: auto; padding: 0 ' + (3 + padRight) + 'mm 0 ' + (2 + padLeft) + 'mm; }'
             } else if (data.paperSize === '80mm') {
-              style.innerHTML = '@page { size: 80mm auto; margin: 0; } body { width: 80mm; font-size: 12px; padding: 0 \' + (4 + padRight) + \'mm 0 \' + (4 + padLeft) + \'mm; }'
+              style.innerHTML = '@page { size: ' + pageSizeCss + '; margin: 0; } body { width: 80mm; font-size: 12px; margin-left: 0; margin-right: auto; padding: 0 ' + (4 + padRight) + 'mm 0 ' + (4 + padLeft) + 'mm; }'
             }
             document.head.appendChild(style)
           }
@@ -54,7 +55,7 @@ export function registerPrinterIpc() {
 
       setTimeout(() => {
         const printOptions = {
-          silent: true,
+          silent: data.printerType === 'system' ? false : true,
           margins: { marginType: 'none' },
           printBackground: true,
           pagesPerSheet: 1,
@@ -63,10 +64,11 @@ export function registerPrinterIpc() {
         }
 
         // Set explicit size in microns to prevent Chromium from defaulting to A4/Letter scaling
+        // Only override pageSize for thermal default printers (silent mode) to allow PDF/standard printing to use default page layout
         if (data.paperSize === '58mm') {
-          printOptions.pageSize = { width: 58000, height: 297000 } // 58mm x 297mm
+          printOptions.pageSize = { width: 58000, height: 297000 }
         } else if (data.paperSize === '80mm') {
-          printOptions.pageSize = { width: 80000, height: 297000 } // 80mm x 297mm
+          printOptions.pageSize = { width: 80000, height: 297000 }
         }
 
         rWin.webContents.print(printOptions, (success, errorType) => {
@@ -234,15 +236,17 @@ export function registerPrinterIpc() {
     try {
       // getPrintersAsync() hanya bisa dipanggil dari webContents, event.sender adalah webContents
       let printers = await event.sender.getPrintersAsync()
-      
+
       // Patch isDefault for Windows karena Electron terkadang gagal mendapatkan status default
       if (process.platform === 'win32') {
         try {
-          const { stdout } = await execPromise(`reg query "HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows" /v Device`)
+          const { stdout } = await execPromise(
+            `reg query "HKCU\\Software\\Microsoft\\Windows NT\\CurrentVersion\\Windows" /v Device`
+          )
           const match = stdout.match(/Device\s+REG_SZ\s+([^,\r\n]+)/)
           if (match && match[1]) {
             const defaultPrinterName = match[1].trim()
-            printers = printers.map(p => ({
+            printers = printers.map((p) => ({
               ...p,
               isDefault: p.name === defaultPrinterName
             }))

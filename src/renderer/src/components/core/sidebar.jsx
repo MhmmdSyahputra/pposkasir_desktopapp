@@ -40,8 +40,9 @@ import {
 } from '@mui/icons-material'
 import { useAuth } from '../../context/authContext'
 import { useNotifier } from './notificationProvider'
-import { CONFIG } from '../../utils/config'
+import { receiptSettingsService } from '../../services/receiptSettingsService'
 import { PromotionSidebarBanner } from './promotionSidebarBanner'
+import { Stack } from '@mui/material'
 
 // ── sub-menu popover shown when sidebar is collapsed ─────────────────────
 const CollapsedSubMenu = ({ anchorEl, open, item, onClose, onOpen, navItemSx, theme }) => {
@@ -333,424 +334,431 @@ export const Sidebar = ({ routes = [] }) => {
         }}
       >
         <List sx={{ width: '100%', px: 0 }}>
-        {menuItems.map((item) => {
-          const Icon = item.icon ?? HomeRounded
+          {menuItems.map((item) => {
+            const Icon = item.icon ?? HomeRounded
 
-          // ── item with children (group) ──────────────────────────────
-          if (item.children) {
-            const active = isGroupActive(item)
-            const groupOpen = openGroups[item.label] ?? active
+            // ── item with children (group) ──────────────────────────────
+            if (item.children) {
+              const active = isGroupActive(item)
+              const groupOpen = openGroups[item.label] ?? active
 
-            return (
-              <Box key={item.label}>
-                {/* parent button */}
-                <Tooltip
-                  title={collapsed ? t(item.labelKey || item.label) : ''}
-                  placement="right"
-                  disableHoverListener={!collapsed}
-                >
-                  <ListItemButton
-                    selected={active}
-                    onClick={() => {
-                      if (collapsed) return // handled by popper
-                      toggleGroup(item.label)
-                    }}
-                    onMouseEnter={(e) => collapsed && openGroup(item.label, e.currentTarget)}
-                    onMouseLeave={() => collapsed && closeGroup()}
-                    sx={{
-                      ...navItemSx,
-                      justifyContent: collapsed ? 'center' : 'space-between'
-                    }}
+              return (
+                <Box key={item.label}>
+                  {/* parent button */}
+                  <Tooltip
+                    title={collapsed ? t(item.labelKey || item.label) : ''}
+                    placement="right"
+                    disableHoverListener={!collapsed}
                   >
-                    <Box
+                    <ListItemButton
+                      selected={active}
+                      onClick={() => {
+                        if (collapsed) return // handled by popper
+                        toggleGroup(item.label)
+                      }}
+                      onMouseEnter={(e) => collapsed && openGroup(item.label, e.currentTarget)}
+                      onMouseLeave={() => collapsed && closeGroup()}
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: collapsed ? 'center' : 'flex-start',
-                        gap: collapsed ? 0 : 1.5,
-                        flex: 1,
-                        minWidth: 0
+                        ...navItemSx,
+                        justifyContent: collapsed ? 'center' : 'space-between'
                       }}
                     >
-                      <ListItemIcon sx={{ color: 'inherit', minWidth: 0 }}>
-                        <Icon fontSize="small" />
-                      </ListItemIcon>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: collapsed ? 'center' : 'flex-start',
+                          gap: collapsed ? 0 : 1.5,
+                          flex: 1,
+                          minWidth: 0
+                        }}
+                      >
+                        <ListItemIcon sx={{ color: 'inherit', minWidth: 0 }}>
+                          <Icon fontSize="small" />
+                        </ListItemIcon>
+                        {!collapsed && (
+                          <ListItemText
+                            primary={t(item.labelKey || item.label)}
+                            primaryTypographyProps={{
+                              fontSize: 14,
+                              fontWeight: active ? 700 : 500,
+                              textTransform: 'capitalize',
+                              noWrap: true
+                            }}
+                          />
+                        )}
+                      </Box>
                       {!collapsed && (
-                        <ListItemText
-                          primary={t(item.labelKey || item.label)}
-                          primaryTypographyProps={{
-                            fontSize: 14,
-                            fontWeight: active ? 700 : 500,
-                            textTransform: 'capitalize',
-                            noWrap: true
+                        <ExpandMoreRounded
+                          sx={{
+                            fontSize: 18,
+                            color: 'text.disabled',
+                            flexShrink: 0,
+                            transform: groupOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 200ms ease'
                           }}
                         />
                       )}
-                    </Box>
-                    {!collapsed && (
-                      <ExpandMoreRounded
-                        sx={{
-                          fontSize: 18,
-                          color: 'text.disabled',
-                          flexShrink: 0,
-                          transform: groupOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                          transition: 'transform 200ms ease'
-                        }}
-                      />
-                    )}
-                  </ListItemButton>
-                </Tooltip>
+                    </ListItemButton>
+                  </Tooltip>
 
-                {/* collapsed → floating popper */}
-                {collapsed && (
-                  <CollapsedSubMenu
-                    anchorEl={hoveredGroupEl}
-                    open={hoveredGroup === item.label}
-                    item={item}
-                    onClose={closeGroup}
-                    onOpen={() => clearTimeout(closeTimer.current)}
-                    navItemSx={navItemSx}
-                    theme={theme}
-                  />
-                )}
+                  {/* collapsed → floating popper */}
+                  {collapsed && (
+                    <CollapsedSubMenu
+                      anchorEl={hoveredGroupEl}
+                      open={hoveredGroup === item.label}
+                      item={item}
+                      onClose={closeGroup}
+                      onOpen={() => clearTimeout(closeTimer.current)}
+                      navItemSx={navItemSx}
+                      theme={theme}
+                    />
+                  )}
 
-                {/* expanded → inline collapse */}
-                {!collapsed && (
-                  <Collapse in={groupOpen} timeout={160}>
-                    <List disablePadding sx={{ pl: 1 }}>
-                      {item.children
-                        .filter((c) => c.active)
-                        .map((child) => {
-                          const ChildIcon = child.icon ?? HomeRounded
-                          const selected = location.pathname === child.path
-                          return (
-                            <Tooltip
-                              key={child.path}
-                              title=""
-                              placement="right"
-                              disableHoverListener
-                            >
-                              <ListItemButton
-                                selected={selected}
-                                onClick={() => navigate(child.path)}
-                                sx={childItemSx}
+                  {/* expanded → inline collapse */}
+                  {!collapsed && (
+                    <Collapse in={groupOpen} timeout={160}>
+                      <List disablePadding sx={{ pl: 1 }}>
+                        {item.children
+                          .filter((c) => c.active)
+                          .map((child) => {
+                            const ChildIcon = child.icon ?? HomeRounded
+                            const selected = location.pathname === child.path
+                            return (
+                              <Tooltip
+                                key={child.path}
+                                title=""
+                                placement="right"
+                                disableHoverListener
                               >
-                                <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                                  <ChildIcon sx={{ fontSize: 11 }} />
-                                </ListItemIcon>
-                                <ListItemText
-                                  primary={t(child.labelKey || child.label)}
-                                  primaryTypographyProps={{
-                                    fontSize: 13,
-                                    fontWeight: selected ? 700 : 500
-                                  }}
-                                />
-                              </ListItemButton>
-                            </Tooltip>
-                          )
-                        })}
-                    </List>
-                  </Collapse>
-                )}
-              </Box>
-            )
-          }
+                                <ListItemButton
+                                  selected={selected}
+                                  onClick={() => navigate(child.path)}
+                                  sx={childItemSx}
+                                >
+                                  <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                                    <ChildIcon sx={{ fontSize: 11 }} />
+                                  </ListItemIcon>
+                                  <ListItemText
+                                    primary={t(child.labelKey || child.label)}
+                                    primaryTypographyProps={{
+                                      fontSize: 13,
+                                      fontWeight: selected ? 700 : 500
+                                    }}
+                                  />
+                                </ListItemButton>
+                              </Tooltip>
+                            )
+                          })}
+                      </List>
+                    </Collapse>
+                  )}
+                </Box>
+              )
+            }
 
-          // ── flat item ───────────────────────────────────────────────
-          const selected = location.pathname === item.path
-          return (
-            <Tooltip
-              key={item.path}
-              title={collapsed ? t(item.labelKey || item.label) : ''}
-              placement="right"
-              disableHoverListener={!collapsed}
-            >
-              <ListItemButton
-                selected={selected}
-                onClick={() => navigate(item.path)}
-                sx={navItemSx}
+            // ── flat item ───────────────────────────────────────────────
+            const selected = location.pathname === item.path
+            return (
+              <Tooltip
+                key={item.path}
+                title={collapsed ? t(item.labelKey || item.label) : ''}
+                placement="right"
+                disableHoverListener={!collapsed}
               >
-                <ListItemIcon sx={{ color: 'inherit' }}>
-                  <Icon fontSize="small" />
+                <ListItemButton
+                  selected={selected}
+                  onClick={() => navigate(item.path)}
+                  sx={navItemSx}
+                >
+                  <ListItemIcon sx={{ color: 'inherit' }}>
+                    <Icon fontSize="small" />
+                  </ListItemIcon>
+                  {!collapsed && (
+                    <ListItemText
+                      primary={t(item.labelKey || item.label)}
+                      primaryTypographyProps={{
+                        fontSize: 14,
+                        fontWeight: selected ? 700 : 500,
+                        textTransform: 'capitalize'
+                      }}
+                    />
+                  )}
+                </ListItemButton>
+              </Tooltip>
+            )
+          })}
+        </List>
+
+        <Divider sx={{ mt: 1, mb: 2, width: '85%', borderColor: 'divider' }} />
+
+        <List sx={{ width: '100%', px: 0 }}>
+          <Tooltip
+            title={collapsed ? t(settingsMenu.labelKey) : ''}
+            placement="right"
+            disableHoverListener={!collapsed}
+          >
+            <ListItemButton
+              selected={isSettingsRoute}
+              onClick={() => {
+                if (collapsed) return
+                toggleGroup('settings')
+              }}
+              onMouseEnter={(e) => collapsed && openGroup('settings', e.currentTarget)}
+              onMouseLeave={() => collapsed && closeGroup()}
+              sx={{ ...navItemSx, justifyContent: collapsed ? 'center' : 'space-between', mb: 0 }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  gap: collapsed ? 0 : 1.5,
+                  flex: 1,
+                  minWidth: 0
+                }}
+              >
+                <ListItemIcon sx={{ color: 'inherit', minWidth: 0 }}>
+                  <SettingsRounded fontSize="medium" />
                 </ListItemIcon>
                 {!collapsed && (
                   <ListItemText
-                    primary={t(item.labelKey || item.label)}
+                    primary={t(settingsMenu.labelKey)}
                     primaryTypographyProps={{
                       fontSize: 14,
-                      fontWeight: selected ? 700 : 500,
-                      textTransform: 'capitalize'
+                      fontWeight: isSettingsRoute ? 700 : 500
                     }}
                   />
                 )}
-              </ListItemButton>
-            </Tooltip>
-          )
-        })}
-      </List>
+              </Box>
+              {!collapsed && (
+                <ExpandMoreRounded
+                  sx={{
+                    fontSize: 18,
+                    color: 'text.disabled',
+                    flexShrink: 0,
+                    transform: settingsGroupOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 200ms ease'
+                  }}
+                />
+              )}
+            </ListItemButton>
+          </Tooltip>
 
-      <Divider sx={{ mt: 1, mb: 2, width: '85%', borderColor: 'divider' }} />
+          {collapsed && (
+            <CollapsedSubMenu
+              anchorEl={hoveredGroupEl}
+              open={hoveredGroup === 'settings'}
+              item={settingsMenu}
+              onClose={closeGroup}
+              onOpen={() => clearTimeout(closeTimer.current)}
+              navItemSx={navItemSx}
+              theme={theme}
+            />
+          )}
 
-      <List sx={{ width: '100%', px: 0 }}>
-        <Tooltip
-          title={collapsed ? t(settingsMenu.labelKey) : ''}
-          placement="right"
-          disableHoverListener={!collapsed}
-        >
-          <ListItemButton
-            selected={isSettingsRoute}
-            onClick={() => {
-              if (collapsed) return
-              toggleGroup('settings')
-            }}
-            onMouseEnter={(e) => collapsed && openGroup('settings', e.currentTarget)}
-            onMouseLeave={() => collapsed && closeGroup()}
-            sx={{ ...navItemSx, justifyContent: collapsed ? 'center' : 'space-between', mb: 0 }}
+          {!collapsed && (
+            <Collapse in={settingsGroupOpen} timeout={160}>
+              <List disablePadding sx={{ pl: 1, mb: 0.5 }}>
+                {settingsMenu.children.map((child) => {
+                  const selected = location.pathname === child.path
+                  const ChildIcon = child.icon ?? HomeRounded
+                  return (
+                    <ListItemButton
+                      key={child.path}
+                      selected={selected}
+                      onClick={() => navigate(child.path)}
+                      sx={childItemSx}
+                    >
+                      <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
+                        <ChildIcon sx={{ fontSize: 11 }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={t(child.labelKey || child.label)}
+                        primaryTypographyProps={{ fontSize: 13, fontWeight: selected ? 700 : 500 }}
+                      />
+                    </ListItemButton>
+                  )
+                })}
+              </List>
+            </Collapse>
+          )}
+
+          <Tooltip
+            title={collapsed ? t('sidebar.cashier_session') : ''}
+            placement="right"
+            disableHoverListener={!collapsed}
           >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                gap: collapsed ? 0 : 1.5,
-                flex: 1,
-                minWidth: 0
-              }}
-            >
-              <ListItemIcon sx={{ color: 'inherit', minWidth: 0 }}>
-                <SettingsRounded fontSize="medium" />
+            <ListItemButton onClick={handleOpenCashierDialog} sx={{ ...navItemSx, mb: 0.75 }}>
+              <ListItemIcon sx={{ color: isCashierOpen ? 'success.main' : 'inherit' }}>
+                <PointOfSaleRounded fontSize="medium" />
               </ListItemIcon>
               {!collapsed && (
                 <ListItemText
-                  primary={t(settingsMenu.labelKey)}
-                  primaryTypographyProps={{ fontSize: 14, fontWeight: isSettingsRoute ? 700 : 500 }}
+                  primary={t('sidebar.cashier_session')}
+                  secondary={
+                    isCashierOpen ? t('sidebar.cashier_open') : t('sidebar.cashier_closed')
+                  }
+                  primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }}
+                  secondaryTypographyProps={{ fontSize: 11 }}
                 />
               )}
-            </Box>
-            {!collapsed && (
-              <ExpandMoreRounded
-                sx={{
-                  fontSize: 18,
-                  color: 'text.disabled',
-                  flexShrink: 0,
-                  transform: settingsGroupOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                  transition: 'transform 200ms ease'
-                }}
-              />
-            )}
-          </ListItemButton>
-        </Tooltip>
+            </ListItemButton>
+          </Tooltip>
 
-        {collapsed && (
-          <CollapsedSubMenu
-            anchorEl={hoveredGroupEl}
-            open={hoveredGroup === 'settings'}
-            item={settingsMenu}
-            onClose={closeGroup}
-            onOpen={() => clearTimeout(closeTimer.current)}
-            navItemSx={navItemSx}
-            theme={theme}
-          />
-        )}
-
-        {!collapsed && (
-          <Collapse in={settingsGroupOpen} timeout={160}>
-            <List disablePadding sx={{ pl: 1, mb: 0.5 }}>
-              {settingsMenu.children.map((child) => {
-                const selected = location.pathname === child.path
-                const ChildIcon = child.icon ?? HomeRounded
-                return (
-                  <ListItemButton
-                    key={child.path}
-                    selected={selected}
-                    onClick={() => navigate(child.path)}
-                    sx={childItemSx}
-                  >
-                    <ListItemIcon sx={{ color: 'inherit', minWidth: 32 }}>
-                      <ChildIcon sx={{ fontSize: 11 }} />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={t(child.labelKey || child.label)}
-                      primaryTypographyProps={{ fontSize: 13, fontWeight: selected ? 700 : 500 }}
-                    />
-                  </ListItemButton>
-                )
-              })}
-            </List>
-          </Collapse>
-        )}
-
-        <Tooltip
-          title={collapsed ? t('sidebar.cashier_session') : ''}
-          placement="right"
-          disableHoverListener={!collapsed}
-        >
-          <ListItemButton onClick={handleOpenCashierDialog} sx={{ ...navItemSx, mb: 0.75 }}>
-            <ListItemIcon sx={{ color: isCashierOpen ? 'success.main' : 'inherit' }}>
-              <PointOfSaleRounded fontSize="medium" />
-            </ListItemIcon>
-            {!collapsed && (
-              <ListItemText
-                primary={t('sidebar.cashier_session')}
-                secondary={isCashierOpen ? t('sidebar.cashier_open') : t('sidebar.cashier_closed')}
-                primaryTypographyProps={{ fontSize: 14, fontWeight: 500 }}
-                secondaryTypographyProps={{ fontSize: 11 }}
-              />
-            )}
-          </ListItemButton>
-        </Tooltip>
-
-        <Tooltip
-          title={collapsed ? t('settings.logout') : ''}
-          placement="right"
-          disableHoverListener={!collapsed}
-        >
-          <ListItemButton onClick={logout} sx={{ ...navItemSx, mb: 0 }}>
-            <ListItemIcon sx={{ color: 'error.main' }}>
-              <LogoutRounded fontSize="medium" />
-            </ListItemIcon>
-            {!collapsed && (
-              <ListItemText
-                primary={t('settings.logout')}
-                primaryTypographyProps={{ fontSize: 14, fontWeight: 500, color: 'error.main' }}
-              />
-            )}
-          </ListItemButton>
-        </Tooltip>
-      </List>
-
-      <Box
-        sx={{
-          mt: 'auto',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          pb: 1
-        }}
-      >
-        <PromotionSidebarBanner collapsed={collapsed} />
-
-        <Tooltip
-          title={collapsed ? 'Dukung Pengembang' : ''}
-          placement="right"
-          disableHoverListener={!collapsed}
-        >
-          <ListItemButton
-            onClick={() => navigate('/apresiasi')}
-            selected={location.pathname === '/apresiasi'}
-            sx={{
-              ...navItemSx,
-              width: '100%',
-              mb: 0.5,
-              '&:hover': {
-                bgcolor: 'warning.main',
-                color: 'white',
-                '& .MuiListItemIcon-root': { color: 'white' }
-              },
-              '&.Mui-selected': {
-                color: 'warning.main',
-                bgcolor: alpha(theme.palette.warning.main, 0.12)
-              }
-            }}
+          <Tooltip
+            title={collapsed ? t('settings.logout') : ''}
+            placement="right"
+            disableHoverListener={!collapsed}
           >
-            <ListItemIcon sx={{ color: 'warning.main', transition: 'color 0.2s' }}>
-              <CoffeeRounded fontSize="medium" />
-            </ListItemIcon>
-            {!collapsed && (
-              <ListItemText
-                primary="Dukung Pengembang"
-                secondary="Donasi & Apresiasi"
-                primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
-                secondaryTypographyProps={{ fontSize: 9, opacity: 0.8 }}
-              />
-            )}
-          </ListItemButton>
-        </Tooltip>
+            <ListItemButton onClick={logout} sx={{ ...navItemSx, mb: 0 }}>
+              <ListItemIcon sx={{ color: 'error.main' }}>
+                <LogoutRounded fontSize="medium" />
+              </ListItemIcon>
+              {!collapsed && (
+                <ListItemText
+                  primary={t('settings.logout')}
+                  primaryTypographyProps={{ fontSize: 14, fontWeight: 500, color: 'error.main' }}
+                />
+              )}
+            </ListItemButton>
+          </Tooltip>
+        </List>
 
-        <Tooltip
-          title={collapsed ? 'Hubungi Developer' : ''}
-          placement="right"
-          disableHoverListener={!collapsed}
+        <Box
+          sx={{
+            mt: 'auto',
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            pb: 1
+          }}
         >
-          <ListItemButton
-            onClick={() => {
-              const url = `https://wa.me/${CONFIG.developer.whatsapp}?text=${encodeURIComponent(CONFIG.developer.message)}`
-              window.open(url, '_blank')
-            }}
-            sx={{
-              ...navItemSx,
-              width: '100%',
-              mb: 0.5,
-              '&:hover': {
-                bgcolor: 'success.main',
-                color: 'white',
-                '& .MuiListItemIcon-root': { color: 'white' }
-              }
-            }}
-          >
-            <ListItemIcon sx={{ color: 'success.main', transition: 'color 0.2s' }}>
-              <WhatsApp fontSize="medium" />
-            </ListItemIcon>
-            {!collapsed && (
-              <ListItemText
-                primary="Hubungi Developer"
-                secondary="Support"
-                primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
-                secondaryTypographyProps={{ fontSize: 9, opacity: 0.8 }}
-              />
-            )}
-          </ListItemButton>
-        </Tooltip>
+          <PromotionSidebarBanner collapsed={collapsed} />
 
-        <Divider sx={{ width: '85%', borderColor: 'divider', opacity: 0.3, mb: 1 }} />
-        <Tooltip
-          title={collapsed ? 'Profile' : ''}
-          placement="right"
-          disableHoverListener={!collapsed}
-        >
-          <Box
-            onClick={() => navigate('/profil-toko')}
-            sx={{
-              width: '100%',
-              px: collapsed ? 0 : 1,
-              py: 0.5,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              gap: 1,
-              cursor: 'pointer',
-              borderRadius: 2,
-              '&:hover': { bgcolor: 'action.hover' }
-            }}
+          <Tooltip
+            title={collapsed ? 'Dukung Pengembang' : ''}
+            placement="right"
+            disableHoverListener={!collapsed}
           >
-            <Avatar
+            <ListItemButton
+              onClick={() => navigate('/apresiasi')}
+              selected={location.pathname === '/apresiasi'}
               sx={{
-                width: 38,
-                height: 38,
-                bgcolor: theme.palette.mode === 'dark' ? '#1f2630' : '#dde5f0',
-                color: 'text.secondary',
-                fontSize: 14,
-                fontWeight: 700
+                ...navItemSx,
+                width: '100%',
+                mb: 0.5,
+                '&:hover': {
+                  bgcolor: 'warning.main',
+                  color: 'white',
+                  '& .MuiListItemIcon-root': { color: 'white' }
+                },
+                '&.Mui-selected': {
+                  color: 'warning.main',
+                  bgcolor: alpha(theme.palette.warning.main, 0.12)
+                }
               }}
             >
-              {initials}
-            </Avatar>
-            {!collapsed && (
-              <Box>
-                <Typography sx={{ color: 'text.primary', fontSize: 13, fontWeight: 600 }}>
-                  {user?.username || '-'}
-                </Typography>
-                <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
-                  {roleLabel}
-                  {' • '}
-                  {isCashierOpen ? t('sidebar.cashier_open') : t('sidebar.cashier_closed')}
-                </Typography>
-              </Box>
-            )}
-          </Box>
-        </Tooltip>
-      </Box>
+              <ListItemIcon sx={{ color: 'warning.main', transition: 'color 0.2s' }}>
+                <CoffeeRounded fontSize="medium" />
+              </ListItemIcon>
+              {!collapsed && (
+                <ListItemText
+                  primary="Dukung Pengembang"
+                  secondary="Donasi & Apresiasi"
+                  primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
+                  secondaryTypographyProps={{ fontSize: 9, opacity: 0.8 }}
+                />
+              )}
+            </ListItemButton>
+          </Tooltip>
+
+          <Tooltip
+            title={collapsed ? 'Hubungi Developer' : ''}
+            placement="right"
+            disableHoverListener={!collapsed}
+          >
+            <ListItemButton
+              onClick={() => {
+                const whatsapp = '6282323232565'
+                const message = 'Halo Developer, saya butuh bantuan terkait aplikasi P-Pos Kasir.'
+                const url = `https://wa.me/${whatsapp}?text=${encodeURIComponent(message)}`
+                window.open(url, '_blank')
+              }}
+              sx={{
+                ...navItemSx,
+                width: '100%',
+                mb: 0.5,
+                '&:hover': {
+                  bgcolor: 'success.main',
+                  color: 'white',
+                  '& .MuiListItemIcon-root': { color: 'white' }
+                }
+              }}
+            >
+              <ListItemIcon sx={{ color: 'success.main', transition: 'color 0.2s' }}>
+                <WhatsApp fontSize="medium" />
+              </ListItemIcon>
+              {!collapsed && (
+                <ListItemText
+                  primary="Hubungi Developer"
+                  secondary="Support"
+                  primaryTypographyProps={{ fontSize: 13, fontWeight: 500 }}
+                  secondaryTypographyProps={{ fontSize: 9, opacity: 0.8 }}
+                />
+              )}
+            </ListItemButton>
+          </Tooltip>
+
+          <Divider sx={{ width: '85%', borderColor: 'divider', opacity: 0.3, mb: 1 }} />
+          <Tooltip
+            title={collapsed ? 'Profile' : ''}
+            placement="right"
+            disableHoverListener={!collapsed}
+          >
+            <Box
+              onClick={() => navigate('/profil-toko')}
+              sx={{
+                width: '100%',
+                px: collapsed ? 0 : 1,
+                py: 0.5,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                gap: 1,
+                cursor: 'pointer',
+                borderRadius: 2,
+                '&:hover': { bgcolor: 'action.hover' }
+              }}
+            >
+              <Avatar
+                sx={{
+                  width: 38,
+                  height: 38,
+                  bgcolor: theme.palette.mode === 'dark' ? '#1f2630' : '#dde5f0',
+                  color: 'text.secondary',
+                  fontSize: 14,
+                  fontWeight: 700
+                }}
+              >
+                {initials}
+              </Avatar>
+              {!collapsed && (
+                <Box>
+                  <Typography sx={{ color: 'text.primary', fontSize: 13, fontWeight: 600 }}>
+                    {user?.username || '-'}
+                  </Typography>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 12 }}>
+                    {roleLabel}
+                    {' • '}
+                    {isCashierOpen ? t('sidebar.cashier_open') : t('sidebar.cashier_closed')}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Tooltip>
+        </Box>
       </Box>
 
       <Dialog
@@ -789,29 +797,110 @@ export const Sidebar = ({ routes = [] }) => {
             {cashierError && <Alert severity="error">{cashierError}</Alert>}
 
             {closeSummary && (
-              <Alert severity="success">
-                {t('sidebar.cashier_revenue')}: {fmtRp(closeSummary.total_sales)}
-                <br />
-                {t('sidebar.cashier_tx_count')}: {closeSummary.total_transactions}
-                <br />
-                {t('sidebar.cashier_expected_cash')}: {fmtRp(closeSummary.expected_cash)}
-                <br />
-                {t('sidebar.cashier_cash_diff')}: {fmtRp(closeSummary.cash_difference)}
-              </Alert>
+              <Stack spacing={1.5}>
+                <Alert severity="success">
+                  {t('sidebar.cashier_revenue')}: {fmtRp(closeSummary.total_sales)}
+                  <br />
+                  {t('sidebar.cashier_tx_count')}: {closeSummary.total_transactions}
+                  <br />
+                  {t('sidebar.cashier_expected_cash')}: {fmtRp(closeSummary.expected_cash)}
+                  <br />
+                  {t('sidebar.cashier_cash_diff')}: {fmtRp(closeSummary.cash_difference)}
+                </Alert>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  onClick={async () => {
+                    try {
+                      const receiptSettings = receiptSettingsService.get()
+                      const contentHTML = `
+                        <div style="font-size: 11px;">
+                          <div class="item-row"><span>Kasir</span><span>${closeSummary.cashier_username}</span></div>
+                          <div class="item-row"><span>Buka Sesi</span><span>${closeSummary.opened_at}</span></div>
+                          <div class="item-row"><span>Tutup Sesi</span><span>${closeSummary.closed_at}</span></div>
+                        </div>
+                        <div class="line"></div>
+                        <div style="font-size: 11px;">
+                          <div class="item-row"><span>Modal Awal (Cash)</span><span>${fmtRp(closeSummary.opening_cash)}</span></div>
+                          <div class="item-row"><span>Penjualan Tunai</span><span>${fmtRp(closeSummary.total_cash_sales)}</span></div>
+                          <div class="item-row"><span>Total Penjualan</span><span>${fmtRp(closeSummary.total_sales)}</span></div>
+                          <div class="item-row"><span>Total Transaksi</span><span>${closeSummary.total_transactions}</span></div>
+                        </div>
+                        <div class="line"></div>
+                        <div style="font-size: 11px;">
+                          <div class="item-row"><span>Ekspektasi Uang Tunai</span><span>${fmtRp(closeSummary.expected_cash)}</span></div>
+                          <div class="item-row" style="font-weight: bold;"><span>Uang Laci (Aktual)</span><span>${fmtRp(closeSummary.closing_cash)}</span></div>
+                          <div class="item-row" style="font-weight: bold; color: ${closeSummary.cash_difference < 0 ? 'red' : 'inherit'}">
+                            <span>Selisih</span><span>${fmtRp(closeSummary.cash_difference)}</span>
+                          </div>
+                        </div>
+                        ${
+                          closeSummary.close_note
+                            ? `
+                        <div class="line"></div>
+                        <div style="font-size: 11px; font-style: italic;">
+                          Catatan: ${closeSummary.close_note}
+                        </div>`
+                            : ''
+                        }
+                      `
+                      const payload = {
+                        header1: 'LAPORAN SHIFT',
+                        header2: 'TUTUP KASIR',
+                        header3: `ID Sesi: #${closeSummary.id}`,
+                        contentHTML,
+                        footer1: 'Terima kasih atas dedikasi Anda hari ini!',
+                        footer2: '',
+                        footer3: '',
+                        paperSize: receiptSettings.paperSize || '80mm',
+                        paddingLeft: receiptSettings.paddingLeft || 0,
+                        paddingRight: receiptSettings.paddingRight || 0,
+                        headerAlign: 'center',
+                        footerAlign: 'center',
+                        printerType: receiptSettings.printerType || 'thermal'
+                      }
+                      await window.api.printOrderReceipt(payload)
+                      show({ message: 'Laporan tutup kasir berhasil dicetak', severity: 'success' })
+                    } catch (printErr) {
+                      console.error('Print closing summary error:', printErr)
+                      show({ message: 'Gagal mencetak laporan tutup kasir', severity: 'error' })
+                    }
+                  }}
+                  fullWidth
+                >
+                  Cetak Struk Tutup Kasir
+                </Button>
+              </Stack>
             )}
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenCashierDialog(false)} disabled={cashierLoading}>
-            {t('common.cancel')}
-          </Button>
-          <Button
-            onClick={handleSubmitCashierSession}
-            variant="contained"
-            disabled={cashierLoading}
-          >
-            {isCashierOpen ? t('sidebar.close_cashier_button') : t('sidebar.open_cashier_button')}
-          </Button>
+          {closeSummary ? (
+            <Button
+              onClick={() => {
+                setOpenCashierDialog(false)
+                setCloseSummary(null)
+              }}
+              variant="contained"
+            >
+              Selesai
+            </Button>
+          ) : (
+            <>
+              <Button onClick={() => setOpenCashierDialog(false)} disabled={cashierLoading}>
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleSubmitCashierSession}
+                variant="contained"
+                disabled={cashierLoading}
+              >
+                {isCashierOpen
+                  ? t('sidebar.close_cashier_button')
+                  : t('sidebar.open_cashier_button')}
+              </Button>
+            </>
+          )}
         </DialogActions>
       </Dialog>
     </Box>

@@ -104,8 +104,17 @@ export const ListProductPage = () => {
     { id: 'aksi', label: '', width: 48, align: 'center' }
   ]
 
-  const { rows, loading, search, setSearch, kategori, setKategori, categories, deleteProduct, fetchData } =
-    useListProduct()
+  const {
+    rows,
+    loading,
+    search,
+    setSearch,
+    kategori,
+    setKategori,
+    categories,
+    deleteProduct,
+    fetchData
+  } = useListProduct()
 
   const fileInputRef = useRef(null)
 
@@ -169,7 +178,6 @@ export const ListProductPage = () => {
       rows
     })
   }
-
 
   const handleImportExcel = async (e) => {
     const file = e.target.files?.[0]
@@ -819,10 +827,18 @@ export const ListProductPage = () => {
                           {row.nama}
                         </Typography>
                         {Boolean(row.is_bundle) && (
-                          <Chip 
-                            label="Paket" 
-                            size="small" 
-                            sx={{ height: 16, fontSize: 9, alignSelf: 'flex-start', mt: 0.5, bgcolor: 'primary.main', color: '#fff', fontWeight: 600 }} 
+                          <Chip
+                            label="Paket"
+                            size="small"
+                            sx={{
+                              height: 16,
+                              fontSize: 9,
+                              alignSelf: 'flex-start',
+                              mt: 0.5,
+                              bgcolor: 'primary.main',
+                              color: '#fff',
+                              fontWeight: 600
+                            }}
                           />
                         )}
                       </Box>

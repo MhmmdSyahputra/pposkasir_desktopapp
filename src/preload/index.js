@@ -151,6 +151,11 @@ const api = {
   profile: {
     get: () => ipcRenderer.invoke('profile:get'),
     upsert: (payload) => ipcRenderer.invoke('profile:upsert', payload)
+  },
+
+  database: {
+    backupExport: async () => await ipcRenderer.invoke('database:backup-export'),
+    backupImport: async () => await ipcRenderer.invoke('database:backup-import')
   }
 }
 

@@ -101,7 +101,9 @@ export const TemplatePage = () => {
       title={t('template.page_title')}
     >
       <Box sx={{ mb: 4 }}>
-        <Typography sx={{ fontSize: 14, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}>
+        <Typography
+          sx={{ fontSize: 14, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}
+        >
           {t('template.description')}
         </Typography>
       </Box>
@@ -109,7 +111,12 @@ export const TemplatePage = () => {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(4, 1fr)' },
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: 'repeat(4, 1fr)'
+          },
           gap: 3
         }}
       >
@@ -212,22 +219,36 @@ export const TemplatePage = () => {
           {t('template.info_product')}
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: theme.palette.divider }}>
-          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, fontFamily: 'Poppins, sans-serif' }}>
+          <Typography
+            sx={{ fontSize: 13, color: 'text.secondary', mb: 2, fontFamily: 'Poppins, sans-serif' }}
+          >
             {t('template.info_desc')}
           </Typography>
-          
+
           <List disablePadding>
             {fieldsInfo.map((field, idx) => (
-              <ListItem key={idx} sx={{ px: 0, py: 1, borderBottom: idx !== fieldsInfo.length - 1 ? `1px dashed ${theme.palette.divider}` : 'none' }}>
+              <ListItem
+                key={idx}
+                sx={{
+                  px: 0,
+                  py: 1,
+                  borderBottom:
+                    idx !== fieldsInfo.length - 1 ? `1px dashed ${theme.palette.divider}` : 'none'
+                }}
+              >
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
+                      <Typography
+                        sx={{ fontSize: 13, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}
+                      >
                         {field.name}
                       </Typography>
-                      <Chip 
-                        label={field.req ? t('template.field_required') : t('template.field_optional')} 
-                        size="small" 
+                      <Chip
+                        label={
+                          field.req ? t('template.field_required') : t('template.field_optional')
+                        }
+                        size="small"
                         color={field.req ? 'error' : 'default'}
                         variant={field.req ? 'filled' : 'outlined'}
                         sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
@@ -235,7 +256,13 @@ export const TemplatePage = () => {
                     </Box>
                   }
                   secondary={
-                    <Typography sx={{ fontSize: 12, color: 'text.disabled', fontFamily: 'Poppins, sans-serif' }}>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        color: 'text.disabled',
+                        fontFamily: 'Poppins, sans-serif'
+                      }}
+                    >
                       {field.desc}
                     </Typography>
                   }
@@ -245,7 +272,10 @@ export const TemplatePage = () => {
           </List>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenProductModal(false)} sx={{ textTransform: 'none', color: 'text.secondary' }}>
+          <Button
+            onClick={() => setOpenProductModal(false)}
+            sx={{ textTransform: 'none', color: 'text.secondary' }}
+          >
             {t('common.cancel')}
           </Button>
           <Button
@@ -277,22 +307,38 @@ export const TemplatePage = () => {
           {t('template.info_category')}
         </DialogTitle>
         <DialogContent dividers sx={{ borderColor: theme.palette.divider }}>
-          <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 2, fontFamily: 'Poppins, sans-serif' }}>
+          <Typography
+            sx={{ fontSize: 13, color: 'text.secondary', mb: 2, fontFamily: 'Poppins, sans-serif' }}
+          >
             {t('template.info_desc')}
           </Typography>
-          
+
           <List disablePadding>
             {categoryFieldsInfo.map((field, idx) => (
-              <ListItem key={idx} sx={{ px: 0, py: 1, borderBottom: idx !== categoryFieldsInfo.length - 1 ? `1px dashed ${theme.palette.divider}` : 'none' }}>
+              <ListItem
+                key={idx}
+                sx={{
+                  px: 0,
+                  py: 1,
+                  borderBottom:
+                    idx !== categoryFieldsInfo.length - 1
+                      ? `1px dashed ${theme.palette.divider}`
+                      : 'none'
+                }}
+              >
                 <ListItemText
                   primary={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
+                      <Typography
+                        sx={{ fontSize: 13, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}
+                      >
                         {field.name}
                       </Typography>
-                      <Chip 
-                        label={field.req ? t('template.field_required') : t('template.field_optional')} 
-                        size="small" 
+                      <Chip
+                        label={
+                          field.req ? t('template.field_required') : t('template.field_optional')
+                        }
+                        size="small"
                         color={field.req ? 'error' : 'default'}
                         variant={field.req ? 'filled' : 'outlined'}
                         sx={{ height: 20, fontSize: 10, fontWeight: 600 }}
@@ -300,7 +346,13 @@ export const TemplatePage = () => {
                     </Box>
                   }
                   secondary={
-                    <Typography sx={{ fontSize: 12, color: 'text.disabled', fontFamily: 'Poppins, sans-serif' }}>
+                    <Typography
+                      sx={{
+                        fontSize: 12,
+                        color: 'text.disabled',
+                        fontFamily: 'Poppins, sans-serif'
+                      }}
+                    >
                       {field.desc}
                     </Typography>
                   }
@@ -310,7 +362,10 @@ export const TemplatePage = () => {
           </List>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setOpenCategoryModal(false)} sx={{ textTransform: 'none', color: 'text.secondary' }}>
+          <Button
+            onClick={() => setOpenCategoryModal(false)}
+            sx={{ textTransform: 'none', color: 'text.secondary' }}
+          >
             {t('common.cancel')}
           </Button>
           <Button

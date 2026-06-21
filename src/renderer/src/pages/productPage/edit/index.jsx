@@ -32,12 +32,14 @@ import {
   AddPhotoAlternateRounded,
   DeleteRounded,
   InfoOutlined,
-  TuneRounded
+  TuneRounded,
+  QrCodeScannerRounded
 } from '@mui/icons-material'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { PageLayout } from '../components/PageLayout'
 import { useEditProduct } from './hook/useEditProduct'
+import { BarcodeScanner } from '../../../components/core/BarcodeScanner'
 
 // ── section card wrapper ──────────────────────────────────────────────────
 // eslint-disable-next-line react/prop-types
@@ -125,6 +127,7 @@ export const EditProductPage = () => {
   const [quickUnitError, setQuickUnitError] = useState('')
   const [quickCategorySaving, setQuickCategorySaving] = useState(false)
   const [quickUnitSaving, setQuickUnitSaving] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   // ── shared styles ─────────────────────────────────────────────────────
   const inputSx = {
@@ -517,6 +520,15 @@ export const EditProductPage = () => {
                 error={Boolean(errors.barcode)}
                 helperText={errors.barcode || ' '}
                 sx={inputSx}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton onClick={() => setScannerOpen(true)} size="medium" edge="end">
+                        <QrCodeScannerRounded sx={{ fontSize: 20 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  )
+                }}
               />
             </Stack>
 
@@ -547,12 +559,23 @@ export const EditProductPage = () => {
 
           {/* ── Paket Bundle ────────────────────────── */}
           <SectionCard title={t('product.bundle_settings')}>
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: form.is_bundle ? 2 : 0 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                mb: form.is_bundle ? 2 : 0
+              }}
+            >
               <Box>
-                <Typography sx={{ fontSize: 14, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>
+                <Typography
+                  sx={{ fontSize: 14, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}
+                >
                   {t('product.is_bundle')}
                 </Typography>
-                <Typography sx={{ fontSize: 11, color: 'text.disabled', fontFamily: 'Poppins, sans-serif' }}>
+                <Typography
+                  sx={{ fontSize: 11, color: 'text.disabled', fontFamily: 'Poppins, sans-serif' }}
+                >
                   {t('product.bundle_desc')}
                 </Typography>
               </Box>
@@ -568,9 +591,9 @@ export const EditProductPage = () => {
                     if (val) addBundleItem(val)
                   }}
                   renderInput={(params) => (
-                    <TextField 
-                      {...params} 
-                      label={t('product.bundle_search_placeholder')} 
+                    <TextField
+                      {...params}
+                      label={t('product.bundle_search_placeholder')}
                       placeholder={t('product.bundle_type_name')}
                       sx={inputSx}
                     />
@@ -579,15 +602,36 @@ export const EditProductPage = () => {
                 />
 
                 {form.bundle_items.length === 0 ? (
-                  <Typography sx={{ fontSize: 12, color: 'text.disabled', textAlign: 'center', py: 2 }}>
+                  <Typography
+                    sx={{ fontSize: 12, color: 'text.disabled', textAlign: 'center', py: 2 }}
+                  >
                     {t('product.bundle_empty')}
                   </Typography>
                 ) : (
                   <Stack spacing={1}>
                     {form.bundle_items.map((item) => (
-                      <Box key={item.product_id} sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, border: `1px solid ${theme.palette.divider}`, borderRadius: 1.5, bgcolor: theme.palette.custom.inputBg }}>
+                      <Box
+                        key={item.product_id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          p: 1.5,
+                          border: `1px solid ${theme.palette.divider}`,
+                          borderRadius: 1.5,
+                          bgcolor: theme.palette.custom.inputBg
+                        }}
+                      >
                         <Box sx={{ flex: 1 }}>
-                          <Typography sx={{ fontSize: 13, fontWeight: 600, fontFamily: 'Poppins, sans-serif' }}>{item.product_nama}</Typography>
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              fontWeight: 600,
+                              fontFamily: 'Poppins, sans-serif'
+                            }}
+                          >
+                            {item.product_nama}
+                          </Typography>
                         </Box>
                         <TextField
                           type="number"
@@ -598,7 +642,11 @@ export const EditProductPage = () => {
                           sx={{ width: 80, ...inputSx }}
                           inputProps={{ min: 1 }}
                         />
-                        <IconButton size="small" color="error" onClick={() => removeBundleItem(item.product_id)}>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => removeBundleItem(item.product_id)}
+                        >
                           <DeleteRounded fontSize="small" />
                         </IconButton>
                       </Box>
@@ -1148,6 +1196,14 @@ export const EditProductPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <BarcodeScanner
+        open={scannerOpen}
+        onClose={() => setScannerOpen(false)}
+        onScanSuccess={(val) => {
+          handleChange('barcode')({ target: { value: val } })
+        }}
+      />
     </PageLayout>
   )
 }

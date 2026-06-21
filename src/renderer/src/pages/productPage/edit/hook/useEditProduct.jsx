@@ -34,7 +34,7 @@ export const useEditProduct = () => {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState({})
-  
+
   const [allProducts, setAllProducts] = useState([])
 
   useEffect(() => {
@@ -97,10 +97,13 @@ export const useEditProduct = () => {
 
   const addBundleItem = (product) => {
     setForm((prev) => {
-      if (prev.bundle_items.find(i => i.product_id === product.id)) return prev
+      if (prev.bundle_items.find((i) => i.product_id === product.id)) return prev
       return {
         ...prev,
-        bundle_items: [...prev.bundle_items, { product_id: product.id, product_nama: product.nama, qty: 1 }]
+        bundle_items: [
+          ...prev.bundle_items,
+          { product_id: product.id, product_nama: product.nama, qty: 1 }
+        ]
       }
     })
   }
@@ -108,14 +111,16 @@ export const useEditProduct = () => {
   const removeBundleItem = (productId) => {
     setForm((prev) => ({
       ...prev,
-      bundle_items: prev.bundle_items.filter(i => i.product_id !== productId)
+      bundle_items: prev.bundle_items.filter((i) => i.product_id !== productId)
     }))
   }
 
   const updateBundleItemQty = (productId, qty) => {
     setForm((prev) => ({
       ...prev,
-      bundle_items: prev.bundle_items.map(i => i.product_id === productId ? { ...i, qty: Number(qty) || 1 } : i)
+      bundle_items: prev.bundle_items.map((i) =>
+        i.product_id === productId ? { ...i, qty: Number(qty) || 1 } : i
+      )
     }))
   }
 

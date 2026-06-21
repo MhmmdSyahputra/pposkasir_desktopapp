@@ -61,7 +61,9 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
     >
       <Box sx={{ textAlign: settings?.headerAlign || 'center', pb: 1.5 }}>
         {visibility.headerLine1 && settings.headerLine1 ? (
-          <Typography sx={{ fontSize: baseFontSize + 2, fontWeight: 700 }}>{settings.headerLine1}</Typography>
+          <Typography sx={{ fontSize: baseFontSize + 2, fontWeight: 700 }}>
+            {settings.headerLine1}
+          </Typography>
         ) : null}
         {visibility.headerLine2 && settings.headerLine2 ? (
           <Typography sx={{ fontSize: baseFontSize }}>{settings.headerLine2}</Typography>
@@ -74,13 +76,15 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
       <Divider sx={{ my: 1.5 }} />
 
       {infoRows
-         .filter((row) => (row.key === 'customerName' ? true : visibility[row.key]) && row.value)
+        .filter((row) => (row.key === 'customerName' ? true : visibility[row.key]) && row.value)
         .map((row) => (
           <Box
             key={row.key}
             sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.6, gap: 1 }}
           >
-            <Typography sx={{ fontSize: baseFontSize, color: 'text.secondary' }}>{row.label}</Typography>
+            <Typography sx={{ fontSize: baseFontSize, color: 'text.secondary' }}>
+              {row.label}
+            </Typography>
             <Typography sx={{ fontSize: baseFontSize }}>{row.value}</Typography>
           </Box>
         ))}
@@ -100,17 +104,23 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
             }}
           >
             <Box>
-              <Typography sx={{ fontSize: baseFontSize + 1, fontWeight: 700 }}>{item.name}</Typography>
+              <Typography sx={{ fontSize: baseFontSize + 1, fontWeight: 700 }}>
+                {item.name}
+              </Typography>
               <Typography sx={{ fontSize: baseFontSize - 1, color: 'text.secondary', mt: 0.25 }}>
                 {item.qtyText}
               </Typography>
               {item.note ? (
-                <Typography sx={{ fontSize: baseFontSize - 1, color: 'text.disabled', mt: 0.25, pl: 1 }}>
+                <Typography
+                  sx={{ fontSize: baseFontSize - 1, color: 'text.disabled', mt: 0.25, pl: 1 }}
+                >
                   - {item.note}
                 </Typography>
               ) : null}
             </Box>
-            <Typography sx={{ fontSize: baseFontSize, fontWeight: 700 }}>{item.subtotal}</Typography>
+            <Typography sx={{ fontSize: baseFontSize, fontWeight: 700 }}>
+              {item.subtotal}
+            </Typography>
           </Box>
         ))}
       </Box>
@@ -172,7 +182,9 @@ export const ReceiptPreview = ({ settings, order, compact = false }) => {
           </Typography>
         ) : null}
         <Divider sx={{ my: 1, borderStyle: 'dashed' }} />
-        <Typography sx={{ fontSize: baseFontSize - 2, fontWeight: 'bold', color: 'text.secondary', mt: 0.5 }}>
+        <Typography
+          sx={{ fontSize: baseFontSize - 2, fontWeight: 'bold', color: 'text.secondary', mt: 0.5 }}
+        >
           Powered by P-POS Kasir
         </Typography>
       </Box>

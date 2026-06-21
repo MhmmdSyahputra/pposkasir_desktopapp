@@ -95,14 +95,18 @@ export function transactionCreate({
      VALUES
        (@transaction_id, @product_id, @nama_produk, @harga_satuan, @harga_dasar, @qty, @subtotal, @catatan, @modifier_summary)`
   )
-  const productStockStmt = db.prepare(`SELECT id, nama, stok, harga_beli, is_bundle FROM products WHERE id = ?`)
+  const productStockStmt = db.prepare(
+    `SELECT id, nama, stok, harga_beli, is_bundle FROM products WHERE id = ?`
+  )
   const decrementStockStmt = db.prepare(
     `UPDATE products
      SET stok = stok - @quantity,
          updated_at = datetime('now', 'localtime')
      WHERE id = @productId`
   )
-  const bundleItemsStmt = db.prepare(`SELECT product_id, qty FROM product_bundle_items WHERE bundle_id = ?`)
+  const bundleItemsStmt = db.prepare(
+    `SELECT product_id, qty FROM product_bundle_items WHERE bundle_id = ?`
+  )
 
   const txId = db.transaction(() => {
     for (const item of normalizedItems) {
@@ -117,8 +121,11 @@ export function transactionCreate({
         const bundleItems = bundleItemsStmt.all(product.id)
         for (const bItem of bundleItems) {
           const compProduct = productStockStmt.get(bItem.product_id)
-          if (!compProduct) throw new Error(`Komponen produk ID ${bItem.product_id} tidak ditemukan untuk paket ${product.nama}`)
-          
+          if (!compProduct)
+            throw new Error(
+              `Komponen produk ID ${bItem.product_id} tidak ditemukan untuk paket ${product.nama}`
+            )
+
           const requiredQty = bItem.qty * item.quantity
           if (Number(compProduct.stok) < requiredQty) {
             throw new Error(
@@ -301,7 +308,7 @@ export function transactionGetStats({ startDate = '', endDate = '' } = {}) {
        FROM transactions t ${where}`
     )
     .get(params)
-    
+
   summary.laba_kotor = summary.omzet - summary.total_hpp
 
   const byMethod = db
@@ -430,7 +437,9 @@ export function transactionGetReport({
   if (status === 'all') {
     topProductsWhere.push(`t.status = 'selesai'`)
   }
-  const topProductsWhereStr = topProductsWhere.length ? `WHERE ${topProductsWhere.join(' AND ')}` : ''
+  const topProductsWhereStr = topProductsWhere.length
+    ? `WHERE ${topProductsWhere.join(' AND ')}`
+    : ''
 
   const topProducts = db
     .prepare(

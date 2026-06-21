@@ -72,9 +72,13 @@ class ApiService {
    */
   async reportAiResponse(payload) {
     try {
-      const response = await axios.post('https://api.muhammadsyahputra.my.id/api/v1/ldesktop/report', payload, {
-        headers: { 'Content-Type': 'application/json' }
-      })
+      const response = await axios.post(
+        'https://api.muhammadsyahputra.my.id/api/v1/ldesktop/report',
+        payload,
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
       return response.data
     } catch (error) {
       console.error('reportAiResponse error:', error)
@@ -88,7 +92,9 @@ class ApiService {
    */
   async getConfig(appName = 'P-Pos Kasir') {
     try {
-      const response = await axios.get(`https://api.muhammadsyahputra.my.id/api/v1/config/get/${encodeURIComponent(appName)}`)
+      const response = await axios.get(
+        `https://api.muhammadsyahputra.my.id/api/v1/config/get/${encodeURIComponent(appName)}`
+      )
       return response.data
     } catch (error) {
       console.error('getConfig error:', error)
@@ -110,7 +116,7 @@ class ApiService {
           window.api.device.deviceBrand(),
           window.api.device.deviceInfo()
         ])
-        
+
         const deviceMeta = {
           id: deviceId,
           brand: `${brand?.manufacturer || ''} ${brand?.model || ''}`.trim(),
@@ -127,9 +133,13 @@ class ApiService {
       }
 
       // NOTE: Replace this endpoint with the actual endpoint for business info if it's different.
-      const response = await axios.post('https://api.muhammadsyahputra.my.id/api/v1/myapp/business-info', payloadWithMeta, {
-        headers: { 'Content-Type': 'application/json' }
-      })
+      const response = await axios.post(
+        'https://api.muhammadsyahputra.my.id/api/v1/myapp/business-info',
+        payloadWithMeta,
+        {
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
       return response.data
     } catch (error) {
       console.error('sendBusinessInfo error:', error)

@@ -48,7 +48,7 @@ const TEMPLATE_QUESTIONS = [
 export const AiAssistantFab = () => {
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
-  
+
   const { user, activeSession } = useAuth()
 
   const [isOpen, setIsOpen] = useState(false)
@@ -61,7 +61,7 @@ export const AiAssistantFab = () => {
   ])
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  
+
   // Reporting states
   const [reportDialogOpen, setReportDialogOpen] = useState(false)
   const [reportedMessage, setReportedMessage] = useState(null)
@@ -94,36 +94,39 @@ export const AiAssistantFab = () => {
       // Fetch Real-time Context
       const todayStr = new Date().toISOString().slice(0, 10)
       const productsRes = await productService.getAll({ limit: 10000 })
-      const products = productsRes.ok ? (productsRes.data || []) : []
-      const outOfStock = products.filter(p => p.stok <= 0)
-      const lowStock = products.filter(p => p.stok > 0 && p.stok <= 5)
-      
+      const products = productsRes.ok ? productsRes.data || [] : []
+      const outOfStock = products.filter((p) => p.stok <= 0)
+      const lowStock = products.filter((p) => p.stok > 0 && p.stok <= 5)
+
       const catRes = await categoryService.getAll({ limit: 100 })
-      const categories = catRes.ok ? (catRes.data || []) : []
-      
+      const categories = catRes.ok ? catRes.data || [] : []
+
       const reportRes = await transactionService.getReport({
         startDate: todayStr,
         endDate: todayStr,
         status: 'all',
         limit: 10
       })
-      const todaySummary = reportRes.ok && reportRes.data.summary 
-         ? reportRes.data.summary 
-         : { total_transaksi: 0, omzet_bersih: 0 }
-      const topProducts = reportRes.ok ? (reportRes.data.topProducts || []) : []
+      const todaySummary =
+        reportRes.ok && reportRes.data.summary
+          ? reportRes.data.summary
+          : { total_transaksi: 0, omzet_bersih: 0 }
+      const topProducts = reportRes.ok ? reportRes.data.topProducts || [] : []
 
       // Printer
       const printerSettings = receiptSettingsService.get()
 
-      const routesMap = sidebarRoutes.map(r => {
-        let str = `- Menu "${r.label}" (Path: ${r.path || 'Dropdown'})`
-        if (r.children) {
-          r.children.forEach(c => {
-            str += `\n  * Sub-menu "${c.label}" (Path: ${c.path})`
-          })
-        }
-        return str
-      }).join('\n')
+      const routesMap = sidebarRoutes
+        .map((r) => {
+          let str = `- Menu "${r.label}" (Path: ${r.path || 'Dropdown'})`
+          if (r.children) {
+            r.children.forEach((c) => {
+              str += `\n  * Sub-menu "${c.label}" (Path: ${c.path})`
+            })
+          }
+          return str
+        })
+        .join('\n')
 
       let reportContextStr = ''
       if (window.__currentReportContext) {
@@ -139,9 +142,9 @@ export const AiAssistantFab = () => {
   * Laba Kotor: Rp ${Number(rc.summary?.laba_kotor || 0).toLocaleString('id-ID')}
   * Rata-rata Nilai Transaksi: Rp ${Number(rc.summary?.rata_rata_transaksi || 0).toLocaleString('id-ID')}
 - Breakdown Metode Pembayaran Periode Ini:
-  ${(rc.byMethod || []).map(m => `* ${m.metode_bayar}: ${m.jumlah} transaksi, Total Rp ${Number(m.total).toLocaleString('id-ID')}`).join('\n  ')}
+  ${(rc.byMethod || []).map((m) => `* ${m.metode_bayar}: ${m.jumlah} transaksi, Total Rp ${Number(m.total).toLocaleString('id-ID')}`).join('\n  ')}
 - Produk Terlaris Periode Ini:
-  ${(rc.topProducts || []).map(p => `* ${p.nama_produk}: ${p.qty} pcs terjual, Total Penjualan Rp ${Number(p.total).toLocaleString('id-ID')}`).join('\n  ')}
+  ${(rc.topProducts || []).map((p) => `* ${p.nama_produk}: ${p.qty} pcs terjual, Total Penjualan Rp ${Number(p.total).toLocaleString('id-ID')}`).join('\n  ')}
 `
       }
 
@@ -194,12 +197,34 @@ ${routesMap}
 - User Login: ${user?.username || 'Tidak diketahui'} (Role: ${user?.role || '-'})
 - Shift Kasir Aktif: ${activeSession ? `Ya (Modal Awal: Rp ${Number(activeSession.opening_cash).toLocaleString('id-ID')})` : 'Tidak ada sesi aktif'}
 - Pengaturan Printer: Tipe ${printerSettings.printerType} (IP: ${printerSettings.printerIp || '-'})
-- Kategori Produk: ${categories.length} Kategori (${categories.slice(0, 8).map(c => c.nama).join(', ')})
+- Kategori Produk: ${categories.length} Kategori (${categories
+        .slice(0, 8)
+        .map((c) => c.nama)
+        .join(', ')})
 - Total Produk di Sistem: ${products.length}
-- Stok Kritis (Sisa <= 5): ${lowStock.length > 0 ? lowStock.slice(0,5).map(p => `${p.nama} sisa ${p.stok}`).join(', ') : 'Aman'}
-- Produk Habis Stok: ${outOfStock.length} produk. ${outOfStock.length > 0 ? `(Habis: ${outOfStock.slice(0, 10).map(p => p.nama).join(', ')})` : ''}
+- Stok Kritis (Sisa <= 5): ${
+        lowStock.length > 0
+          ? lowStock
+              .slice(0, 5)
+              .map((p) => `${p.nama} sisa ${p.stok}`)
+              .join(', ')
+          : 'Aman'
+      }
+- Produk Habis Stok: ${outOfStock.length} produk. ${
+        outOfStock.length > 0
+          ? `(Habis: ${outOfStock
+              .slice(0, 10)
+              .map((p) => p.nama)
+              .join(', ')})`
+          : ''
+      }
 - Penjualan Hari Ini (${todayStr}): ${todaySummary.total_transaksi} transaksi, Omzet Bersih: Rp ${Number(todaySummary.omzet_bersih).toLocaleString('id-ID')}
-- 5 Produk Terlaris Hari Ini: ${topProducts.slice(0, 5).map(p => `${p.nama} (${p.qty} terjual)`).join(', ') || 'Belum ada data'}
+- 5 Produk Terlaris Hari Ini: ${
+        topProducts
+          .slice(0, 5)
+          .map((p) => `${p.nama} (${p.qty} terjual)`)
+          .join(', ') || 'Belum ada data'
+      }
 ${reportContextStr}
 ${cartContextStr}
 ${txDetailContextStr}
@@ -371,21 +396,44 @@ Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cer
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                         </Box>
                       )}
-                      
+
                       {/* Report Actions for AI Responses */}
                       {!isUser && i > 0 && (
-                        <Box sx={{ display: 'flex', gap: 1, mt: 1, justifyContent: 'flex-start', borderTop: '1px solid rgba(128,128,128,0.2)', pt: 1 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            gap: 1,
+                            mt: 1,
+                            justifyContent: 'flex-start',
+                            borderTop: '1px solid rgba(128,128,128,0.2)',
+                            pt: 1
+                          }}
+                        >
                           <Button
                             size="small"
-                            sx={{ fontSize: 11, minWidth: 0, p: '2px 8px', textTransform: 'none', color: 'text.secondary' }}
-                            onClick={() => { /* helpful action */ }}
+                            sx={{
+                              fontSize: 11,
+                              minWidth: 0,
+                              p: '2px 8px',
+                              textTransform: 'none',
+                              color: 'text.secondary'
+                            }}
+                            onClick={() => {
+                              /* helpful action */
+                            }}
                           >
                             👍 Helpful
                           </Button>
                           <Button
                             size="small"
                             color="error"
-                            sx={{ fontSize: 11, minWidth: 0, p: '2px 8px', textTransform: 'none', opacity: 0.8 }}
+                            sx={{
+                              fontSize: 11,
+                              minWidth: 0,
+                              p: '2px 8px',
+                              textTransform: 'none',
+                              opacity: 0.8
+                            }}
                             onClick={() => {
                               setReportedMessage(msg.content)
                               setReportDialogOpen(true)
@@ -493,21 +541,50 @@ Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cer
       </Slide>
 
       {/* Report Dialog */}
-      <Dialog open={reportDialogOpen} onClose={() => !isReporting && setReportDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontFamily: 'Poppins, sans-serif', fontSize: 16, fontWeight: 600 }}>Report Inappropriate AI Content</DialogTitle>
+      <Dialog
+        open={reportDialogOpen}
+        onClose={() => !isReporting && setReportDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontFamily: 'Poppins, sans-serif', fontSize: 16, fontWeight: 600 }}>
+          Report Inappropriate AI Content
+        </DialogTitle>
         <DialogContent dividers>
           <Typography variant="body2" sx={{ mb: 2, fontFamily: 'Poppins, sans-serif' }}>
             Please select a reason for reporting this AI response:
           </Typography>
           <RadioGroup value={reportReason} onChange={(e) => setReportReason(e.target.value)}>
-            <FormControlLabel value="Offensive Content" control={<Radio size="small" />} label={<Typography variant="body2">Offensive Content</Typography>} />
-            <FormControlLabel value="Harmful Information" control={<Radio size="small" />} label={<Typography variant="body2">Harmful Information</Typography>} />
-            <FormControlLabel value="Incorrect Information" control={<Radio size="small" />} label={<Typography variant="body2">Incorrect Information</Typography>} />
-            <FormControlLabel value="Other" control={<Radio size="small" />} label={<Typography variant="body2">Other</Typography>} />
+            <FormControlLabel
+              value="Offensive Content"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Offensive Content</Typography>}
+            />
+            <FormControlLabel
+              value="Harmful Information"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Harmful Information</Typography>}
+            />
+            <FormControlLabel
+              value="Incorrect Information"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Incorrect Information</Typography>}
+            />
+            <FormControlLabel
+              value="Other"
+              control={<Radio size="small" />}
+              label={<Typography variant="body2">Other</Typography>}
+            />
           </RadioGroup>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setReportDialogOpen(false)} disabled={isReporting} sx={{ textTransform: 'none' }}>Cancel</Button>
+          <Button
+            onClick={() => setReportDialogOpen(false)}
+            disabled={isReporting}
+            sx={{ textTransform: 'none' }}
+          >
+            Cancel
+          </Button>
           <Button
             onClick={handleReportSubmit}
             variant="contained"

@@ -29,7 +29,7 @@ export const exportRowsToExcel = ({ fileBaseName, sheetName = 'Sheet1', columns,
     return out
   })
 
-  const headers = columns.map(c => c.header)
+  const headers = columns.map((c) => c.header)
   const ws = XLSX.utils.json_to_sheet(mappedRows, { header: headers })
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, sheetName)
