@@ -163,6 +163,16 @@ const api = {
     categoryDelete: (id) => ipcRenderer.invoke('expense-category:delete', id)
   },
 
+  customer: {
+    create: (payload) => ipcRenderer.invoke('customer:create', payload),
+    getAll: () => ipcRenderer.invoke('customer:getAll'),
+    update: (payload) => ipcRenderer.invoke('customer:update', payload),
+    delete: (id) => ipcRenderer.invoke('customer:delete', id),
+    debtPaymentCreate: (payload) => ipcRenderer.invoke('customer:debtPaymentCreate', payload),
+    debtPaymentGetHistory: (customerId) =>
+      ipcRenderer.invoke('customer:debtPaymentGetHistory', customerId)
+  },
+
   database: {
     backupExport: async () => await ipcRenderer.invoke('database:backup-export'),
     backupImport: async () => await ipcRenderer.invoke('database:backup-import')

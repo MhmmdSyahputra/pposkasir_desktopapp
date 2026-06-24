@@ -322,7 +322,7 @@ export function authCloseCashierSession({ sessionId, closingCash = 0, note = '' 
          COALESCE(SUM(total), 0) AS total_sales,
          COALESCE(SUM(CASE WHEN metode_bayar = 'tunai' THEN total ELSE 0 END), 0) AS total_cash_sales
        FROM transactions
-       WHERE status = 'selesai'
+       WHERE status IN ('selesai', 'piutang')
          AND kasir = @kasir
          AND datetime(created_at) >= datetime(@opened_at)
          AND datetime(created_at) <= datetime('now', 'localtime')`

@@ -219,6 +219,13 @@ export const Sidebar = ({ routes = [] }) => {
         labelKey: 'sidebar.settings_receipt',
         icon: FiberManualRecord,
         active: true
+      },
+      {
+        path: '/template',
+        label: 'Template Data',
+        labelKey: 'sidebar.template_data',
+        icon: FiberManualRecord,
+        active: true
       }
     ]
   }

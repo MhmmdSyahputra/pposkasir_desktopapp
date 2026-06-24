@@ -352,36 +352,35 @@ export const ExpensePage = () => {
       <Box sx={{ display: 'grid', gap: 3 }}>
         {/* Summary Card */}
         <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12 }}>
             <Card
               sx={{
-                borderRadius: 3,
-                border: `1px solid ${theme.palette.divider}`,
-                boxShadow: 'none',
-                bgcolor: isDark ? '#111823' : '#fafafa'
+                background: isDark
+                  ? `linear-gradient(135deg, ${theme.palette.error.dark} 0%, ${alpha(theme.palette.error.dark, 0.4)} 100%)`
+                  : `linear-gradient(135deg, ${theme.palette.error.light} 0%, ${theme.palette.error.main} 100%)`,
+                color: isDark ? 'text.primary' : '#fff',
+                borderRadius: 3
               }}
             >
-              <CardContent
-                sx={{ display: 'flex', alignItems: 'center', gap: 2, py: '20px !important' }}
-              >
+              <CardContent sx={{ display: 'flex', alignItems: 'center', p: 3 }}>
                 <Box
                   sx={{
-                    bgcolor: alpha(theme.palette.error.main, 0.12),
-                    color: 'error.main',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
                     borderRadius: 2,
                     p: 1.5,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center'
+                    justifyContent: 'center',
+                    mr: 2
                   }}
                 >
-                  <TrendingDownRounded sx={{ fontSize: 28 }} />
+                  <TrendingDownRounded sx={{ fontSize: 32 }} />
                 </Box>
                 <Box>
-                  <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 500 }}>
+                  <Typography variant="body2" sx={{ opacity: 0.8, fontWeight: 500 }}>
                     Total Pengeluaran (Filtered)
                   </Typography>
-                  <Typography sx={{ color: 'error.main', fontSize: 22, fontWeight: 700, mt: 0.5 }}>
+                  <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {formatRupiah(totalAmount)}
                   </Typography>
                 </Box>
@@ -402,7 +401,7 @@ export const ExpensePage = () => {
         >
           <Grid container spacing={2} alignItems="center">
             {/* Cari Keterangan / Kasir filter and date filters */}
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -418,7 +417,7 @@ export const ExpensePage = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid size={{ xs: 6, sm: 3 }}>
               <DatePicker
                 fullWidth
                 size="small"
@@ -428,7 +427,7 @@ export const ExpensePage = () => {
                 sx={{ width: '100%' }}
               />
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid size={{ xs: 6, sm: 3 }}>
               <DatePicker
                 fullWidth
                 size="small"
@@ -438,7 +437,7 @@ export const ExpensePage = () => {
                 sx={{ width: '100%' }}
               />
             </Grid>
-            <Grid item xs={12} sm={2} sx={{ display: 'flex', gap: 1 }}>
+            <Grid size={{ xs: 12, sm: 2 }} sx={{ display: 'flex', gap: 1 }}>
               <Button
                 fullWidth
                 variant="outlined"

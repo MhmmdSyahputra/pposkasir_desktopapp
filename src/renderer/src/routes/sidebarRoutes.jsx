@@ -4,7 +4,6 @@ import {
   ReceiptLongOutlined,
   AssessmentOutlined,
   FiberManualRecord,
-  FileDownloadOutlined,
   PersonRounded,
   PaidOutlined
 } from '@mui/icons-material'
@@ -56,14 +55,6 @@ export const sidebarRoutes = [
     ]
   },
   {
-    path: '/template',
-    label: 'Template Data',
-    labelKey: 'sidebar.template_data',
-    icon: FileDownloadOutlined,
-    active: true,
-    protected: false
-  },
-  {
     path: '/kasir/list',
     label: 'Kasir',
     labelKey: 'sidebar.cashier',
@@ -84,6 +75,14 @@ export const sidebarRoutes = [
     label: 'Pengeluaran',
     labelKey: 'sidebar.expenses',
     icon: PaidOutlined,
+    active: true,
+    protected: false
+  },
+  {
+    path: '/pelanggan',
+    label: 'Pelanggan / Kasbon',
+    labelKey: 'sidebar.customers',
+    icon: PersonRounded,
     active: true,
     protected: false
   },

@@ -48,6 +48,9 @@ import { receiptSettingsService } from '../../services/receiptSettingsService'
 import { promotionService } from '../../services/promotionService'
 import { ReceiptPreview } from '../../components/core/receiptPreview'
 import { BarcodeScanner } from '../../components/core/BarcodeScanner'
+import { customerService } from '../../services/customerService'
+import { Autocomplete } from '@mui/material'
+import { CustomerCreateDialog } from '../../components/core/CustomerCreateDialog'
 
 // ─── FORMAT RUPIAH ─────────────────────────────────────────────────────────────
 const fmt = (n) =>
@@ -640,15 +643,31 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
   const [bayarInput, setBayarInput] = useState('')
   const [diskonInput, setDiskonInput] = useState('')
   const [customerName, setCustomerName] = useState('')
+  const [customerId, setCustomerId] = useState(null)
+  const [customersList, setCustomersList] = useState([])
+  const [customerCreateOpen, setCustomerCreateOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(null)
+
+  useEffect(() => {
+    if (!open) return
+    ;(async () => {
+      try {
+        const res = await customerService.getAll()
+        if (res.ok) setCustomersList(res.data || [])
+      } catch (e) {
+        console.error(e)
+      }
+    })()
+  }, [open])
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0)
   const diskon = parseInt(diskonInput.replace(/\D/g, '') || '0', 10)
   const total = Math.max(0, subtotal - diskon)
   const bayar = parseInt(bayarInput.replace(/\D/g, '') || '0', 10)
   const kembalian = metode === 'tunai' ? Math.max(0, bayar - total) : 0
-  const canConfirm = !saving && (metode !== 'tunai' || bayar >= total)
+  const canConfirm =
+    !saving && (metode !== 'tunai' || bayar >= total) && (metode !== 'piutang' || customerId)
   const paymentSuggestions = useMemo(() => {
     if (total <= 0) return []
 
@@ -667,7 +686,8 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
     { value: 'tunai', label: t('pos.method_cash') },
     { value: 'qris', label: t('pos.method_qris') },
     { value: 'kartu', label: t('pos.method_card') },
-    { value: 'transfer', label: t('pos.method_transfer') }
+    { value: 'transfer', label: t('pos.method_transfer') },
+    { value: 'piutang', label: 'Piutang / Kasbon' }
   ]
 
   const reset = () => {
@@ -675,6 +695,7 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
     setBayarInput('')
     setDiskonInput('')
     setCustomerName('')
+    setCustomerId(null)
     setDone(null)
     setSaving(false)
   }
@@ -708,7 +729,8 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
         metode_bayar: metode,
         catatan: '',
         kasir: user?.username || '',
-        nama_pelanggan: customerName.trim()
+        nama_pelanggan: metode === 'piutang' ? customerName || '' : customerName.trim(),
+        customer_id: metode === 'piutang' ? customerId : null
       }
       const res = await transactionService.create(payload)
       if (res.ok) {
@@ -1109,15 +1131,57 @@ const CheckoutDialog = ({ open, onClose, cart, onSuccess }) => {
         <Divider sx={{ mb: 2 }} />
 
         {/* Nama Pelanggan */}
-        <TextField
-          fullWidth
-          size="small"
-          label="Nama Pelanggan (Opsional)"
-          placeholder="Masukkan nama pelanggan..."
-          value={customerName}
-          onChange={(e) => setCustomerName(e.target.value)}
-          sx={{ mb: 2, ...inputSx }}
-        />
+        {metode === 'piutang' ? (
+          <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+            <Autocomplete
+              options={customersList}
+              getOptionLabel={(option) => option.nama || ''}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onChange={(_, val) => {
+                setCustomerId(val ? val.id : null)
+                setCustomerName(val ? val.nama : '')
+              }}
+              value={customersList.find((c) => c.id === customerId) || null}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  size="small"
+                  label="Pilih Pelanggan *"
+                  placeholder="Pilih pelanggan untuk piutang..."
+                  sx={inputSx}
+                />
+              )}
+              sx={{ flex: 1 }}
+            />
+            <Button
+              variant="outlined"
+              onClick={() => setCustomerCreateOpen(true)}
+              sx={{ minWidth: 40, p: 0, borderColor: theme.palette.custom.inputBorder }}
+            >
+              <AddIcon fontSize="small" />
+            </Button>
+            <CustomerCreateDialog
+              open={customerCreateOpen}
+              onClose={() => setCustomerCreateOpen(false)}
+              onSuccess={(newCustomer) => {
+                setCustomersList((prev) => [...prev, newCustomer])
+                setCustomerId(newCustomer.id)
+                setCustomerName(newCustomer.nama)
+              }}
+            />
+          </Box>
+        ) : (
+          <TextField
+            fullWidth
+            size="small"
+            label="Nama Pelanggan (Opsional)"
+            placeholder="Masukkan nama pelanggan..."
+            value={customerName}
+            onChange={(e) => setCustomerName(e.target.value)}
+            sx={{ mb: 2, ...inputSx }}
+          />
+        )}
 
         {/* Diskon */}
         <TextField

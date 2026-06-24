@@ -21,7 +21,8 @@ import {
   CashierPage,
   BusinessInfoPage,
   SupportPage,
-  ExpensePage
+  ExpensePage,
+  CustomerPage
 } from '../pages'
 
 export const appRoutes = [
@@ -58,6 +59,8 @@ export const appRoutes = [
   { path: '/kasir/list', element: <CashierPage />, active: true, protected: false },
   // pengeluaran
   { path: '/pengeluaran', element: <ExpensePage />, active: true, protected: false },
+  // pelanggan
+  { path: '/pelanggan', element: <CustomerPage />, active: true, protected: false },
   // settings
   { path: '/settings', element: <SettingsPage />, active: true, protected: false },
   {

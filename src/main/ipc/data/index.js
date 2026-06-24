@@ -8,6 +8,7 @@ import { registerAuthIpc } from './auth.ipc.js'
 import { registerSystemIpc } from './system.ipc.js'
 import { registerProfileIpc } from './profile.ipc.js'
 import { registerExpenseIpc } from './expense.ipc.js'
+import { registerCustomerIpc } from './customer.ipc.js'
 
 /**
  * Registers all local-data IPC handlers (SQLite layer).
@@ -24,4 +25,5 @@ export function registerDataIpc() {
   registerSystemIpc()
   registerProfileIpc()
   registerExpenseIpc()
+  registerCustomerIpc()
 }

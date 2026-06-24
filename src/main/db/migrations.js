@@ -302,5 +302,33 @@ export const migrations = [
         ALTER TABLE expenses ADD COLUMN images TEXT DEFAULT '[]';
       `)
     }
+  },
+  {
+    version: 13,
+    description: 'Add customers and debt payments tables, alter transactions for customer_id',
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS customers (
+          id           INTEGER PRIMARY KEY AUTOINCREMENT,
+          nama         TEXT    UNIQUE NOT NULL,
+          telepon      TEXT,
+          alamat       TEXT,
+          total_hutang REAL    NOT NULL DEFAULT 0,
+          created_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
+        );
+
+        CREATE TABLE IF NOT EXISTS debt_payments (
+          id           INTEGER PRIMARY KEY AUTOINCREMENT,
+          customer_id  INTEGER NOT NULL REFERENCES customers(id) ON DELETE CASCADE,
+          jumlah_bayar REAL    NOT NULL,
+          metode_bayar TEXT    NOT NULL,
+          keterangan   TEXT,
+          kasir        TEXT    NOT NULL,
+          created_at   TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
+        );
+
+        ALTER TABLE transactions ADD COLUMN customer_id INTEGER DEFAULT NULL;
+      `)
+    }
   }
 ]

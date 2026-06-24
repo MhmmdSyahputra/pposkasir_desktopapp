@@ -78,15 +78,16 @@ export function transactionCreate({
   metode_bayar = 'tunai',
   catatan = '',
   kasir = '',
-  nama_pelanggan = ''
+  nama_pelanggan = '',
+  customer_id = null
 }) {
   const db = getDb()
   const normalizedItems = items.map(_normalizeCartItem)
   const insertTransactionStmt = db.prepare(
     `INSERT INTO transactions
-       (no_transaksi, subtotal, diskon, pajak, total, bayar, kembalian, metode_bayar, catatan, kasir, status, nama_pelanggan)
+       (no_transaksi, subtotal, diskon, pajak, total, bayar, kembalian, metode_bayar, catatan, kasir, status, nama_pelanggan, customer_id)
      VALUES
-       (@no_transaksi, @subtotal, @diskon, @pajak, @total, @bayar, @kembalian, @metode_bayar, @catatan, @kasir, 'selesai', @nama_pelanggan)`
+       (@no_transaksi, @subtotal, @diskon, @pajak, @total, @bayar, @kembalian, @metode_bayar, @catatan, @kasir, @status, @nama_pelanggan, @customer_id)`
   )
 
   const itemStmt = db.prepare(
@@ -106,6 +107,11 @@ export function transactionCreate({
   )
   const bundleItemsStmt = db.prepare(
     `SELECT product_id, qty FROM product_bundle_items WHERE bundle_id = ?`
+  )
+  const incrementCustomerDebtStmt = db.prepare(
+    `UPDATE customers
+     SET total_hutang = total_hutang + @amount
+     WHERE id = @customerId`
   )
 
   const txId = db.transaction(() => {
@@ -142,6 +148,8 @@ export function transactionCreate({
       }
     }
 
+    const txStatus = metode_bayar === 'piutang' ? 'piutang' : 'selesai'
+
     const result = insertTransactionStmt.run({
       no_transaksi: _generateNoTrx(db),
       subtotal,
@@ -153,10 +161,19 @@ export function transactionCreate({
       metode_bayar,
       catatan,
       kasir,
-      nama_pelanggan
+      status: txStatus,
+      nama_pelanggan,
+      customer_id
     })
 
     const newTxId = result.lastInsertRowid
+
+    if (metode_bayar === 'piutang' && customer_id) {
+      incrementCustomerDebtStmt.run({
+        amount: total,
+        customerId: customer_id
+      })
+    }
 
     for (const item of normalizedItems) {
       let actualHargaBeli = item.basePrice
@@ -240,6 +257,7 @@ export function transactionGetAll({
   status = '',
   startDate = '',
   endDate = '',
+  customer_id = null,
   limit = 50,
   offset = 0
 } = {}) {
@@ -248,12 +266,18 @@ export function transactionGetAll({
   const params = {}
 
   if (search) {
-    conditions.push(`(t.no_transaksi LIKE @search OR t.kasir LIKE @search)`)
+    conditions.push(
+      `(t.no_transaksi LIKE @search OR t.kasir LIKE @search OR t.nama_pelanggan LIKE @search)`
+    )
     params.search = `%${search}%`
   }
   if (status) {
     conditions.push(`t.status = @status`)
     params.status = status
+  }
+  if (customer_id) {
+    conditions.push(`t.customer_id = @customer_id`)
+    params.customer_id = customer_id
   }
   if (startDate) {
     conditions.push(`date(t.created_at) >= @startDate`)
@@ -284,7 +308,7 @@ export function transactionGetAll({
 
 export function transactionGetStats({ startDate = '', endDate = '' } = {}) {
   const db = getDb()
-  const conditions = [`t.status = 'selesai'`]
+  const conditions = [`t.status IN ('selesai', 'piutang')`]
   const params = {}
 
   if (startDate) {
@@ -382,6 +406,7 @@ export function transactionGetReport({
   status = 'all',
   metode = 'all',
   search = '',
+  customer_id = null,
   limit = 500,
   offset = 0
 } = {}) {
@@ -405,8 +430,14 @@ export function transactionGetReport({
     conditions.push(`t.metode_bayar = @metode`)
     params.metode = metode
   }
+  if (customer_id) {
+    conditions.push(`t.customer_id = @customer_id`)
+    params.customer_id = customer_id
+  }
   if (search) {
-    conditions.push(`(t.no_transaksi LIKE @search OR t.kasir LIKE @search)`)
+    conditions.push(
+      `(t.no_transaksi LIKE @search OR t.kasir LIKE @search OR t.nama_pelanggan LIKE @search)`
+    )
     params.search = `%${search}%`
   }
 
@@ -418,13 +449,13 @@ export function transactionGetReport({
     .prepare(
       `SELECT
          COUNT(*) AS total_transaksi,
-         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN 1 ELSE 0 END), 0) AS transaksi_selesai,
+         COALESCE(SUM(CASE WHEN t.status IN ('selesai', 'piutang') THEN 1 ELSE 0 END), 0) AS transaksi_selesai,
          COALESCE(SUM(CASE WHEN t.status = 'batal' THEN 1 ELSE 0 END), 0) AS transaksi_batal,
-         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.subtotal ELSE 0 END), 0) AS subtotal_bruto,
-         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.diskon ELSE 0 END), 0) AS total_diskon,
-         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.total ELSE 0 END), 0) AS omzet_bersih,
-         COALESCE(AVG(CASE WHEN t.status = 'selesai' THEN t.total ELSE NULL END), 0) AS rata_rata_transaksi,
-         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN (SELECT SUM(ti.qty * ti.harga_dasar) FROM transaction_items ti WHERE ti.transaction_id = t.id) ELSE 0 END), 0) AS total_hpp
+         COALESCE(SUM(CASE WHEN t.status IN ('selesai', 'piutang') THEN t.subtotal ELSE 0 END), 0) AS subtotal_bruto,
+         COALESCE(SUM(CASE WHEN t.status IN ('selesai', 'piutang') THEN t.diskon ELSE 0 END), 0) AS total_diskon,
+         COALESCE(SUM(CASE WHEN t.status IN ('selesai', 'piutang') THEN t.total ELSE 0 END), 0) AS omzet_bersih,
+         COALESCE(AVG(CASE WHEN t.status IN ('selesai', 'piutang') THEN t.total ELSE NULL END), 0) AS rata_rata_transaksi,
+         COALESCE(SUM(CASE WHEN t.status IN ('selesai', 'piutang') THEN (SELECT SUM(ti.qty * ti.harga_dasar) FROM transaction_items ti WHERE ti.transaction_id = t.id) ELSE 0 END), 0) AS total_hpp
        FROM transactions t ${where}`
     )
     .get(params)
@@ -461,7 +492,7 @@ export function transactionGetReport({
       `SELECT
          t.metode_bayar,
          COUNT(*) AS jumlah,
-         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.total ELSE 0 END), 0) AS total
+         COALESCE(SUM(CASE WHEN t.status IN ('selesai', 'piutang') THEN t.total ELSE 0 END), 0) AS total
        FROM transactions t ${where}
        GROUP BY t.metode_bayar
        ORDER BY total DESC, jumlah DESC`
@@ -473,7 +504,7 @@ export function transactionGetReport({
       `SELECT
          date(t.created_at) AS tanggal,
          COUNT(*) AS jumlah,
-         COALESCE(SUM(CASE WHEN t.status = 'selesai' THEN t.total ELSE 0 END), 0) AS total
+         COALESCE(SUM(CASE WHEN t.status IN ('selesai', 'piutang') THEN t.total ELSE 0 END), 0) AS total
        FROM transactions t ${where}
        GROUP BY date(t.created_at)
        ORDER BY tanggal ASC`
@@ -482,7 +513,7 @@ export function transactionGetReport({
 
   const topProductsWhere = conditions.slice()
   if (status === 'all') {
-    topProductsWhere.push(`t.status = 'selesai'`)
+    topProductsWhere.push(`t.status IN ('selesai', 'piutang')`)
   }
   const topProductsWhereStr = topProductsWhere.length
     ? `WHERE ${topProductsWhere.join(' AND ')}`
@@ -532,7 +563,9 @@ export function transactionGetReport({
 export function transactionVoid(id) {
   const db = getDb()
   db.transaction((transactionId) => {
-    const trx = db.prepare(`SELECT id, status FROM transactions WHERE id = ?`).get(transactionId)
+    const trx = db
+      .prepare(`SELECT id, status, total, customer_id, metode_bayar FROM transactions WHERE id = ?`)
+      .get(transactionId)
     if (!trx) throw new Error('Transaksi tidak ditemukan')
     if (trx.status === 'batal') return
 
@@ -549,6 +582,14 @@ export function transactionVoid(id) {
         productId: item.product_id,
         quantity: Number(item.qty) || 0
       })
+    }
+
+    if (trx.metode_bayar === 'piutang' && trx.customer_id) {
+      db.prepare(
+        `UPDATE customers
+         SET total_hutang = total_hutang - ?
+         WHERE id = ?`
+      ).run(trx.total, trx.customer_id)
     }
 
     db.prepare(`UPDATE transactions SET status = 'batal' WHERE id = ?`).run(transactionId)
