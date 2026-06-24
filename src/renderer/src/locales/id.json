@@ -25,6 +25,8 @@
     "modifier_list": "Modifier",
     "history": "Riwayat",
     "report": "Laporan",
+    "sales_report": "Laporan Penjualan",
+    "expense_report": "Laporan Pengeluaran",
     "settings": "Pengaturan",
     "settings_general": "Umum",
     "settings_receipt": "Struk",
@@ -51,7 +53,8 @@
     "cashier_cash_diff": "Selisih kas",
     "show_labels": "Tampilkan label menu",
     "hide_labels": "Sembunyikan label menu",
-    "template_data": "Template Data"
+    "template_data": "Template Data",
+    "expenses": "Pengeluaran"
   },
   "titlebar": {
     "close_title": "Tutup Aplikasi?",

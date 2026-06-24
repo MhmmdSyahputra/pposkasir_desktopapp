@@ -186,6 +186,23 @@ export const useCreateProduct = () => {
       await modifierService.setProductGroups(res.data.id, selectedModifierIds)
     }
 
+    // Send log metadata to endpoint via main process IPC log handler
+    try {
+      let appVersion = ''
+      if (window.api && window.api.getAppVersion) {
+        appVersion = await window.api.getAppVersion()
+      }
+      if (window.api && window.api.logAction) {
+        window.api.logAction({
+          type: 'product_create',
+          payload: res.data,
+          description: `Produk baru "${res.data.nama}" (Kode: ${res.data.kode || '-'}) berhasil dibuat (v${appVersion})`
+        })
+      }
+    } catch (logErr) {
+      console.error('Failed to log product creation:', logErr)
+    }
+
     setSaving(false)
     navigate('/produk/list')
   }

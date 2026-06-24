@@ -25,6 +25,8 @@
     "modifier_list": "Modifier",
     "history": "History",
     "report": "Reports",
+    "sales_report": "Sales Report",
+    "expense_report": "Expense Report",
     "settings": "Settings",
     "settings_general": "General",
     "settings_receipt": "Receipt",
@@ -51,7 +53,8 @@
     "cashier_cash_diff": "Cash difference",
     "show_labels": "Show menu labels",
     "hide_labels": "Hide menu labels",
-    "template_data": "Template Data"
+    "template_data": "Template Data",
+    "expenses": "Expenses"
   },
   "titlebar": {
     "close_title": "Close Application?",

@@ -153,6 +153,16 @@ const api = {
     upsert: (payload) => ipcRenderer.invoke('profile:upsert', payload)
   },
 
+  expense: {
+    create: (payload) => ipcRenderer.invoke('expense:create', payload),
+    getAll: (params) => ipcRenderer.invoke('expense:getAll', params),
+    getReport: (params) => ipcRenderer.invoke('expense:getReport', params),
+    delete: (id) => ipcRenderer.invoke('expense:delete', id),
+    categoryCreate: (payload) => ipcRenderer.invoke('expense-category:create', payload),
+    categoryGetAll: () => ipcRenderer.invoke('expense-category:getAll'),
+    categoryDelete: (id) => ipcRenderer.invoke('expense-category:delete', id)
+  },
+
   database: {
     backupExport: async () => await ipcRenderer.invoke('database:backup-export'),
     backupImport: async () => await ipcRenderer.invoke('database:backup-import')

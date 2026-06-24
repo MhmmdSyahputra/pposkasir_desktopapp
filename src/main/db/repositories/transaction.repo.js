@@ -311,6 +311,30 @@ export function transactionGetStats({ startDate = '', endDate = '' } = {}) {
 
   summary.laba_kotor = summary.omzet - summary.total_hpp
 
+  let totalExpenses = 0
+  if (startDate || endDate) {
+    const expConditions = []
+    const expParams = {}
+    if (startDate) {
+      expConditions.push('created_at >= @startDate')
+      expParams.startDate = `${startDate} 00:00:00`
+    }
+    if (endDate) {
+      expConditions.push('created_at <= @endDate')
+      expParams.endDate = `${endDate} 23:59:59`
+    }
+    const expWhere = expConditions.length ? `WHERE ${expConditions.join(' AND ')}` : ''
+    const expRes = db
+      .prepare(`SELECT COALESCE(SUM(jumlah), 0) AS total FROM expenses ${expWhere}`)
+      .get(expParams)
+    totalExpenses = expRes ? expRes.total : 0
+  } else {
+    const expRes = db.prepare(`SELECT COALESCE(SUM(jumlah), 0) AS total FROM expenses`).get()
+    totalExpenses = expRes ? expRes.total : 0
+  }
+  summary.total_expenses = totalExpenses
+  summary.laba_bersih = summary.laba_kotor - totalExpenses
+
   const byMethod = db
     .prepare(
       `SELECT
@@ -407,6 +431,29 @@ export function transactionGetReport({
 
   if (summary) {
     summary.laba_kotor = summary.omzet_bersih - summary.total_hpp
+    let totalExpenses = 0
+    if (startDate || endDate) {
+      const expConditions = []
+      const expParams = {}
+      if (startDate) {
+        expConditions.push('created_at >= @startDate')
+        expParams.startDate = `${startDate} 00:00:00`
+      }
+      if (endDate) {
+        expConditions.push('created_at <= @endDate')
+        expParams.endDate = `${endDate} 23:59:59`
+      }
+      const expWhere = expConditions.length ? `WHERE ${expConditions.join(' AND ')}` : ''
+      const expRes = db
+        .prepare(`SELECT COALESCE(SUM(jumlah), 0) AS total FROM expenses ${expWhere}`)
+        .get(expParams)
+      totalExpenses = expRes ? expRes.total : 0
+    } else {
+      const expRes = db.prepare(`SELECT COALESCE(SUM(jumlah), 0) AS total FROM expenses`).get()
+      totalExpenses = expRes ? expRes.total : 0
+    }
+    summary.total_expenses = totalExpenses
+    summary.laba_bersih = summary.laba_kotor - totalExpenses
   }
 
   const byMethod = db

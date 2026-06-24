@@ -190,6 +190,25 @@ export const useEditProduct = () => {
     // Save modifier group links
     await modifierService.setProductGroups(Number(id), selectedModifierIds)
 
+    // Send log metadata to endpoint via main process IPC log handler
+    if (res.ok) {
+      try {
+        let appVersion = ''
+        if (window.api && window.api.getAppVersion) {
+          appVersion = await window.api.getAppVersion()
+        }
+        if (window.api && window.api.logAction) {
+          window.api.logAction({
+            type: 'product_update',
+            payload: { id: Number(id), ...form },
+            description: `Produk "${form.nama}" (ID: ${id}) berhasil diperbarui (v${appVersion})`
+          })
+        }
+      } catch (logErr) {
+        console.error('Failed to log product update:', logErr)
+      }
+    }
+
     setSaving(false)
     if (res.ok) {
       navigate('/produk/list')

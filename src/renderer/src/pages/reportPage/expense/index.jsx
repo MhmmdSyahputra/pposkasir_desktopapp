@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'react'
+/* eslint-disable react/prop-types */
+import { useState, useEffect, useCallback } from 'react'
 import {
   Alert,
   Box,
   Button,
-  Chip,
   Divider,
   InputAdornment,
   MenuItem,
@@ -20,11 +20,11 @@ import {
   alpha,
   useTheme,
   Dialog,
+  IconButton,
   DialogTitle,
   DialogContent,
-  DialogActions,
   CircularProgress,
-  IconButton
+  DialogActions
 } from '@mui/material'
 import {
   Chart as ChartJS,
@@ -39,7 +39,7 @@ import {
   Legend,
   Filler
 } from 'chart.js'
-import { Line, Bar, Doughnut } from 'react-chartjs-2'
+import { Line, Doughnut } from 'react-chartjs-2'
 import {
   AssessmentOutlined,
   DownloadRounded,
@@ -47,16 +47,18 @@ import {
   RestartAltRounded,
   SearchRounded,
   TableChartRounded,
-  AutoAwesomeRounded,
-  CloseRounded
+  CloseRounded,
+  AutoAwesomeRounded
 } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { PageLayout } from '../../productPage/components/PageLayout'
-import { useReport } from './hook/useReport'
+import { useExpenseReport } from './hook/useExpenseReport'
 import { DatePicker } from '../../../components/ui/DatePicker'
+import { expenseService } from '../../../services/expenseService'
+import { imageService } from '../../../services/imageService'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { apiService } from '../../../services/apiService'
@@ -145,7 +147,7 @@ const SummaryCard = ({ label, value, accent = 'primary.main' }) => {
   )
 }
 
-export const ListReportPage = () => {
+export const ListExpenseReportPage = () => {
   const theme = useTheme()
   const isDark = theme.palette.mode === 'dark'
   const { t } = useTranslation()
@@ -156,26 +158,62 @@ export const ListReportPage = () => {
     page,
     setPage,
     totalPages,
+    LIMIT,
     loading,
     error,
     summary,
-    byMethod,
+    byCategory,
     daily,
-    topProducts,
     rows,
     totalRows,
     getAllRowsForExport
-  } = useReport()
+  } = useExpenseReport()
 
-  const methodLabel = useMemo(
-    () => ({
-      tunai: t('transaction.method_cash'),
-      qris: t('transaction.method_qris'),
-      kartu: t('transaction.method_card'),
-      transfer: t('transaction.method_transfer')
-    }),
-    [t]
-  )
+  const [customCategories, setCustomCategories] = useState([])
+  const [lightboxImage, setLightboxImage] = useState(null)
+
+  const fetchCategories = useCallback(async () => {
+    try {
+      const res = await expenseService.categoryGetAll()
+      if (res.ok) {
+        setCustomCategories(res.data)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCategories()
+  }, [fetchCategories])
+
+  // Sync current expense report context globally for AI assistant
+  useEffect(() => {
+    window.__currentExpenseReportContext = {
+      filters,
+      summary,
+      byCategory,
+      daily,
+      rows,
+      totalRows
+    }
+    return () => {
+      delete window.__currentExpenseReportContext
+    }
+  }, [filters, summary, byCategory, daily, rows, totalRows])
+
+  const DEFAULT_CATEGORIES = [
+    { id: 'operasional', nama: 'Operasional' },
+    { id: 'bahan baku', nama: 'Bahan Baku' },
+    { id: 'sewa', nama: 'Sewa Tempat' },
+    { id: 'gaji', nama: 'Gaji / Karyawan' },
+    { id: 'lain-lain', nama: 'Lain-lain' }
+  ]
+
+  const allCategories = [
+    ...DEFAULT_CATEGORIES,
+    ...customCategories.map((c) => ({ id: c.nama, nama: c.nama }))
+  ]
 
   const [aiLoading, setAiLoading] = useState(false)
   const [aiInsight, setAiInsight] = useState(null)
@@ -192,14 +230,19 @@ export const ListReportPage = () => {
       const promptData = {
         periode: `${filters.startDate || 'Awal'} sampai ${filters.endDate || 'Akhir'}`,
         summary: data.summary,
-        topProducts: data.topProducts.slice(0, 10),
-        byMethod: data.byMethod
+        byCategory: data.byCategory,
+        expensesSample: data.rows.slice(0, 15).map((r) => ({
+          tanggal: r.created_at,
+          kategori: r.kategori,
+          jumlah: r.jumlah,
+          keterangan: r.keterangan || ''
+        }))
       }
 
-      const promptContent = `Berikut adalah data laporan penjualan dari sistem POS (Point of Sales):
+      const promptContent = `Berikut adalah data laporan pengeluaran (expenses/cost) dari sistem POS (Point of Sales):
 ${JSON.stringify(promptData, null, 2)}
 
-Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penjualan, dan saran langkah strategis selanjutnya untuk bisnis ini. Gunakan format yang rapi dengan poin-poin (bullet points). Gunakan Bahasa Indonesia.`
+Tolong berikan ringkasan analisis keuangan pengeluaran yang profesional, evaluasi alokasi budget/kategori pengeluaran terbesar, dan berikan saran langkah efisiensi cost strategis untuk bisnis ini. Gunakan format yang rapi dengan poin-poin (bullet points). Gunakan Bahasa Indonesia.`
 
       const insight = await apiService.generateBusinessInsight(promptContent)
       setAiInsight(insight)
@@ -215,90 +258,47 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
 
   const exportExcel = async () => {
     const data = await getAllRowsForExport()
-
     const wb = XLSX.utils.book_new()
 
     const summarySheet = XLSX.utils.json_to_sheet([
       {
-        Metric: t('report.summary_total_tx'),
-        Value: data.summary?.total_transaksi || 0
+        Metric: 'Total Pengeluaran',
+        Value: data.summary?.total_pengeluaran || 0
       },
       {
-        Metric: t('report.summary_completed_tx'),
-        Value: data.summary?.transaksi_selesai || 0
+        Metric: 'Jumlah Transaksi',
+        Value: data.summary?.jumlah_transaksi || 0
       },
       {
-        Metric: t('report.summary_void_tx'),
-        Value: data.summary?.transaksi_batal || 0
-      },
-      {
-        Metric: t('report.summary_gross_sales'),
-        Value: data.summary?.subtotal_bruto || 0
-      },
-      {
-        Metric: t('report.summary_total_discount'),
-        Value: data.summary?.total_diskon || 0
-      },
-      {
-        Metric: t('report.summary_net_sales'),
-        Value: data.summary?.omzet_bersih || 0
-      },
-      {
-        Metric: t('report.summary_cogs'),
-        Value: data.summary?.total_hpp || 0
-      },
-      {
-        Metric: t('report.summary_gross_profit'),
-        Value: data.summary?.laba_kotor || 0
-      },
-      {
-        Metric: 'Total Biaya / Expense',
-        Value: data.summary?.total_expenses || 0
-      },
-      {
-        Metric: 'Laba Bersih',
-        Value: data.summary?.laba_bersih || 0
-      },
-      {
-        Metric: t('report.summary_avg_sales'),
-        Value: Number(data.summary?.rata_rata_transaksi || 0).toFixed(0)
+        Metric: 'Rata-rata Pengeluaran',
+        Value: Number(data.summary?.rata_rata_pengeluaran || 0).toFixed(0)
       }
     ])
 
     const txSheet = XLSX.utils.json_to_sheet(
-      data.rows.map((r) => ({
-        [t('transaction.col_no')]: r.no_transaksi,
-        [t('transaction.col_time')]: fmtDate(r.created_at),
-        [t('transaction.col_items')]: r.item_count,
-        [t('transaction.col_total')]: r.total,
-        [t('transaction.col_method')]: methodLabel[r.metode_bayar] || r.metode_bayar,
-        [t('transaction.col_status')]:
-          r.status === 'selesai' ? t('transaction.status_done') : t('transaction.status_void')
+      data.rows.map((r, index) => ({
+        No: index + 1,
+        Tanggal: fmtDate(r.created_at),
+        Kategori: r.kategori,
+        Jumlah: r.jumlah,
+        Keterangan: r.keterangan || '',
+        Kasir: r.kasir || ''
       }))
     )
 
-    const methodSheet = XLSX.utils.json_to_sheet(
-      data.byMethod.map((m) => ({
-        [t('transaction.col_method')]: methodLabel[m.metode_bayar] || m.metode_bayar,
-        [t('transaction.count_transactions', { count: '' }).trim() || 'Count']: m.jumlah,
-        [t('transaction.col_total')]: m.total
+    const catSheet = XLSX.utils.json_to_sheet(
+      data.byCategory.map((c) => ({
+        Kategori: c.kategori,
+        'Jumlah Transaksi': c.jumlah,
+        'Total Pengeluaran': c.total
       }))
     )
 
-    const topSheet = XLSX.utils.json_to_sheet(
-      data.topProducts.map((p) => ({
-        [t('report.top_products_name')]: p.nama_produk,
-        [t('report.top_products_qty')]: p.qty,
-        [t('report.top_products_total')]: p.total
-      }))
-    )
+    XLSX.utils.book_append_sheet(wb, summarySheet, 'Ringkasan')
+    XLSX.utils.book_append_sheet(wb, txSheet, 'Daftar Pengeluaran')
+    XLSX.utils.book_append_sheet(wb, catSheet, 'Berdasarkan Kategori')
 
-    XLSX.utils.book_append_sheet(wb, summarySheet, 'Summary')
-    XLSX.utils.book_append_sheet(wb, txSheet, 'Transactions')
-    XLSX.utils.book_append_sheet(wb, methodSheet, 'ByMethod')
-    XLSX.utils.book_append_sheet(wb, topSheet, 'TopProducts')
-
-    XLSX.writeFile(wb, `report_${todayFileStamp()}.xlsx`)
+    XLSX.writeFile(wb, `laporan_pengeluaran_${todayFileStamp()}.xlsx`)
   }
 
   const exportPdf = async () => {
@@ -306,67 +306,62 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' })
 
     doc.setFontSize(14)
-    doc.text(t('report.page_title'), 40, 36)
+    doc.text('Laporan Pengeluaran Toko', 40, 36)
     doc.setFontSize(10)
-    doc.text(
-      `${t('report.period')} : ${filters.startDate || '-'} - ${filters.endDate || '-'}`,
-      40,
-      54
-    )
+    doc.text(`Periode : ${filters.startDate || '-'} - ${filters.endDate || '-'}`, 40, 54)
 
     autoTable(doc, {
       startY: 72,
-      head: [[t('report.metric'), t('report.value')]],
+      head: [['Ringkasan', 'Nilai']],
       body: [
-        [t('report.summary_total_tx'), data.summary?.total_transaksi || 0],
-        [t('report.summary_completed_tx'), data.summary?.transaksi_selesai || 0],
-        [t('report.summary_void_tx'), data.summary?.transaksi_batal || 0],
-        [t('report.summary_gross_sales'), fmtRp(data.summary?.subtotal_bruto || 0)],
-        [t('report.summary_total_discount'), fmtRp(data.summary?.total_diskon || 0)],
-        [t('report.summary_net_sales'), fmtRp(data.summary?.omzet_bersih || 0)],
-        [t('report.summary_cogs'), fmtRp(data.summary?.total_hpp || 0)],
-        [t('report.summary_gross_profit'), fmtRp(data.summary?.laba_kotor || 0)],
-        ['Total Biaya / Expense', fmtRp(data.summary?.total_expenses || 0)],
-        ['Laba Bersih', fmtRp(data.summary?.laba_bersih || 0)],
-        [t('report.summary_avg_sales'), fmtRp(data.summary?.rata_rata_transaksi || 0)]
+        ['Total Pengeluaran', fmtRp(data.summary?.total_pengeluaran || 0)],
+        ['Jumlah Transaksi Pengeluaran', data.summary?.jumlah_transaksi || 0],
+        ['Rata-rata Pengeluaran', fmtRp(data.summary?.rata_rata_pengeluaran || 0)]
       ],
       styles: { fontSize: 9 }
     })
 
     autoTable(doc, {
       startY: doc.lastAutoTable.finalY + 14,
-      head: [
-        [
-          t('transaction.col_no'),
-          t('transaction.col_time'),
-          t('transaction.col_items'),
-          t('transaction.col_total'),
-          t('transaction.col_method'),
-          t('transaction.col_status')
-        ]
-      ],
-      body: data.rows.map((r) => [
-        r.no_transaksi,
+      head: [['No', 'Tanggal / Waktu', 'Kategori', 'Jumlah', 'Keterangan', 'Kasir']],
+      body: data.rows.map((r, idx) => [
+        idx + 1,
         fmtDate(r.created_at),
-        r.item_count,
-        fmtRp(r.total),
-        methodLabel[r.metode_bayar] || r.metode_bayar,
-        r.status === 'selesai' ? t('transaction.status_done') : t('transaction.status_void')
+        r.kategori,
+        fmtRp(r.jumlah),
+        r.keterangan || '-',
+        r.kasir || '-'
       ]),
       styles: { fontSize: 8 },
-      headStyles: { fillColor: [35, 65, 125] }
+      headStyles: { fillColor: [180, 40, 40] }
     })
 
     const blob = doc.output('blob')
-    saveBlob(blob, `report_${todayFileStamp()}.pdf`)
+    saveBlob(blob, `laporan_pengeluaran_${todayFileStamp()}.pdf`)
   }
 
   return (
     <PageLayout
-      breadcrumbs={[{ label: t('report.page_title') }]}
-      title={t('report.page_title')}
+      breadcrumbs={[{ label: 'Laporan', path: '/laporan/list' }, { label: 'Laporan Pengeluaran' }]}
+      title="Laporan Pengeluaran"
       actions={
         <>
+          <Button
+            size="small"
+            startIcon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />}
+            onClick={generateAiInsight}
+            sx={{
+              fontSize: 13,
+              textTransform: 'none',
+              borderRadius: 2,
+              px: 1.5,
+              bgcolor: isDark ? 'rgba(156,39,176,0.24)' : 'rgba(156,39,176,0.12)',
+              color: 'secondary.main',
+              '&:hover': { bgcolor: isDark ? 'rgba(156,39,176,0.34)' : 'rgba(156,39,176,0.2)' }
+            }}
+          >
+            Magic Insight
+          </Button>
           <Button
             size="small"
             startIcon={<TableChartRounded sx={{ fontSize: 16 }} />}
@@ -381,7 +376,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
               '&:hover': { bgcolor: isDark ? 'rgba(46,125,50,0.34)' : 'rgba(46,125,50,0.2)' }
             }}
           >
-            {t('report.export_excel')}
+            Ekspor Excel
           </Button>
           <Button
             size="small"
@@ -397,24 +392,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
               '&:hover': { bgcolor: isDark ? 'rgba(211,47,47,0.34)' : 'rgba(211,47,47,0.2)' }
             }}
           >
-            {t('report.export_pdf')}
-          </Button>
-          <Button
-            size="small"
-            startIcon={<AutoAwesomeRounded sx={{ fontSize: 16 }} />}
-            onClick={generateAiInsight}
-            sx={{
-              fontSize: 13,
-              fontWeight: 600,
-              textTransform: 'none',
-              borderRadius: 2,
-              px: 1.5,
-              bgcolor: isDark ? 'rgba(156,39,176,0.24)' : 'rgba(156,39,176,0.12)',
-              color: 'secondary.main',
-              '&:hover': { bgcolor: isDark ? 'rgba(156,39,176,0.34)' : 'rgba(156,39,176,0.2)' }
-            }}
-          >
-            Magic Insight
+            Ekspor PDF
           </Button>
         </>
       }
@@ -431,7 +409,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(6, 1fr)' },
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(5, 1fr)' },
             gap: 1.25
           }}
         >
@@ -447,29 +425,20 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
           />
           <Select
             size="small"
-            value={filters.status}
-            onChange={(e) => updateFilter('status', e.target.value)}
+            value={filters.kategori}
+            onChange={(e) => updateFilter('kategori', e.target.value)}
             displayEmpty
           >
-            <MenuItem value="all">{t('report.all_status')}</MenuItem>
-            <MenuItem value="selesai">{t('transaction.status_done')}</MenuItem>
-            <MenuItem value="batal">{t('transaction.status_void')}</MenuItem>
-          </Select>
-          <Select
-            size="small"
-            value={filters.metode}
-            onChange={(e) => updateFilter('metode', e.target.value)}
-            displayEmpty
-          >
-            <MenuItem value="all">{t('report.all_methods')}</MenuItem>
-            <MenuItem value="tunai">{t('transaction.method_cash')}</MenuItem>
-            <MenuItem value="qris">{t('transaction.method_qris')}</MenuItem>
-            <MenuItem value="kartu">{t('transaction.method_card')}</MenuItem>
-            <MenuItem value="transfer">{t('transaction.method_transfer')}</MenuItem>
+            <MenuItem value="all">Semua Kategori</MenuItem>
+            {allCategories.map((cat) => (
+              <MenuItem key={cat.id} value={cat.id} style={{ textTransform: 'capitalize' }}>
+                {cat.nama}
+              </MenuItem>
+            ))}
           </Select>
           <TextField
             size="small"
-            placeholder={t('report.search_placeholder')}
+            placeholder="Cari keterangan/kasir..."
             value={filters.search}
             onChange={(e) => updateFilter('search', e.target.value)}
             InputProps={{
@@ -500,39 +469,24 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(6, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
           gap: 1.5,
           mb: 2.5
         }}
       >
         <SummaryCard
-          label={t('report.summary_total_tx')}
-          value={loading ? '...' : summary?.total_transaksi || 0}
-          accent="text.primary"
-        />
-        <SummaryCard
-          label={t('report.summary_net_sales')}
-          value={loading ? '...' : fmtRp(summary?.omzet_bersih || 0)}
-          accent="primary.main"
-        />
-        <SummaryCard
-          label={t('report.summary_gross_profit')}
-          value={loading ? '...' : fmtRp(summary?.laba_kotor || 0)}
-          accent="success.main"
-        />
-        <SummaryCard
-          label="TOTAL BIAYA / EXPENSE"
-          value={loading ? '...' : fmtRp(summary?.total_expenses || 0)}
+          label="TOTAL PENGELUARAN"
+          value={loading ? '...' : fmtRp(summary?.total_pengeluaran || 0)}
           accent="error.main"
         />
         <SummaryCard
-          label="LABA BERSIH"
-          value={loading ? '...' : fmtRp(summary?.laba_bersih || 0)}
-          accent="secondary.main"
+          label="JUMLAH TRANSAKSI"
+          value={loading ? '...' : summary?.jumlah_transaksi || 0}
+          accent="text.primary"
         />
         <SummaryCard
-          label={t('report.summary_avg_sales')}
-          value={loading ? '...' : fmtRp(summary?.rata_rata_transaksi || 0)}
+          label="RATA-RATA PENGELUARAN"
+          value={loading ? '...' : fmtRp(summary?.rata_rata_pengeluaran || 0)}
           accent="warning.main"
         />
       </Box>
@@ -551,18 +505,19 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         }}
       >
         <AssessmentOutlined sx={{ fontSize: 20, color: 'primary.main' }} />
-        Statistik Visual
+        Statistik Visual Pengeluaran
       </Typography>
 
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '1fr 1.5fr 1fr' },
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 1.5fr' },
           gap: 1.5,
           mb: 2.5,
           minHeight: 340
         }}
       >
+        {/* Breakdown by Category */}
         <Box
           sx={{
             border: `1px solid ${theme.palette.divider}`,
@@ -583,7 +538,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
               fontFamily: 'Poppins'
             }}
           >
-            {t('report.breakdown_method')}
+            Proporsi Berdasarkan Kategori
           </Typography>
           <Box
             sx={{
@@ -597,30 +552,28 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
           >
             {loading ? (
               <Skeleton variant="circular" width={180} height={180} />
-            ) : byMethod.length === 0 ? (
-              <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
-                {t('report.no_data')}
-              </Typography>
+            ) : byCategory.length === 0 ? (
+              <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>Tidak ada data</Typography>
             ) : (
               <Doughnut
                 data={{
-                  labels: byMethod.map((m) => methodLabel[m.metode_bayar] || m.metode_bayar),
+                  labels: byCategory.map((c) => c.kategori),
                   datasets: [
                     {
-                      data: byMethod.map((m) => m.total),
+                      data: byCategory.map((c) => c.total),
                       backgroundColor: [
+                        theme.palette.error.main,
+                        theme.palette.warning.main,
                         theme.palette.primary.main,
                         theme.palette.success.main,
-                        theme.palette.warning.main,
-                        theme.palette.info.main,
-                        theme.palette.error.main
+                        theme.palette.info.main
                       ].map((c) => alpha(c, 0.75)),
                       hoverBackgroundColor: [
+                        theme.palette.error.main,
+                        theme.palette.warning.main,
                         theme.palette.primary.main,
                         theme.palette.success.main,
-                        theme.palette.warning.main,
-                        theme.palette.info.main,
-                        theme.palette.error.main
+                        theme.palette.info.main
                       ],
                       borderColor: theme.palette.background.paper,
                       borderWidth: 2,
@@ -662,6 +615,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
           </Box>
         </Box>
 
+        {/* Daily Trend */}
         <Box
           sx={{
             border: `1px solid ${theme.palette.divider}`,
@@ -682,7 +636,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
               fontFamily: 'Poppins'
             }}
           >
-            {t('report.trend_daily')}
+            Tren Pengeluaran Harian
           </Typography>
           <Box sx={{ flex: 1, position: 'relative', minHeight: 220 }}>
             {loading ? (
@@ -697,7 +651,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
                 }}
               >
                 <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
-                  {t('report.no_data')}
+                  Tidak ada data
                 </Typography>
               </Box>
             ) : (
@@ -706,18 +660,18 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
                   labels: daily.map((d) => d.tanggal),
                   datasets: [
                     {
-                      label: t('report.summary_net_sales'),
+                      label: 'Total Pengeluaran',
                       data: daily.map((d) => d.total),
-                      borderColor: theme.palette.primary.main,
-                      backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                      borderColor: theme.palette.error.main,
+                      backgroundColor: alpha(theme.palette.error.main, 0.08),
                       fill: true,
                       tension: 0.4,
                       pointRadius: 4,
-                      pointBackgroundColor: theme.palette.primary.main,
+                      pointBackgroundColor: theme.palette.error.main,
                       pointBorderColor: theme.palette.background.paper,
                       pointBorderWidth: 2,
                       pointHoverRadius: 6,
-                      pointHoverBackgroundColor: theme.palette.primary.main,
+                      pointHoverBackgroundColor: theme.palette.error.main,
                       pointHoverBorderColor: theme.palette.background.paper,
                       pointHoverBorderWidth: 2
                     }
@@ -770,106 +724,6 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
             )}
           </Box>
         </Box>
-
-        <Box
-          sx={{
-            border: `1px solid ${theme.palette.divider}`,
-            borderRadius: 3,
-            bgcolor: theme.palette.background.paper,
-            p: 2.5,
-            display: 'flex',
-            flexDirection: 'column',
-            boxShadow: isDark ? 'none' : '0 2px 12px rgba(0,0,0,0.03)'
-          }}
-        >
-          <Typography
-            sx={{
-              fontSize: 13,
-              color: 'text.secondary',
-              mb: 2,
-              fontWeight: 700,
-              fontFamily: 'Poppins'
-            }}
-          >
-            {t('report.top_products')}
-          </Typography>
-          <Box sx={{ flex: 1, position: 'relative', minHeight: 220 }}>
-            {loading ? (
-              <Skeleton variant="rounded" height="100%" />
-            ) : topProducts.length === 0 ? (
-              <Box
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                <Typography sx={{ color: 'text.disabled', fontSize: 12 }}>
-                  {t('report.no_data')}
-                </Typography>
-              </Box>
-            ) : (
-              <Bar
-                data={{
-                  labels: topProducts.slice(0, 5).map((p) => p.nama_produk),
-                  datasets: [
-                    {
-                      label: t('report.top_products_total'),
-                      data: topProducts.slice(0, 5).map((p) => p.total),
-                      backgroundColor: alpha(theme.palette.success.main, 0.7),
-                      hoverBackgroundColor: theme.palette.success.main,
-                      borderRadius: 6,
-                      barThickness: 16
-                    }
-                  ]
-                }}
-                options={{
-                  indexAxis: 'y',
-                  responsive: true,
-                  maintainAspectRatio: false,
-                  scales: {
-                    x: {
-                      beginAtZero: true,
-                      grid: { color: theme.palette.divider, drawBorder: false },
-                      ticks: {
-                        font: { size: 10, family: 'Poppins' },
-                        color: theme.palette.text.disabled,
-                        callback: (val) => (val >= 1000 ? `${val / 1000}rb` : val)
-                      }
-                    },
-                    y: {
-                      grid: { display: false },
-                      ticks: {
-                        font: { size: 10, family: 'Poppins', weight: 500 },
-                        color: theme.palette.text.primary,
-                        padding: 8,
-                        callback: function (val) {
-                          const label = this.getLabelForValue(val)
-                          return label.length > 12 ? label.substr(0, 12) + '...' : label
-                        }
-                      }
-                    }
-                  },
-                  plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                      padding: 10,
-                      backgroundColor: theme.palette.background.paper,
-                      titleColor: theme.palette.text.primary,
-                      bodyColor: theme.palette.text.secondary,
-                      borderColor: theme.palette.divider,
-                      borderWidth: 1,
-                      callbacks: {
-                        label: (ctx) => ` ${ctx.dataset.label}: ${fmtRp(ctx.raw)}`
-                      }
-                    }
-                  }
-                }}
-              />
-            )}
-          </Box>
-        </Box>
       </Box>
 
       <Typography
@@ -886,7 +740,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         }}
       >
         <TableChartRounded sx={{ fontSize: 20, color: 'primary.main' }} />
-        Rincian Transaksi
+        Rincian Transaksi Pengeluaran
       </Typography>
 
       <TableContainer
@@ -901,12 +755,13 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
           <TableHead>
             <TableRow>
               {[
-                t('transaction.col_no'),
-                t('transaction.col_time'),
-                t('transaction.col_items'),
-                t('transaction.col_total'),
-                t('transaction.col_method'),
-                t('transaction.col_status')
+                'No',
+                'Tanggal / Waktu',
+                'Kategori',
+                'Jumlah',
+                'Keterangan',
+                'Lampiran',
+                'Kasir'
               ].map((h) => (
                 <TableCell
                   key={h}
@@ -932,7 +787,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
             {loading ? (
               Array.from({ length: 6 }).map((_, i) => (
                 <TableRow key={i}>
-                  {Array.from({ length: 6 }).map((__, j) => (
+                  {Array.from({ length: 7 }).map((__, j) => (
                     <TableCell key={j}>
                       <Skeleton variant="text" width="75%" />
                     </TableCell>
@@ -941,56 +796,65 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
               ))
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} sx={{ textAlign: 'center', py: 7 }}>
-                  <Typography sx={{ color: 'text.secondary' }}>{t('report.no_data')}</Typography>
+                <TableCell colSpan={7} sx={{ textAlign: 'center', py: 7 }}>
+                  <Typography sx={{ color: 'text.secondary' }}>Tidak ada data</Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              rows.map((r) => (
-                <TableRow
-                  key={r.id}
-                  hover
-                  sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
-                >
-                  <TableCell sx={{ fontSize: 12, fontWeight: 500 }}>{r.no_transaksi}</TableCell>
-                  <TableCell sx={{ fontSize: 12 }}>{fmtDate(r.created_at)}</TableCell>
-                  <TableCell sx={{ fontSize: 12 }}>{r.item_count || 0}</TableCell>
-                  <TableCell sx={{ fontSize: 12, fontWeight: 700, color: 'primary.main' }}>
-                    {fmtRp(r.total)}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: 12 }}>
-                    {methodLabel[r.metode_bayar] || r.metode_bayar}
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={
-                        r.status === 'selesai'
-                          ? t('transaction.status_done')
-                          : t('transaction.status_void')
-                      }
-                      sx={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        height: 20,
-                        bgcolor:
-                          r.status === 'selesai'
-                            ? alpha(theme.palette.success.main, 0.12)
-                            : alpha(theme.palette.error.main, 0.1),
-                        color:
-                          r.status === 'selesai'
-                            ? theme.palette.success.main
-                            : theme.palette.error.main,
-                        border: `1px solid ${
-                          r.status === 'selesai'
-                            ? alpha(theme.palette.success.main, 0.25)
-                            : alpha(theme.palette.error.main, 0.25)
-                        }`
-                      }}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))
+              rows.map((r, idx) => {
+                const imgs = imageService.parseImages(r.images)
+                return (
+                  <TableRow
+                    key={r.id}
+                    hover
+                    sx={{ '&:last-child td, &:last-child th': { border: 0 } }}
+                  >
+                    <TableCell sx={{ fontSize: 12, fontWeight: 500 }}>
+                      {page * LIMIT + idx + 1}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12 }}>{fmtDate(r.created_at)}</TableCell>
+                    <TableCell sx={{ fontSize: 12, textTransform: 'capitalize' }}>
+                      {r.kategori}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12, fontWeight: 700, color: 'error.main' }}>
+                      {fmtRp(r.jumlah)}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12 }}>{r.keterangan || '-'}</TableCell>
+                    <TableCell sx={{ fontSize: 12 }}>
+                      {imgs.length > 0 ? (
+                        <Box sx={{ display: 'flex', gap: 0.5 }}>
+                          {imgs.slice(0, 3).map((img, i) => (
+                            <Box
+                              key={i}
+                              component="img"
+                              src={img.url}
+                              alt="receipt"
+                              onClick={() => setLightboxImage(img.url)}
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: 1,
+                                objectFit: 'cover',
+                                cursor: 'pointer',
+                                border: `1px solid ${theme.palette.divider}`,
+                                '&:hover': { opacity: 0.8 }
+                              }}
+                            />
+                          ))}
+                          {imgs.length > 3 && (
+                            <Typography variant="caption" sx={{ alignSelf: 'center', ml: 0.5 }}>
+                              +{imgs.length - 3}
+                            </Typography>
+                          )}
+                        </Box>
+                      ) : (
+                        '-'
+                      )}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12 }}>{r.kasir || '-'}</TableCell>
+                  </TableRow>
+                )
+              })
             )}
           </TableBody>
         </Table>
@@ -1036,6 +900,43 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         </Box>
       </Box>
 
+      {/* Lightbox Preview */}
+      <Dialog open={!!lightboxImage} onClose={() => setLightboxImage(null)} maxWidth="md">
+        <Box
+          sx={{
+            position: 'relative',
+            bgcolor: '#000',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+        >
+          <IconButton
+            onClick={() => setLightboxImage(null)}
+            sx={{
+              position: 'absolute',
+              top: 8,
+              right: 8,
+              color: '#fff',
+              bgcolor: 'rgba(0,0,0,0.5)',
+              '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
+            }}
+          >
+            <CloseRounded />
+          </IconButton>
+          <Box
+            component="img"
+            src={lightboxImage}
+            alt="Preview"
+            sx={{
+              maxWidth: '100%',
+              maxHeight: '90vh',
+              objectFit: 'contain'
+            }}
+          />
+        </Box>
+      </Dialog>
+
       {/* AI Insight Dialog */}
       <Dialog
         open={aiDialogOpen}
@@ -1053,7 +954,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
           <AutoAwesomeRounded sx={{ color: 'secondary.main' }} />
           <Typography sx={{ fontWeight: 700, fontFamily: 'Poppins, sans-serif', fontSize: 18 }}>
-            AI Business Insight
+            AI Business Insight (Expenses)
           </Typography>
           <IconButton
             size="small"
@@ -1064,51 +965,40 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
             <CloseRounded />
           </IconButton>
         </DialogTitle>
-        <DialogContent dividers sx={{ minHeight: 200, display: 'flex', flexDirection: 'column' }}>
+        <DialogContent dividers sx={{ p: 3 }}>
           {aiLoading ? (
             <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flex: 1,
-                gap: 2,
-                py: 4
-              }}
+              sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 6, gap: 2 }}
             >
               <CircularProgress color="secondary" />
               <Typography
-                sx={{ color: 'text.secondary', fontSize: 14, fontFamily: 'Poppins, sans-serif' }}
+                sx={{ fontSize: 13, color: 'text.secondary', fontFamily: 'Poppins, sans-serif' }}
               >
-                AI sedang menganalisis data penjualan Anda...
+                Menganalisis data pengeluaran dan merumuskan efisiensi cost...
               </Typography>
             </Box>
           ) : (
-            <Box sx={{ py: 1 }}>
-              <Typography
-                component="div"
-                sx={{
-                  color: 'text.primary',
-                  fontSize: 14,
-                  fontFamily: 'Poppins, sans-serif',
-                  lineHeight: 1.8,
-                  whiteSpace: 'pre-line',
-                  '& strong': { color: 'text.primary', fontWeight: 700 }
-                }}
-                dangerouslySetInnerHTML={{
-                  // Simple markdown parsing for bold text
-                  __html: (aiInsight || '').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-                }}
-              />
+            <Box
+              sx={{
+                fontSize: 13.5,
+                lineHeight: 1.7,
+                fontFamily: 'Poppins, sans-serif',
+                color: 'text.primary',
+                '& p': { mb: 1.5 },
+                '& ul, & ol': { pl: 2, mb: 1.5 },
+                '& li': { mb: 0.5 }
+              }}
+            >
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{aiInsight}</ReactMarkdown>
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2 }}>
+        <DialogActions sx={{ p: 2 }}>
           <Button
             onClick={() => setAiDialogOpen(false)}
             disabled={aiLoading}
-            sx={{ textTransform: 'none', fontWeight: 600, borderRadius: 2 }}
+            variant="contained"
+            color="secondary"
           >
             Tutup
           </Button>

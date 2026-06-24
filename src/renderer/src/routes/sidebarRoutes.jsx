@@ -5,7 +5,8 @@ import {
   AssessmentOutlined,
   FiberManualRecord,
   FileDownloadOutlined,
-  PersonRounded
+  PersonRounded,
+  PaidOutlined
 } from '@mui/icons-material'
 
 export const sidebarRoutes = [
@@ -79,11 +80,34 @@ export const sidebarRoutes = [
     protected: false
   },
   {
-    path: '/laporan/list',
+    path: '/pengeluaran',
+    label: 'Pengeluaran',
+    labelKey: 'sidebar.expenses',
+    icon: PaidOutlined,
+    active: true,
+    protected: false
+  },
+  {
     label: 'Laporan',
     labelKey: 'sidebar.report',
     icon: AssessmentOutlined,
     active: true,
-    protected: false
+    protected: false,
+    children: [
+      {
+        path: '/laporan/list',
+        label: 'Laporan Penjualan',
+        labelKey: 'sidebar.sales_report',
+        icon: FiberManualRecord,
+        active: true
+      },
+      {
+        path: '/laporan/pengeluaran',
+        label: 'Laporan Pengeluaran',
+        labelKey: 'sidebar.expense_report',
+        icon: FiberManualRecord,
+        active: true
+      }
+    ]
   }
 ]

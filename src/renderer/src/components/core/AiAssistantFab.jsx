@@ -110,8 +110,21 @@ export const AiAssistantFab = () => {
       const todaySummary =
         reportRes.ok && reportRes.data.summary
           ? reportRes.data.summary
-          : { total_transaksi: 0, omzet_bersih: 0 }
+          : { total_transaksi: 0, omzet_bersih: 0, total_expenses: 0, laba_bersih: 0 }
       const topProducts = reportRes.ok ? reportRes.data.topProducts || [] : []
+
+      // Fetch today's expenses
+      let todayExpensesCount = 0
+      try {
+        if (window.api && window.api.expense) {
+          const expRes = await window.api.expense.getAll({ startDate: todayStr, endDate: todayStr })
+          if (expRes.ok) {
+            todayExpensesCount = expRes.data.length
+          }
+        }
+      } catch (e) {
+        console.error(e)
+      }
 
       // Printer
       const printerSettings = receiptSettingsService.get()
@@ -140,11 +153,28 @@ export const AiAssistantFab = () => {
   * Omzet Bersih: Rp ${Number(rc.summary?.omzet_bersih || 0).toLocaleString('id-ID')}
   * Total HPP: Rp ${Number(rc.summary?.total_hpp || 0).toLocaleString('id-ID')}
   * Laba Kotor: Rp ${Number(rc.summary?.laba_kotor || 0).toLocaleString('id-ID')}
+  * Total Biaya / Expense: Rp ${Number(rc.summary?.total_expenses || 0).toLocaleString('id-ID')}
+  * Laba Bersih: Rp ${Number(rc.summary?.laba_bersih || 0).toLocaleString('id-ID')}
   * Rata-rata Nilai Transaksi: Rp ${Number(rc.summary?.rata_rata_transaksi || 0).toLocaleString('id-ID')}
 - Breakdown Metode Pembayaran Periode Ini:
   ${(rc.byMethod || []).map((m) => `* ${m.metode_bayar}: ${m.jumlah} transaksi, Total Rp ${Number(m.total).toLocaleString('id-ID')}`).join('\n  ')}
 - Produk Terlaris Periode Ini:
   ${(rc.topProducts || []).map((p) => `* ${p.nama_produk}: ${p.qty} pcs terjual, Total Penjualan Rp ${Number(p.total).toLocaleString('id-ID')}`).join('\n  ')}
+`
+      }
+
+      let expenseReportContextStr = ''
+      if (window.__currentExpenseReportContext) {
+        const erc = window.__currentExpenseReportContext
+        expenseReportContextStr = `
+[DATA LAPORAN PENGELUARAN YANG SEDANG DILIHAT USER SAAT INI]
+- Periode Filter: ${erc.filters?.startDate || '-'} s/d ${erc.filters?.endDate || '-'}, Kategori: ${erc.filters?.kategori || 'all'}
+- Ringkasan Pengeluaran Periode Ini:
+  * Total Pengeluaran: Rp ${Number(erc.summary?.total_pengeluaran || 0).toLocaleString('id-ID')}
+  * Jumlah Transaksi Pengeluaran: ${erc.summary?.jumlah_transaksi || 0}
+  * Rata-rata per Pengeluaran: Rp ${Number(erc.summary?.rata_rata_pengeluaran || 0).toLocaleString('id-ID')}
+- Breakdown Kategori Pengeluaran:
+  ${(erc.byCategory || []).map((c) => `* ${c.kategori}: ${c.jumlah} transaksi, Total Rp ${Number(c.total).toLocaleString('id-ID')}`).join('\n  ')}
 `
       }
 
@@ -218,7 +248,8 @@ ${routesMap}
               .join(', ')})`
           : ''
       }
-- Penjualan Hari Ini (${todayStr}): ${todaySummary.total_transaksi} transaksi, Omzet Bersih: Rp ${Number(todaySummary.omzet_bersih).toLocaleString('id-ID')}
+- Penjualan Hari Ini (${todayStr}): ${todaySummary.total_transaksi} transaksi, Omzet Bersih: Rp ${Number(todaySummary.omzet_bersih).toLocaleString('id-ID')}, Pengeluaran Hari Ini: Rp ${Number(todaySummary.total_expenses || 0).toLocaleString('id-ID')}, Laba Bersih: Rp ${Number(todaySummary.laba_bersih || 0).toLocaleString('id-ID')}
+- Total Jumlah Transaksi Pengeluaran Hari Ini: ${todayExpensesCount} transaksi
 - 5 Produk Terlaris Hari Ini: ${
         topProducts
           .slice(0, 5)
@@ -226,9 +257,10 @@ ${routesMap}
           .join(', ') || 'Belum ada data'
       }
 ${reportContextStr}
+${expenseReportContextStr}
 ${cartContextStr}
 ${txDetailContextStr}
-Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cerdas jika pengguna bertanya status toko, stok barang, printer, shift, laporan penjualan yang sedang dilihat, keranjang belanja kasir saat ini, detail riwayat transaksi yang sedang dibuka, promosi hari ini atau navigasi aplikasi.
+Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cerdas jika pengguna bertanya status toko, stok barang, printer, shift, pengeluaran terbaru, laporan pengeluaran, laporan penjualan yang sedang dilihat, keranjang belanja kasir saat ini, detail riwayat transaksi yang sedang dibuka, promosi hari ini atau navigasi aplikasi.
 ---`
 
       // Replace the first message (system prompt) with the dynamically injected context

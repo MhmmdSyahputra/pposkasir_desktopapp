@@ -271,5 +271,36 @@ export const migrations = [
         );
       `)
     }
+  },
+  {
+    version: 11,
+    description: 'Add expenses table',
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS expenses (
+          id          INTEGER PRIMARY KEY AUTOINCREMENT,
+          kategori    TEXT    NOT NULL,
+          jumlah      REAL    NOT NULL,
+          keterangan  TEXT    DEFAULT '',
+          kasir       TEXT    NOT NULL,
+          created_at  TEXT    NOT NULL DEFAULT (datetime('now', 'localtime'))
+        );
+        CREATE INDEX IF NOT EXISTS idx_expenses_created_at ON expenses(created_at);
+      `)
+    }
+  },
+  {
+    version: 12,
+    description: 'Add expense_categories table and images column to expenses',
+    up: (db) => {
+      db.exec(`
+        CREATE TABLE IF NOT EXISTS expense_categories (
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          nama       TEXT    UNIQUE NOT NULL
+        );
+
+        ALTER TABLE expenses ADD COLUMN images TEXT DEFAULT '[]';
+      `)
+    }
   }
 ]
