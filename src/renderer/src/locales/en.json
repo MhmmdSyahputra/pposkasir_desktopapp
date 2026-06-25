@@ -55,7 +55,8 @@
     "hide_labels": "Hide menu labels",
     "template_data": "Template Data",
     "expenses": "Expenses",
-    "customers": "Customers / Debt"
+    "customers": "Customers / Debt",
+    "about": "About App"
   },
   "titlebar": {
     "close_title": "Close Application?",

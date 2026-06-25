@@ -485,6 +485,18 @@ export function transactionGetReport({
     }
     summary.total_expenses = totalExpenses
     summary.laba_bersih = summary.laba_kotor - totalExpenses
+
+    // Count outstanding piutang (unpaid receivables) in the current filter period
+    let piutangConditions = [...conditions]
+    piutangConditions.push(`t.status = 'piutang'`)
+    const piutangWhere = `WHERE ${piutangConditions.join(' AND ')}`
+    const piutangRes = db
+      .prepare(
+        `SELECT COALESCE(SUM(t.total), 0) AS total_piutang, COUNT(*) AS jumlah_piutang FROM transactions t ${piutangWhere}`
+      )
+      .get(params)
+    summary.total_piutang = piutangRes ? piutangRes.total_piutang : 0
+    summary.jumlah_piutang = piutangRes ? piutangRes.jumlah_piutang : 0
   }
 
   const byMethod = db

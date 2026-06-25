@@ -312,7 +312,7 @@ export const CustomerPage = () => {
               <Box>
                 <Typography variant="body2" sx={{ opacity: 0.8, fontWeight: 500 }}>
                   Total Piutang Berjalan
-                </Typography> 
+                </Typography>
                 <Typography variant="h4" sx={{ fontWeight: 700 }}>
                   {formatRupiah(totalPiutangSemua)}
                 </Typography>

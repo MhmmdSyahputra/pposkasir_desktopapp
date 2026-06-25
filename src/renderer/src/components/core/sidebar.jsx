@@ -226,6 +226,13 @@ export const Sidebar = ({ routes = [] }) => {
         labelKey: 'sidebar.template_data',
         icon: FiberManualRecord,
         active: true
+      },
+      {
+        path: '/tentang',
+        label: 'Tentang Aplikasi',
+        labelKey: 'sidebar.about',
+        icon: FiberManualRecord,
+        active: true
       }
     ]
   }

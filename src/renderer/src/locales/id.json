@@ -55,7 +55,8 @@
     "hide_labels": "Sembunyikan label menu",
     "template_data": "Template Data",
     "expenses": "Pengeluaran",
-    "customers": "Pelanggan / Kasbon"
+    "customers": "Pelanggan / Kasbon",
+    "about": "Tentang Aplikasi"
   },
   "titlebar": {
     "close_title": "Tutup Aplikasi?",

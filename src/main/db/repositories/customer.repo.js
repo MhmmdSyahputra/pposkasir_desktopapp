@@ -40,6 +40,7 @@ export function customerDelete(id) {
 
 export function debtPaymentCreate({ customerId, jumlahBayar, metodeBayar, keterangan, kasir }) {
   const db = getDb()
+  const getCustomerStmt = db.prepare(`SELECT total_hutang FROM customers WHERE id = ?`)
   const insertPaymentStmt = db.prepare(
     `INSERT INTO debt_payments (customer_id, jumlah_bayar, metode_bayar, keterangan, kasir)
      VALUES (@customerId, @jumlahBayar, @metodeBayar, @keterangan, @kasir)`
@@ -49,10 +50,21 @@ export function debtPaymentCreate({ customerId, jumlahBayar, metodeBayar, ketera
      SET total_hutang = total_hutang - @jumlahBayar
      WHERE id = @customerId`
   )
+  const setTransactionsSelesaiStmt = db.prepare(
+    `UPDATE transactions
+     SET status = 'selesai'
+     WHERE customer_id = @customerId AND status = 'piutang'`
+  )
 
   const paymentId = db.transaction(() => {
     const res = insertPaymentStmt.run({ customerId, jumlahBayar, metodeBayar, keterangan, kasir })
     updateCustomerStmt.run({ customerId, jumlahBayar })
+
+    const updatedCustomer = getCustomerStmt.get(customerId)
+    if (updatedCustomer && updatedCustomer.total_hutang <= 0) {
+      setTransactionsSelesaiStmt.run({ customerId })
+    }
+
     return res.lastInsertRowid
   })()
 

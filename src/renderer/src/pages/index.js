@@ -23,6 +23,7 @@ import { SupportPage } from './supportPage'
 import { BusinessInfoPage } from './businessInfoPage'
 import { ExpensePage } from './expensePage'
 import { CustomerPage } from './customerPage'
+import { AboutPage } from './aboutPage'
 
 export {
   HomePage,
@@ -49,5 +50,6 @@ export {
   MirrorPage,
   SupportPage,
   ExpensePage,
-  CustomerPage
+  CustomerPage,
+  AboutPage
 }

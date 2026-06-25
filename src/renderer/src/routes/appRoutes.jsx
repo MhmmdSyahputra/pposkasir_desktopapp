@@ -22,7 +22,8 @@ import {
   BusinessInfoPage,
   SupportPage,
   ExpensePage,
-  CustomerPage
+  CustomerPage,
+  AboutPage
 } from '../pages'
 
 export const appRoutes = [
@@ -70,6 +71,7 @@ export const appRoutes = [
     protected: false
   },
   { path: '/template', element: <TemplatePage />, active: true, protected: false },
-  { path: '/apresiasi', element: <SupportPage />, active: true, protected: false }
+  { path: '/apresiasi', element: <SupportPage />, active: true, protected: false },
+  { path: '/tentang', element: <AboutPage />, active: true, protected: false }
   // { path: '*', element: <NotFoundPage />, active: true, protected: false }
 ]

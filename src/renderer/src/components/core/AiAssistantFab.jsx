@@ -39,10 +39,10 @@ ATURAN SANGAT KETAT:
 3. Gunakan markdown untuk memformat jawaban.`
 
 const TEMPLATE_QUESTIONS = [
-  'Bagaimana cara membatalkan transaksi?',
+  'Bagaimana cara mencatat hutang piutang?',
   'Apa fungsi pengaturan Shift Kasir?',
   'Bagaimana cara menambahkan Paket Bundle?',
-  'Tolong buatkan draf pesan promo WhatsApp'
+  'Apa itu Laba Bersih dan cara melihatnya?'
 ]
 
 export const AiAssistantFab = () => {
@@ -214,12 +214,76 @@ User sedang membuka detail transaksi dengan rincian berikut:
 `
       }
 
+      // ── NEW FEATURE: Customer / Debt (Piutang) Context ──
+      let customerDebtContextStr = ''
+      try {
+        if (window.api && window.api.customer) {
+          const custRes = await window.api.customer.getAll()
+          if (custRes.ok && custRes.data && custRes.data.length > 0) {
+            const custList = custRes.data
+            const totalPiutang = custList.reduce((s, c) => s + Number(c.total_hutang || 0), 0)
+            const topDebtors = custList
+              .filter((c) => Number(c.total_hutang) > 0)
+              .sort((a, b) => Number(b.total_hutang) - Number(a.total_hutang))
+              .slice(0, 5)
+            customerDebtContextStr = `
+[DATA PELANGGAN & PIUTANG]
+- Total Pelanggan Terdaftar: ${custList.length}
+- Total Piutang Berjalan: Rp ${totalPiutang.toLocaleString('id-ID')}
+- Pelanggan dengan Hutang Terbesar:
+  ${
+    topDebtors.length > 0
+      ? topDebtors
+          .map(
+            (c, i) => `  ${i + 1}. ${c.nama}: Rp ${Number(c.total_hutang).toLocaleString('id-ID')}`
+          )
+          .join('\n')
+      : '  Tidak ada piutang aktif saat ini'
+  }
+- Cara Kerja Piutang:
+  * Saat checkout, jika metode bayar dipilih "Piutang / Kasbon", transaksi tetap selesai, stok berkurang, status = 'piutang'.
+  * Hutang akan otomatis masuk ke saldo pelanggan (total_hutang).
+  * Admin/Kasir bisa mencatat pembayaran cicilan/pelunasan di menu Pelanggan / Kasbon.
+  * Saat hutang lunas, semua transaksi piutang customer otomatis berubah status menjadi 'selesai'.
+  * Laporan penjualan sudah menampilkan total piutang periode ini di card "PIUTANG PERIODE INI".
+`
+          } else {
+            customerDebtContextStr = `
+[DATA PELANGGAN & PIUTANG]
+- Belum ada data pelanggan terdaftar.
+- Fitur Piutang/Kasbon tersedia di menu Pelanggan / Kasbon.
+`
+          }
+        }
+      } catch (e) {
+        console.error(e)
+      }
+
+      // ── NEW FEATURE: Net Profit Context ──
+      if (todaySummary.laba_bersih !== undefined) {
+        // already included in real-time section
+      }
+
       const dynamicContext = `
 ---
 [PETA NAVIGASI APLIKASI KASIR]
 Aplikasi memiliki struktur menu sidebar sebagai berikut:
 ${routesMap}
-- Pengaturan (Path: /settings)
+- Pengaturan (Path: /settings) — berisi submenu: General Settings, Receipt Settings, Template Data, Tentang Aplikasi
+- Menu lain: /pengeluaran (Catat Pengeluaran), /pelanggan (Pelanggan & Kasbon), /apresiasi (Dukung Pengembang), /profil-toko (Profil Bisnis)
+- Laporan Penjualan (Path: /laporan/list), Laporan Pengeluaran (Path: /laporan/pengeluaran)
+
+[DESKRIPSI FITUR UTAMA APLIKASI]
+1. POS (Point of Sales): Checkout cepat dengan barcode, scanner kamera, modifier/variasi produk, diskon, piutang/kasbon.
+2. Manajemen Produk & Stok: CRUD produk, kategori, satuan, modifier, bundle, kontrol stok, barcode/SKU.
+3. Pengeluaran: Catat biaya operasional, upload gambar struk/nota, kelola kategori pengeluaran.
+4. Piutang / Kasbon: Transaksi hutang pelanggan, cicilan/pelunasan, status otomatis lunas jika dibayar penuh.
+5. Pelanggan: Master data pelanggan dengan riwayat hutang dan pembayaran.
+6. Laporan Penjualan: Omzet, laba kotor, total biaya, laba bersih, piutang periode ini, top produk, breakdown metode bayar, tren harian. Ekspor Excel & PDF.
+7. Laporan Pengeluaran: Total pengeluaran, breakdown kategori, tren harian. Ekspor Excel & PDF.
+8. Backup & Restore Database: Ekspor file .db dan impor kembali dari menu Settings.
+9. Struk Thermal: Cetak struk 58mm/80mm, dukungan silent print & system print browser.
+10. Tutup Kasir: Laporan shift dengan cetak struk ringkasan kasir.
 
 [INFO SISTEM TERKINI (Real-Time)]
 - Versi Aplikasi: v${packageJson.version}
@@ -258,9 +322,10 @@ ${routesMap}
       }
 ${reportContextStr}
 ${expenseReportContextStr}
+${customerDebtContextStr}
 ${cartContextStr}
 ${txDetailContextStr}
-Gunakan peta navigasi dan informasi terkini di atas untuk memberikan jawaban cerdas jika pengguna bertanya status toko, stok barang, printer, shift, pengeluaran terbaru, laporan pengeluaran, laporan penjualan yang sedang dilihat, keranjang belanja kasir saat ini, detail riwayat transaksi yang sedang dibuka, promosi hari ini atau navigasi aplikasi.
+Gunakan peta navigasi, deskripsi fitur utama, dan informasi terkini di atas untuk memberikan jawaban cerdas jika pengguna bertanya tentang: status toko, stok barang, printer, shift, pengeluaran terbaru, laporan pengeluaran, laporan penjualan yang sedang dilihat, keranjang belanja kasir, detail riwayat transaksi, data pelanggan dan piutang, cara mencatat pengeluaran, cara menambahkan pelanggan, sistem piutang/kasbon, promosi hari ini, navigasi aplikasi, atau fitur backup database.
 ---`
 
       // Replace the first message (system prompt) with the dynamically injected context

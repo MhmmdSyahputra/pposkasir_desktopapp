@@ -260,6 +260,10 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         Value: data.summary?.laba_bersih || 0
       },
       {
+        Metric: 'Piutang Periode Ini',
+        Value: data.summary?.total_piutang || 0
+      },
+      {
         Metric: t('report.summary_avg_sales'),
         Value: Number(data.summary?.rata_rata_transaksi || 0).toFixed(0)
       }
@@ -273,7 +277,11 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         [t('transaction.col_total')]: r.total,
         [t('transaction.col_method')]: methodLabel[r.metode_bayar] || r.metode_bayar,
         [t('transaction.col_status')]:
-          r.status === 'selesai' ? t('transaction.status_done') : t('transaction.status_void')
+          r.status === 'selesai'
+            ? t('transaction.status_done')
+            : r.status === 'piutang'
+              ? 'Piutang'
+              : t('transaction.status_void')
       }))
     )
 
@@ -328,6 +336,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
         [t('report.summary_gross_profit'), fmtRp(data.summary?.laba_kotor || 0)],
         ['Total Biaya / Expense', fmtRp(data.summary?.total_expenses || 0)],
         ['Laba Bersih', fmtRp(data.summary?.laba_bersih || 0)],
+        ['Piutang Periode Ini', fmtRp(data.summary?.total_piutang || 0)],
         [t('report.summary_avg_sales'), fmtRp(data.summary?.rata_rata_transaksi || 0)]
       ],
       styles: { fontSize: 9 }
@@ -500,7 +509,7 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(6, 1fr)' },
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(7, 1fr)' },
           gap: 1.5,
           mb: 2.5
         }}
@@ -529,6 +538,11 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
           label="LABA BERSIH"
           value={loading ? '...' : fmtRp(summary?.laba_bersih || 0)}
           accent="secondary.main"
+        />
+        <SummaryCard
+          label="PIUTANG PERIODE INI"
+          value={loading ? '...' : fmtRp(summary?.total_piutang || 0)}
+          accent="warning.main"
         />
         <SummaryCard
           label={t('report.summary_avg_sales')}
@@ -967,7 +981,9 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
                       label={
                         r.status === 'selesai'
                           ? t('transaction.status_done')
-                          : t('transaction.status_void')
+                          : r.status === 'piutang'
+                            ? 'Piutang'
+                            : t('transaction.status_void')
                       }
                       sx={{
                         fontSize: 10,
@@ -976,15 +992,21 @@ Tolong berikan ringkasan yang profesional dan mudah dipahami, analisis tren penj
                         bgcolor:
                           r.status === 'selesai'
                             ? alpha(theme.palette.success.main, 0.12)
-                            : alpha(theme.palette.error.main, 0.1),
+                            : r.status === 'piutang'
+                              ? alpha(theme.palette.warning.main, 0.15)
+                              : alpha(theme.palette.error.main, 0.1),
                         color:
                           r.status === 'selesai'
                             ? theme.palette.success.main
-                            : theme.palette.error.main,
+                            : r.status === 'piutang'
+                              ? theme.palette.warning.main
+                              : theme.palette.error.main,
                         border: `1px solid ${
                           r.status === 'selesai'
                             ? alpha(theme.palette.success.main, 0.25)
-                            : alpha(theme.palette.error.main, 0.25)
+                            : r.status === 'piutang'
+                              ? alpha(theme.palette.warning.main, 0.3)
+                              : alpha(theme.palette.error.main, 0.25)
                         }`
                       }}
                     />
